@@ -3,10 +3,9 @@
 import React, { useEffect, useState } from "react";
 import {
   Shield, Users, AlertTriangle, Ban, CheckCircle2, Award, MessageSquare,
-  DollarSign, Megaphone, FileText, Trash2, Pin, History, Send, Sparkles
+  DollarSign, Megaphone, Trash2, Pin, Send, Sparkles, Search, Globe
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
 import AdminModerationQueue from "@/components/AdminModerationQueue";
 import VerifiedProofsPanel from "@/components/VerifiedProofsPanel";
 
@@ -24,6 +23,8 @@ interface AdminUserRow {
   ban_reason?: string;
   warning_message?: string;
   peer_karma?: number;
+  completed_step_ids?: string[];
+  updated_at?: string;
 }
 
 interface AdminPostRow {
@@ -34,14 +35,6 @@ interface AdminPostRow {
   live_url: string;
   is_pinned: boolean;
   admin_verified: boolean;
-  status: string;
-}
-
-interface AdminCommentRow {
-  id: string;
-  post_id: string;
-  author_name: string;
-  body: string;
   status: string;
 }
 
@@ -63,20 +56,32 @@ interface TrackRow {
   price_ils: number;
 }
 
+const GLOBAL_REPLY_TEMPLATES = [
+  { label: "Portfolio Verified", text: "Your live deployment and architectural proof have been verified. Your Certified Builder badge is now active on your public portfolio!" },
+  { label: "HTTPS Link Required", text: "Please attach a valid live HTTPS deployment URL (e.g., https://vercel.app) so we can complete your verification." },
+  { label: "Upgrade-Delta Info", text: "All previous payments are 100% credited automatically when upgrading to a higher tier (v2.0–v4.0). You only pay the difference." },
+  { label: "Campaign Approved", text: "Your commercial promotion campaign has been approved and pinned to the top of the Builder Proof Feed." },
+];
+
+const GLOBAL_WARNING_TEMPLATES = [
+  { label: "Invalid / Non-HTTPS Link", text: "Security Notice: Please replace non-HTTPS or placeholder links with a verified live deployment URL." },
+  { label: "Incomplete Proof Artifact", text: "Verification Notice: Please submit actual terminal/SQL/code execution output rather than placeholder text." },
+  { label: "Community Conduct", text: "Policy Reminder: Keep all feed submissions and peer reviews constructive, accurate, and aligned with ProofCraft standards." },
+];
+
 export default function AdminCommandCenterPage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<"queue" | "users" | "support" | "feed" | "tracks" | "broadcast">("queue");
 
   const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userSegment, setUserSegment] = useState<"all" | "verified" | "unverified" | "paid" | "banned">("all");
+
   const [posts, setPosts] = useState<AdminPostRow[]>([]);
-  const [comments, setComments] = useState<AdminCommentRow[]>([]);
   const [tickets, setTickets] = useState<SupportRow[]>([]);
   const [tracks, setTracks] = useState<TrackRow[]>([]);
   const [auditLogs, setAuditLogs] = useState<{ id: string; action_title: string; target_info: string; created_at: string }[]>([]);
-
   const [broadcast, setBroadcast] = useState<{ active: boolean; text: string; tone: string }>({ active: false, text: "", tone: "info" });
-  const [legalDocs, setLegalDocs] = useState<LegalDocumentItem[]>(FINTECH_LEGAL_DOCS);
-  const [editingDocIdx, setEditingDocIdx] = useState<number>(0);
 
   const [warnTarget, setWarnTarget] = useState<AdminUserRow | null>(null);
   const [warnText, setWarnText] = useState("");
@@ -84,7 +89,6 @@ export default function AdminCommandCenterPage() {
   const [banText, setBanText] = useState("");
   const [replyTarget, setReplyTarget] = useState<SupportRow | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [editPost, setEditPost] = useState<AdminPostRow | null>(null);
   const [toast, setToast] = useState("");
   const showMsg = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3400); };
 
@@ -103,10 +107,9 @@ export default function AdminCommandCenterPage() {
     }
     setAuthorized(true);
 
-    const [profRes, postRes, cmtRes, tktRes, trkRes, setRes, logRes] = await Promise.all([
+    const [profRes, postRes, tktRes, trkRes, setRes, logRes] = await Promise.all([
       supabase.from("profiles").select("*").order("updated_at", { ascending: false }),
       supabase.from("feed_posts").select("*").order("is_pinned", { ascending: false }).order("created_at", { ascending: false }),
-      supabase.from("feed_comments").select("*").order("created_at", { ascending: false }),
       supabase.from("support_tickets").select("*").order("created_at", { ascending: false }),
       supabase.from("career_tracks").select("*").order("level"),
       supabase.from("site_settings").select("*"),
@@ -115,7 +118,6 @@ export default function AdminCommandCenterPage() {
 
     if (profRes.data) setUsers(profRes.data);
     if (postRes.data) setPosts(postRes.data);
-    if (cmtRes.data) setComments(cmtRes.data);
     if (tktRes.data) setTickets(tktRes.data);
     if (trkRes.data && trkRes.data.length > 0) setTracks(trkRes.data);
     if (logRes.data) setAuditLogs(logRes.data);
@@ -123,8 +125,6 @@ export default function AdminCommandCenterPage() {
     if (setRes.data) {
       const bRow = setRes.data.find((r) => r.key === "broadcast_banner");
       if (bRow?.value) setBroadcast(bRow.value);
-      const lRow = setRes.data.find((r) => r.key === "legal_docs");
-      if (Array.isArray(lRow?.value) && lRow.value.length > 0) setLegalDocs(lRow.value);
     }
   };
 
@@ -135,22 +135,22 @@ export default function AdminCommandCenterPage() {
     await supabase.from("profiles").update({ admin_verified: next }).eq("id", u.id);
     await supabase.from("feed_posts").update({ admin_verified: next }).eq("user_id", u.id);
     await logAdminAction(next ? "Verified Builder Credential" : "Revoked Builder Verification", u.full_name || u.id);
-    showMsg(next ? `Verified ${u.full_name} as Certified Builder!` : "Verification badge removed.");
+    showMsg(next ? `Verified ${u.full_name || "Builder"}!` : "Verification badge removed.");
     loadAllAdminData();
   };
 
   const updateUserTrackLevel = async (u: AdminUserRow, newLevel: number) => {
     await supabase.from("profiles").update({ purchased_track_level: newLevel, current_track_level: newLevel }).eq("id", u.id);
-    await logAdminAction(`Updated Track Tier to Level ${newLevel}`, u.full_name || u.id);
-    showMsg(`Updated ${u.full_name} to Track Level ${newLevel}.`);
+    await logAdminAction(`Updated Tier to Track ${newLevel}`, u.full_name || u.id);
+    showMsg(`Updated ${u.full_name || "Builder"} to Track ${newLevel}.`);
     loadAllAdminData();
   };
 
   const sendWarningToUser = async () => {
     if (!warnTarget || !warnText.trim()) return;
     await supabase.from("profiles").update({ warning_message: warnText.trim() }).eq("id", warnTarget.id);
-    await logAdminAction("Sent Official Policy Warning", `${warnTarget.full_name}: ${warnText.trim()}`);
-    showMsg(`Official warning issued to ${warnTarget.full_name}.`);
+    await logAdminAction("Issued Official Policy Notice", `${warnTarget.full_name}: ${warnText.trim()}`);
+    showMsg(`Notice dispatched to ${warnTarget.full_name}.`);
     setWarnTarget(null); setWarnText("");
     loadAllAdminData();
   };
@@ -159,8 +159,8 @@ export default function AdminCommandCenterPage() {
     if (!banTarget) return;
     const reason = banText.trim() || "Violation of ProofCraft Studio Terms & Security Policy";
     await supabase.from("profiles").update({ is_banned: true, ban_reason: reason }).eq("id", banTarget.id);
-    await logAdminAction("Banned User Account (RLS)", `${banTarget.full_name} (${reason})`);
-    showMsg(`Account ${banTarget.full_name} has been suspended.`);
+    await logAdminAction("Suspended User Account (RLS)", `${banTarget.full_name} (${reason})`);
+    showMsg(`Account ${banTarget.full_name} suspended.`);
     setBanTarget(null); setBanText("");
     loadAllAdminData();
   };
@@ -179,19 +179,19 @@ export default function AdminCommandCenterPage() {
       await supabase.from("feed_posts").update({ is_pinned: true, status: "approved", admin_verified: true }).eq("id", postId);
     }
     await supabase.from("support_tickets").update({
-      admin_reply: "Commercial promotion quote approved! Your campaign post is now verified and pinned at the top of the Builder Proof Feed.",
+      admin_reply: "Commercial promotion campaign approved! Your project is now verified and pinned at the top of the Builder Proof Feed.",
       status: "resolved",
     }).eq("id", t.id);
     await logAdminAction("Approved & Pinned Commercial Campaign", `${t.sender_name} (${postId || "Ticket " + t.id})`);
-    showMsg("Commercial campaign approved & pinned to top of Feed!");
+    showMsg("Commercial campaign approved & pinned!");
     loadAllAdminData();
   };
 
   const sendSupportReply = async () => {
     if (!replyTarget || !replyText.trim()) return;
     await supabase.from("support_tickets").update({ admin_reply: replyText.trim(), status: "resolved" }).eq("id", replyTarget.id);
-    await logAdminAction("Replied to Support Ticket", `${replyTarget.sender_name}: ${replyText.trim()}`);
-    showMsg("Reply sent and synced to user studio!");
+    await logAdminAction("Replied to Ticket", `${replyTarget.sender_name}: ${replyText.trim()}`);
+    showMsg("Reply sent & synced!");
     setReplyTarget(null); setReplyText("");
     loadAllAdminData();
   };
@@ -212,29 +212,40 @@ export default function AdminCommandCenterPage() {
   const saveTrackRow = async (tr: TrackRow) => {
     await supabase.from("career_tracks").update({ name: tr.name, subtitle: tr.subtitle, price_ils: Number(tr.price_ils) }).eq("level", tr.level);
     await logAdminAction(`Updated Track ${tr.level} Pricing`, `${tr.name} ($${tr.price_ils})`);
-    showMsg(`Saved Track ${tr.level} settings!`);
+    showMsg(`Saved Track ${tr.level}!`);
   };
 
   const saveBroadcastSettings = async () => {
     await supabase.from("site_settings").upsert({ key: "broadcast_banner", value: broadcast, updated_at: new Date().toISOString() });
     await logAdminAction("Updated Live Broadcast Banner", broadcast.active ? broadcast.text : "Disabled");
-    showMsg("Live broadcast banner updated across all active sessions!");
+    showMsg("Broadcast banner updated!");
   };
-  if (authorized === null) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>Verifying Admin Authorization...</div>;
+  if (authorized === null) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>Verifying Global Admin Credentials...</div>;
 
   if (!authorized) {
     return (
       <div dir="ltr" className="card-surface" style={{ maxWidth: 460, margin: "40px auto", padding: 26, textAlign: "center", border: "1px solid rgba(248,113,113,0.4)" }}>
         <h1 style={{ fontSize: 18, fontWeight: 900, color: "#f87171", marginBottom: 6 }}>Restricted Admin Command Center</h1>
-        <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6 }}>
-          Sign in with the designated administrator account (<strong>{ADMIN_EMAIL}</strong>) to access platform controls.
-        </p>
+        <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6 }}>Sign in with <strong>{ADMIN_EMAIL}</strong> to access platform governance.</p>
       </div>
     );
   }
 
   const openTicketsCount = tickets.filter((t) => t.status === "open").length;
   const promoQuotesCount = tickets.filter((t) => t.status === "open" && t.category === "COMMERCIAL_PROMO_QUOTE").length;
+  const verifiedBuildersCount = users.filter((u) => u.admin_verified).length;
+  const paidTierBuildersCount = users.filter((u) => (u.purchased_track_level || 1) >= 2).length;
+
+  const filteredUsers = users.filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    const matchQ = !q || (u.full_name || "").toLowerCase().includes(q) || (u.headline || "").toLowerCase().includes(q) || u.id.toLowerCase().includes(q);
+    if (!matchQ) return false;
+    if (userSegment === "verified") return Boolean(u.admin_verified);
+    if (userSegment === "unverified") return !u.admin_verified;
+    if (userSegment === "paid") return (u.purchased_track_level || 1) >= 2;
+    if (userSegment === "banned") return Boolean(u.is_banned);
+    return true;
+  });
 
   return (
     <div dir="ltr" style={{ textAlign: "left" }}>
@@ -248,31 +259,31 @@ export default function AdminCommandCenterPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc", display: "flex", alignItems: "center", gap: 8 }}>
-              <Shield size={20} color="#fbbf24" /> Admin Command & Enforcement Center
+              <Globe size={20} color="#38bdf8" /> Global Operations & Builder Governance Center
             </h1>
-            <p style={{ fontSize: 12, color: "#94a3b8" }}>Zero-code mobile & desktop governance · Real-time Supabase RLS sync</p>
+            <p style={{ fontSize: 12, color: "#94a3b8" }}>Multi-region user CRM, 1-click English response templates, proof auditing & commercial campaigns</p>
           </div>
           <span className="badge-pill" style={{ background: "rgba(52, 211, 153, 0.15)", color: "#34d399", fontSize: 11 }}>
-            Active Admin: {ADMIN_EMAIL}
+            Admin: {ADMIN_EMAIL}
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 10 }}>
           <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
             <div style={{ fontSize: 11, color: "#94a3b8" }}>Total Builders</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>{users.length}</div>
           </div>
-          <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>Open Tickets</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#38bdf8" }}>{openTicketsCount}</div>
+          <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(52,211,153,0.25)" }}>
+            <div style={{ fontSize: 11, color: "#34d399" }}>Verified Builders</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#34d399" }}>{verifiedBuildersCount}</div>
+          </div>
+          <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)" }}>
+            <div style={{ fontSize: 11, color: "#38bdf8" }}>Paid Tiers (T2–T4)</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#38bdf8" }}>{paidTierBuildersCount}</div>
           </div>
           <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(251,191,36,0.28)" }}>
-            <div style={{ fontSize: 11, color: "#fbbf24" }}>Promo Quote Requests</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#fbbf24" }}>{promoQuotesCount}</div>
-          </div>
-          <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>Feed Posts</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#34d399" }}>{posts.length}</div>
+            <div style={{ fontSize: 11, color: "#fbbf24" }}>Promo Quotes / Tickets</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#fbbf24" }}>{promoQuotesCount} / {openTicketsCount}</div>
           </div>
         </div>
       </div>
@@ -280,18 +291,13 @@ export default function AdminCommandCenterPage() {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         {([
           ["queue", "Moderation & Proofs"],
+          ["users", `Global Builders CRM (${users.length})`],
           ["support", `Support & Promo Quotes (${openTicketsCount})`],
-          ["users", "Builders & Enforcement"],
           ["feed", "Feed Management"],
           ["tracks", "Tracks & Pricing"],
           ["broadcast", "Broadcast & Audit Log"],
         ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={activeTab === key ? "btn-primary" : "btn-ghost"}
-            style={{ width: "auto", padding: "7px 14px", fontSize: 12 }}
-          >
+          <button key={key} onClick={() => setActiveTab(key)} className={activeTab === key ? "btn-primary" : "btn-ghost"} style={{ width: "auto", padding: "7px 14px", fontSize: 12 }}>
             {label}
           </button>
         ))}
@@ -301,6 +307,68 @@ export default function AdminCommandCenterPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <AdminModerationQueue />
           <VerifiedProofsPanel isAdminView />
+        </div>
+      )}
+      {activeTab === "users" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="card-surface" style={{ padding: 14, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+              <Search size={14} color="#94a3b8" style={{ position: "absolute", left: 12, top: 12 }} />
+              <input
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search builder by name, headline, or ID..."
+                className="input-dark"
+                style={{ width: "100%", paddingLeft: 34, fontSize: 12.5 }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {(["all", "verified", "unverified", "paid", "banned"] as const).map((seg) => (
+                <button
+                  key={seg}
+                  onClick={() => setUserSegment(seg)}
+                  className={userSegment === seg ? "btn-primary" : "btn-ghost"}
+                  style={{ width: "auto", padding: "5px 11px", fontSize: 11.5 }}
+                >
+                  {seg.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredUsers.map((u) => {
+            const stepsCount = Array.isArray(u.completed_step_ids) ? u.completed_step_ids.length : 0;
+            return (
+              <div key={u.id} className="card-surface" style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <strong style={{ color: "#f8fafc", fontSize: 14 }}>{u.full_name || u.id}</strong>
+                    <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(56,189,248,0.14)", color: "#38bdf8" }}>
+                      Tier {u.purchased_track_level || 1}
+                    </span>
+                    <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(251,191,36,0.14)", color: "#fbbf24" }}>
+                      {stepsCount} Proofs · {u.peer_karma || 0} Karma
+                    </span>
+                    {u.admin_verified && <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(52,211,153,0.14)", color: "#34d399" }}>Verified</span>}
+                    {u.is_banned && <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(248,113,113,0.18)", color: "#f87171" }}>SUSPENDED</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 3 }}>{u.headline || "Independent AI Systems Builder"}</div>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button onClick={() => toggleVerifyUser(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5 }}>{u.admin_verified ? "Revoke Verify" : "Verify Builder"}</button>
+                  {[1, 2, 3, 4].map((lvl) => (
+                    <button key={lvl} onClick={() => updateUserTrackLevel(u, lvl)} className="btn-ghost" style={{ padding: "5px 9px", fontSize: 11 }}>T{lvl}</button>
+                  ))}
+                  <button onClick={() => { setWarnTarget(u); setWarnText(u.warning_message || ""); }} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#fbbf24" }}>Warn</button>
+                  {u.is_banned ? (
+                    <button onClick={() => unbanUser(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#34d399" }}>Unban</button>
+                  ) : (
+                    <button onClick={() => setBanTarget(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#f87171" }}>Ban</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
       {activeTab === "support" && (
@@ -334,7 +402,7 @@ export default function AdminCommandCenterPage() {
                     </button>
                   )}
                   <button onClick={() => { setReplyTarget(t); setReplyText(t.admin_reply || ""); }} className="btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}>
-                    <Send size={13} /> Send Custom Reply
+                    <Send size={13} /> Reply with Template
                   </button>
                 </div>
               </div>
@@ -343,30 +411,6 @@ export default function AdminCommandCenterPage() {
         </div>
       )}
 
-      {activeTab === "users" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {users.map((u) => (
-            <div key={u.id} className="card-surface" style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-              <div>
-                <strong style={{ color: "#f8fafc", fontSize: 14 }}>{u.full_name || u.id}</strong>
-                <div style={{ fontSize: 12, color: "#94a3b8" }}>Tier Level {u.purchased_track_level || 1} · {u.admin_verified ? "Verified" : "Unverified"} {u.is_banned ? "· BANNED" : ""}</div>
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <button onClick={() => toggleVerifyUser(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5 }}>{u.admin_verified ? "Revoke Verify" : "Verify Builder"}</button>
-                {[1, 2, 3, 4].map((lvl) => (
-                  <button key={lvl} onClick={() => updateUserTrackLevel(u, lvl)} className="btn-ghost" style={{ padding: "5px 9px", fontSize: 11 }}>T{lvl}</button>
-                ))}
-                <button onClick={() => { setWarnTarget(u); setWarnText(u.warning_message || ""); }} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#fbbf24" }}>Warn</button>
-                {u.is_banned ? (
-                  <button onClick={() => unbanUser(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#34d399" }}>Unban</button>
-                ) : (
-                  <button onClick={() => setBanTarget(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#f87171" }}>Ban</button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
       {activeTab === "feed" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {posts.map((p) => (
@@ -396,16 +440,15 @@ export default function AdminCommandCenterPage() {
           ))}
         </div>
       )}
-
       {activeTab === "broadcast" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="card-surface" style={{ padding: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc", marginBottom: 10 }}>Global Live Broadcast Banner</h2>
             <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
               <input type="checkbox" checked={broadcast.active} onChange={(e) => setBroadcast({ ...broadcast, active: e.target.checked })} />
-              <span style={{ fontSize: 13, color: "#cbd5e1" }}>Show banner across all active sessions</span>
+              <span style={{ fontSize: 13, color: "#cbd5e1" }}>Show live banner across all active global sessions</span>
             </div>
-            <input value={broadcast.text} onChange={(e) => setBroadcast({ ...broadcast, text: e.target.value })} placeholder="Announcement message..." className="input-dark" style={{ width: "100%", marginBottom: 10 }} />
+            <input value={broadcast.text} onChange={(e) => setBroadcast({ ...broadcast, text: e.target.value })} placeholder="Global announcement message..." className="input-dark" style={{ width: "100%", marginBottom: 10 }} />
             <button onClick={saveBroadcastSettings} className="btn-primary" style={{ width: "auto", padding: "8px 18px" }}>Publish Broadcast</button>
           </div>
 
@@ -422,8 +465,15 @@ export default function AdminCommandCenterPage() {
 
       {replyTarget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 95, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div className="card-surface" style={{ maxWidth: 440, width: "100%", padding: 20 }}>
+          <div className="card-surface" style={{ maxWidth: 480, width: "100%", padding: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>Reply to {replyTarget.sender_name}</h3>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {GLOBAL_REPLY_TEMPLATES.map((tpl) => (
+                <button key={tpl.label} type="button" onClick={() => setReplyText(tpl.text)} style={{ fontSize: 11, padding: "4px 9px", borderRadius: 8, background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", color: "#38bdf8", cursor: "pointer" }}>
+                  + {tpl.label}
+                </button>
+              ))}
+            </div>
             <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={4} className="input-dark" style={{ width: "100%", marginBottom: 12 }} />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={() => setReplyTarget(null)} className="btn-ghost">Cancel</button>
@@ -435,8 +485,15 @@ export default function AdminCommandCenterPage() {
 
       {warnTarget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 95, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div className="card-surface" style={{ maxWidth: 420, width: "100%", padding: 20 }}>
+          <div className="card-surface" style={{ maxWidth: 460, width: "100%", padding: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "#fbbf24", marginBottom: 8 }}>Issue Warning to {warnTarget.full_name}</h3>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {GLOBAL_WARNING_TEMPLATES.map((tpl) => (
+                <button key={tpl.label} type="button" onClick={() => setWarnText(tpl.text)} style={{ fontSize: 11, padding: "4px 9px", borderRadius: 8, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24", cursor: "pointer" }}>
+                  + {tpl.label}
+                </button>
+              ))}
+            </div>
             <input value={warnText} onChange={(e) => setWarnText(e.target.value)} className="input-dark" style={{ width: "100%", marginBottom: 12 }} />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={() => setWarnTarget(null)} className="btn-ghost">Cancel</button>

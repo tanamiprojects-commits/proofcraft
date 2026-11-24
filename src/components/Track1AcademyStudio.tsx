@@ -19,7 +19,7 @@ interface Props {
 export default function Track1AcademyStudio({ userId, profile, setProfile, trackProjects, setTrackProjects, onNotify }: Props) {
   const [selectedPresetIdx, setSelectedPresetIdx] = useState(0);
   const [liveUrl, setLiveUrl] = useState(trackProjects["1"]?.url || profile.projectLiveUrl || "");
-  const preset = TRACK1_NICHES[selectedPresetIdx];
+  const preset = TRACK1_NICHES[selectedPresetIdx] || TRACK1_NICHES[0];
 
   const presets = TRACK1_NICHES.map((p) => ({
     label: p.label,
@@ -41,7 +41,7 @@ export default function Track1AcademyStudio({ userId, profile, setProfile, track
       onNameChange={(name) => setProfile((p) => ({ ...p, fullName: name }))}
       headline={profile.headline || preset.pitch}
       primaryTools={profile.primaryTools}
-      quickToolsList={["Next.js", "TypeScript", "RTL Hebrew", "WhatsApp Engine", "Vercel", "Google AI Studio"]}
+      quickToolsList={["Next.js", "TypeScript", "Tailwind CSS", "Supabase", "Vercel", "Claude / Gemini"]}
       onToggleTool={(tl) => {
         const curr = profile.primaryTools || "";
         if (!curr.toLowerCase().includes(tl.toLowerCase())) {
@@ -53,26 +53,25 @@ export default function Track1AcademyStudio({ userId, profile, setProfile, track
         setSelectedPresetIdx(idx);
         const ch = TRACK1_NICHES[idx];
         setProfile((p) => ({ ...p, headline: ch.pitch, projectTitle: ch.sampleTitle, projectProblemSolved: ch.pitch }));
-        onNotify(`✓ תבנית ${ch.label} הוגדרה!`);
+        onNotify(`Specialization preset applied: ${ch.label}`);
       }}
       completedStepIds={profile.completedStepIds}
-
       liveUrlInput={liveUrl}
       onLiveUrlChange={setLiveUrl}
-      urlPlaceholder="https://vercel.app"
+      urlPlaceholder="https://your-project.vercel.app"
       onCompleteModule={async (mod, quizChoice, onNext) => {
-        if (quizChoice !== mod.correctQuizIdx) return "בחר את התשובה הנכונה בבדיקת ההבנה כדי לאמת את המודול.";
-        if (mod.stepNumber === 1 && !(profile.fullName || "").trim()) return "הזן את שמך המלא בלשונית 2 (ביצוע וכלים) לפני האימות.";
+        if (quizChoice !== mod.correctQuizIdx) return "Please select the correct answer in the Engineering Scenario Check to verify this milestone.";
+        if (mod.stepNumber === 1 && !(profile.fullName || "").trim()) return "Please enter your full name in Station 2 before locking Milestone #1.";
         if (mod.stepNumber === 3) {
           const check = sanitizeExternalUrl(liveUrl);
-          if (!check.valid) return check.error || "הזן קישור HTTPS תקין של דף הנחיתה שבנית.";
+          if (!check.valid) return check.error || "Please enter a valid live HTTPS deployment URL.";
           const nextProj = { ...trackProjects, "1": { title: preset.sampleTitle, url: check.cleanUrl, summary: preset.pitch, verifiedAt: new Date().toISOString() } };
           setTrackProjects(nextProj);
           const nextCompleted = Array.from(new Set([...profile.completedStepIds, mod.id, "step-1", "step-2", "step-3", "step-4", "step-5"]));
           const nextProf = { ...profile, headline: preset.pitch, projectTitle: preset.sampleTitle, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.pitch, completedStepIds: nextCompleted };
           setProfile(nextProf);
           await syncProfileToCloud(userId, nextProf, { track_projects: nextProj });
-          onNotify("🎉 הנכס הראשון (v1.0) ננעל בתיק העבודות שלך!");
+          onNotify("Project #1 (v1.0) locked into your Verified Portfolio!");
           onNext();
           return null;
         }
@@ -80,7 +79,7 @@ export default function Track1AcademyStudio({ userId, profile, setProfile, track
         const nextProf = { ...profile, headline: profile.headline || preset.pitch, completedStepIds: nextCompleted };
         setProfile(nextProf);
         await syncProfileToCloud(userId, nextProf);
-        onNotify(`✓ ${mod.badgeUnlocked} נוסף לפרופיל!`);
+        onNotify(`${mod.badgeUnlocked} badge added to your profile!`);
         onNext();
         return null;
       }}

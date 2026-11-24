@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { Smartphone, Monitor, Send, Copy, CheckCircle2, Trash2, FileText } from "lucide-react";
+import { Smartphone, Monitor, Send, Copy, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { sanitizePlainText } from "@/lib/security-utils";
+import { useStudioLang } from "@/lib/i18n-engine";
 
 interface SyncItem {
   id: string;
@@ -14,6 +15,7 @@ interface SyncItem {
 }
 
 export default function PocketFieldStudio() {
+  const { isHe, dir, t } = useStudioLang();
   const [tab, setTab] = useState<"sync" | "proposal">("sync");
   const [userId, setUserId] = useState<string | null>(null);
   const [builderName, setBuilderName] = useState<string>("");
@@ -24,12 +26,12 @@ export default function PocketFieldStudio() {
   const [itemContent, setItemContent] = useState("");
 
   const [clientName, setClientName] = useState("");
-  const [packageTier, setPackageTier] = useState("דף נחיתה ממיר + מנוע הזמנות WhatsApp (v1.0)");
-  const [priceIls, setPriceIls] = useState("2,200");
+  const [packageTier, setPackageTier] = useState("Conversion Landing Engine + Lead Automation (v1.0)");
+  const [priceAmount, setPriceAmount] = useState("750");
   const [deliveryDays, setDeliveryDays] = useState("4");
   const [msg, setMsg] = useState("");
 
-  const notify = (t: string) => { setMsg(t); setTimeout(() => setMsg(""), 2800); };
+  const notify = (txt: string) => { setMsg(txt); setTimeout(() => setMsg(""), 2800); };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -55,120 +57,86 @@ export default function PocketFieldStudio() {
   const addSyncItem = async () => {
     const cleanT = sanitizePlainText(itemTitle, 90);
     const cleanC = sanitizePlainText(itemContent, 600);
-    if (!cleanT || !cleanC) return notify("נא למלא כותרת ותוכן להעברה");
+    if (!cleanT || !cleanC) return notify(t("Please enter both a title and payload.", "נא למלא כותרת ותוכן להעברה"));
 
     const next: SyncItem[] = [
-      { id: `sync-${Date.now()}`, direction, title: cleanT, content: cleanC, createdAt: new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }) },
+      { id: `sync-${Date.now()}`, direction, title: cleanT, content: cleanC, createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) },
       ...queue,
     ];
     await saveQueue(next);
     setItemTitle(""); setItemContent("");
-    notify(direction === "to-desktop" ? "✓ נשמר לתור העבודה במחשב!" : "✓ נשלח לבדיקה ושיתוף בנייד!");
+    notify(direction === "to-desktop" ? t("Queued for Desktop Studio!", "נשמר לתור העבודה במחשב!") : t("Sent to Mobile Field View!", "נשלח לבדיקה בנייד!"));
   };
 
   const buildProposalText = () => {
-    const portfolioUrl = typeof window !== "undefined" ? `${window.location.origin}/portfolio/live` : "https://proofcraft.app";
-    return `היי ${clientName || "שלום רב"},\nבהמשך לשיחתנו, להלן הצעת מחיר מסודרת להקמת המערכת:\n\n• פתרון נבחר: ${packageTier}\n• השקעה: ₪${priceIls} (חד-פעמי)\n• זמן אספקה משוער: ${deliveryDays} ימי עסקים\n• כולל: התאמה מלאה למובייל (RTL), אבטחת SSL, נגישות והדרכת שימוש.\n\nלצפייה בתיק העבודות המאומת שלי:\n${portfolioUrl}\n\nבברכה,\n${builderName || "בונה מערכות AI"}`;
+    const portfolioUrl = typeof window !== "undefined" ? `${window.location.origin}/portfolio/live` : "https://vercel.app";
+    if (isHe) {
+      return `היי ${clientName || "שלום רב"},\nבהמשך לשיחתנו, להלן הצעת מחיר מסודרת להקמת המערכת:\n\n• פתרון נבחר: ${packageTier}\n• השקעה: ₪${priceAmount} (חד-פעמי)\n• זמן אספקה משוער: ${deliveryDays} ימי עסקים\n• כולל: התאמה מלאה למובייל, אבטחת SSL והדרכת שימוש.\n\nלצפייה בתיק העבודות המאומת שלי:\n${portfolioUrl}\n\nבברכה,\n${builderName || "בונה מערכות AI"}`;
+    }
+    return `Hi ${clientName || "there"},\nFollowing up on our conversation, here is a clear proposal for your build:\n\n• Selected Package: ${packageTier}\n• Investment: $${priceAmount} (one-time)\n• Estimated Delivery: ${deliveryDays} business days\n• Includes: Responsive mobile/desktop UI, SSL security, and handover walkthrough.\n\nInspect my Verified Live Portfolio:\n${portfolioUrl}\n\nBest regards,\n${builderName || "AI Systems Builder"}`;
   };
+
   return (
-    <div dir="rtl" style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 12, fontSize: 12 }}>
+    <div dir={dir} style={{ textAlign: isHe ? "right" : "left", display: "flex", flexDirection: "column", gap: 12, fontSize: 12.5 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-        <button type="button" onClick={() => setTab("sync")} style={{
-          padding: "9px 8px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer",
-          background: tab === "sync" ? "#2481cc" : "#182235", color: "#fff", border: "none"
-        }}>
-          🔄 סנכרון נייד ↔ מחשב ({queue.length})
+        <button type="button" onClick={() => setTab("sync")} className={tab === "sync" ? "btn-primary" : "btn-ghost"} style={{ fontSize: 11.5, padding: "8px 10px" }}>
+          {t(`Mobile ↔ Desktop Sync (${queue.length})`, `סנכרון נייד ↔ מחשב (${queue.length})`)}
         </button>
-        <button type="button" onClick={() => setTab("proposal")} style={{
-          padding: "9px 8px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer",
-          background: tab === "proposal" ? "#51cf66" : "#182235", color: tab === "proposal" ? "#090d16" : "#fff", border: "none"
-        }}>
-          📄 הצעת מחיר מהירה בשטח
+        <button type="button" onClick={() => setTab("proposal")} className={tab === "proposal" ? "btn-primary" : "btn-ghost"} style={{ fontSize: 11.5, padding: "8px 10px" }}>
+          {t("Quick Client Proposal", "הצעת מחיר מהירה בשטח")}
         </button>
       </div>
+
+      {msg && (
+        <div style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(52,211,153,0.14)", color: "#34d399", fontWeight: 700, fontSize: 12 }}>
+          {msg}
+        </div>
+      )}
 
       {tab === "sync" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-            <button type="button" onClick={() => setDirection("to-desktop")} style={{
-              padding: 8, borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer",
-              background: direction === "to-desktop" ? "rgba(151,117,250,0.2)" : "#090d16",
-              color: direction === "to-desktop" ? "#9775fa" : "#94a3b8",
-              border: `1px solid ${direction === "to-desktop" ? "#9775fa" : "rgba(255,255,255,0.08)"}`
-            }}>
-              <Monitor size={13} style={{ display: "inline", marginLeft: 4 }} /> שמור לעבודה במחשב
+            <button type="button" onClick={() => setDirection("to-desktop")} className="btn-ghost" style={{ borderColor: direction === "to-desktop" ? "#38bdf8" : undefined, color: direction === "to-desktop" ? "#38bdf8" : undefined, fontSize: 11.5 }}>
+              <Monitor size={13} /> {t("Send to Desktop", "שלח למחשב")}
             </button>
-            <button type="button" onClick={() => setDirection("to-mobile")} style={{
-              padding: 8, borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer",
-              background: direction === "to-mobile" ? "rgba(81,207,102,0.2)" : "#090d16",
-              color: direction === "to-mobile" ? "#51cf66" : "#94a3b8",
-              border: `1px solid ${direction === "to-mobile" ? "#51cf66" : "rgba(255,255,255,0.08)"}`
-            }}>
-              <Smartphone size={13} style={{ display: "inline", marginLeft: 4 }} /> שלח להצגה בנייד
+            <button type="button" onClick={() => setDirection("to-mobile")} className="btn-ghost" style={{ borderColor: direction === "to-mobile" ? "#34d399" : undefined, color: direction === "to-mobile" ? "#34d399" : undefined, fontSize: 11.5 }}>
+              <Smartphone size={13} /> {t("Send to Mobile", "שלח לנייד")}
             </button>
           </div>
-
-          <input value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} placeholder="כותרת קצרה (לדוגמה: פרומפט לדף קליניקה / לינק להדגמה)" className="input-field" />
-          <textarea rows={2} value={itemContent} onChange={(e) => setItemContent(e.target.value)} placeholder="הדבק כאן פרומפט, רעיון מפגישה או קישור חי..." className="input-field" />
-          <button type="button" onClick={addSyncItem} className="btn-primary" style={{ height: 38 }}>
-            <Send size={13} /> סנכרן לענן עכשיו
+          <input value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} placeholder={t("Title (e.g., Client Notes / API Snippet)", "כותרת (לדוגמה: הערות לקוח / קוד)")} className="input-dark" />
+          <textarea rows={3} value={itemContent} onChange={(e) => setItemContent(e.target.value)} placeholder={t("Paste prompt, URL, or field notes...", "הדבק פרומפט, קישור או הערה...")} className="input-dark" />
+          <button type="button" onClick={addSyncItem} className="btn-primary">
+            <Send size={13} /> {t("Sync Across Devices", "סנכרן בין מכשירים")}
           </button>
 
-          {queue.length === 0 ? (
-            <div style={{ padding: 12, borderRadius: 10, background: "#090d16", color: "#64748b", textAlign: "center", fontSize: 11 }}>
-              התור ריק. שמור כאן פרומפטים מהנייד או קישורים להדגמה מהמחשב.
+          {queue.map((item) => (
+            <div key={item.id} style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>{item.direction === "to-desktop" ? "→ DESKTOP" : "→ MOBILE"} · {item.createdAt}</div>
+                <strong style={{ color: "#f8fafc" }}>{item.title}</strong>
+                <div style={{ color: "#cbd5e1", marginTop: 2 }}>{item.content}</div>
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button type="button" onClick={() => { navigator.clipboard?.writeText(item.content); notify(t("Copied!", "הועתק!")); }} className="btn-ghost" style={{ padding: 6 }}><Copy size={12} /></button>
+                <button type="button" onClick={() => saveQueue(queue.filter((x) => x.id !== item.id))} className="btn-ghost" style={{ padding: 6, color: "#f87171" }}><Trash2 size={12} /></button>
+              </div>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 210, overflowY: "auto" }}>
-              {queue.map((q) => (
-                <div key={q.id} style={{ padding: 10, borderRadius: 10, background: "#090d16", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: q.direction === "to-desktop" ? "#9775fa" : "#51cf66" }}>
-                      {q.direction === "to-desktop" ? "💻 למחשב" : "📱 לנייד"} · {q.createdAt}
-                    </span>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button type="button" onClick={() => { navigator.clipboard?.writeText(q.content); notify("✓ הועתק!"); }} style={{ background: "none", border: "none", color: "#2481cc", cursor: "pointer" }}><Copy size={13} /></button>
-                      <button type="button" onClick={() => saveQueue(queue.filter((x) => x.id !== q.id))} style={{ background: "none", border: "none", color: "#ff6b6b", cursor: "pointer" }}><Trash2 size={13} /></button>
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: 800, marginBottom: 2 }}>{q.title}</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", wordBreak: "break-word" }}>{q.content}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="שם הלקוח / העסק" className="input-field" />
-          <select value={packageTier} onChange={(e) => setPackageTier(e.target.value)} className="input-field">
-            <option>דף נחיתה ממיר + מנוע הזמנות WhatsApp (v1.0)</option>
-            <option>מערכת SaaS לניהול תורים ולקוחות בענן (v2.0)</option>
-            <option>מערכת סליקה מאומתת ואוטומציית Telegram (v3.0)</option>
-            <option>פלטפורמת Enterprise רב-צוותית + AI Copilot (v4.0)</option>
-          </select>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={t("Client / Company Name", "שם הלקוח / החברה")} className="input-dark" />
+          <input value={packageTier} onChange={(e) => setPackageTier(e.target.value)} placeholder={t("Deliverable Scope", "היקף המערכת")} className="input-dark" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <input value={priceIls} onChange={(e) => setPriceIls(e.target.value)} placeholder="מחיר (₪)" className="input-field" />
-            <input value={deliveryDays} onChange={(e) => setDeliveryDays(e.target.value)} placeholder="ימי אספקה" className="input-field" />
+            <input value={priceAmount} onChange={(e) => setPriceAmount(e.target.value)} placeholder={t("Price ($)", "מחיר (₪)")} className="input-dark" />
+            <input value={deliveryDays} onChange={(e) => setDeliveryDays(e.target.value)} placeholder={t("Delivery Days", "ימי אספקה")} className="input-dark" />
           </div>
-          <div style={{ padding: 10, borderRadius: 10, background: "#090d16", border: "1px solid rgba(81,207,102,0.3)", fontSize: 11 }}>
-            <div style={{ fontWeight: 800, color: "#51cf66", marginBottom: 4 }}><FileText size={12} style={{ display: "inline" }} /> תצוגה מקדימה להצעה:</div>
-            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", color: "#e2e8f0" }}>{buildProposalText()}</pre>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <button type="button" onClick={() => { navigator.clipboard?.writeText(buildProposalText()); notify("✓ הצעת המחיר הועתקה!"); }} className="btn-ghost" style={{ height: 38 }}>
-              <Copy size={13} /> העתק טקסט
-            </button>
-            <a href={`https://wa.me{encodeURIComponent(buildProposalText())}`} target="_blank" rel="noreferrer" className="btn-primary" style={{ height: 38, background: "#51cf66", color: "#090d16" }}>
-              שלח בוואטסאפ
-            </a>
-          </div>
-        </div>
-      )}
-
-      {msg && (
-        <div style={{ padding: 8, borderRadius: 8, background: "rgba(81,207,102,0.14)", color: "#51cf66", fontSize: 11, fontWeight: 700, textAlign: "center" }}>
-          <CheckCircle2 size={12} style={{ display: "inline", marginLeft: 4 }} /> {msg}
+          <pre style={{ padding: 10, borderRadius: 10, background: "#05070a", color: "#e2e8f0", fontSize: 11.5, whiteSpace: "pre-wrap", border: "1px solid rgba(255,255,255,0.08)" }}>
+            {buildProposalText()}
+          </pre>
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(buildProposalText()); notify(t("Proposal copied to clipboard!", "הצעת המחיר הועתקה!")); }} className="btn-primary">
+            <Copy size={13} /> {t("Copy Client Proposal", "העתק הצעת מחיר")}
+          </button>
         </div>
       )}
     </div>

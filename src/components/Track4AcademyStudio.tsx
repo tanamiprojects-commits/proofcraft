@@ -24,8 +24,8 @@ export default function Track4AcademyStudio({ userId, profile, setProfile, track
   const presets = TRACK4_PRESETS.map((p) => ({
     label: p.label,
     headline: p.headline,
-    projectTitle: p.v4Title,
-    projectSummary: p.v4Summary,
+    projectTitle: p.projectTitle,
+    projectSummary: p.projectSummary,
   }));
 
   return (
@@ -38,10 +38,9 @@ export default function Track4AcademyStudio({ userId, profile, setProfile, track
       presets={presets}
       closingKit={TRACK4_CLOSING_KIT}
       fullName={profile.fullName}
-      onNameChange={(name) => setProfile((p) => ({ ...p, fullName: name }))}
       headline={profile.headline || preset.headline}
       primaryTools={profile.primaryTools}
-      quickToolsList={["Multi-Tenant RBAC", "Gemini AI Copilot", "Audit Logs", "Vercel Edge Caching", "Enterprise SLA"]}
+      quickToolsList={["Multi-Tenant RBAC", "Enterprise AI Copilot", "Immutable Audit Logs", "OWASP Hardening", "4/4 Portfolio Credential"]}
       onToggleTool={(tl) => {
         const curr = profile.primaryTools || "";
         if (!curr.toLowerCase().includes(tl.toLowerCase())) {
@@ -52,33 +51,25 @@ export default function Track4AcademyStudio({ userId, profile, setProfile, track
       onApplyPreset={(idx) => {
         setSelectedPresetIdx(idx);
         const ch = TRACK4_PRESETS[idx];
-        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.v4Title, projectProblemSolved: ch.v4Summary }));
-        onNotify(`✓ התמחות ${ch.label} הוגדרה!`);
+        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.projectTitle, projectProblemSolved: ch.projectSummary }));
+        onNotify(`Selected ${ch.label} Flagship Enterprise preset!`);
       }}
       completedStepIds={profile.completedStepIds}
-
       liveUrlInput={liveUrl}
       onLiveUrlChange={setLiveUrl}
       urlPlaceholder="https://vercel.app"
       onCompleteModule={async (mod, quizChoice, onNext) => {
-        if (quizChoice !== mod.correctQuizIdx) return "בחר את התשובה הנכונה בבדיקת ההבנה כדי לאמת את המודול.";
+        if (quizChoice !== mod.correctQuizIdx) return "Please select the correct engineering scenario answer to verify this milestone.";
         if (mod.stepNumber === 3) {
           const check = sanitizeExternalUrl(liveUrl);
-          if (!check.valid) return check.error || "הזן קישור HTTPS תקין של מערכת הדגל v4.0.";
-          const nowIso = new Date().toISOString();
-          const nextProj: Record<string, TrackProjectEntry> = {
-            "1": trackProjects["1"] || { title: "v1.0 — דף נחיתה ממיר ומנוע הזמנות WhatsApp", url: check.cleanUrl, summary: "שכבת המרה מהירה בעברית (RTL).", verifiedAt: nowIso },
-            "2": trackProjects["2"] || { title: "v2.0 — מערכת SaaS וניהול לקוחות (Supabase + RLS)", url: check.cleanUrl, summary: "מסד נתונים מנורמל ואבטחת RLS.", verifiedAt: nowIso },
-            "3": trackProjects["3"] || { title: "v3.0 — מנוע סליקה, Webhooks ואוטומציית Telegram", url: check.cleanUrl, summary: "סליקה מאומתת וחומת אש Cloudflare.", verifiedAt: nowIso },
-            "4": { title: preset.v4Title, url: check.cleanUrl, summary: preset.v4Summary, verifiedAt: nowIso },
-          };
+          if (!check.valid) return check.error || "Enter a valid live HTTPS URL for your v4.0 Enterprise AI Platform.";
+          const nextProj = { ...trackProjects, "4": { title: preset.projectTitle, url: check.cleanUrl, summary: preset.projectSummary, verifiedAt: new Date().toISOString() } };
           setTrackProjects(nextProj);
-          const allIds = ["t1-mod1","t1-mod2","t1-mod3","t1-mod4","t2-mod1","t2-mod2","t2-mod3","t2-mod4","t3-mod1","t3-mod2","t3-mod3","t3-mod4","t4-mod1","t4-mod2","t4-mod3","step-1","step-2","step-3","step-4","step-5","step-6","step-7","step-8"];
-          const nextCompleted = Array.from(new Set([...profile.completedStepIds, ...allIds]));
-          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.v4Title, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.v4Summary, completedStepIds: nextCompleted };
+          const nextCompleted = Array.from(new Set([...profile.completedStepIds, mod.id, "step-9", "step-10"]));
+          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.projectTitle, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.projectSummary, completedStepIds: nextCompleted };
           setProfile(nextProf);
           await syncProfileToCloud(userId, nextProf, { track_projects: nextProj });
-          onNotify("🎉 תיק עבודות מלא (4/4 עבודות) ופרופיל Senior Architect סונכרנו!");
+          onNotify("Flagship Project #4 (v4.0 Enterprise AI Architect) locked — 4/4 Portfolio Complete!");
           onNext();
           return null;
         }
@@ -86,7 +77,7 @@ export default function Track4AcademyStudio({ userId, profile, setProfile, track
         const nextProf = { ...profile, headline: preset.headline, completedStepIds: nextCompleted };
         setProfile(nextProf);
         await syncProfileToCloud(userId, nextProf);
-        onNotify(`✓ ${mod.badgeUnlocked} נוסף לפרופיל!`);
+        onNotify(`${mod.badgeUnlocked} badge added to your profile!`);
         onNext();
         return null;
       }}

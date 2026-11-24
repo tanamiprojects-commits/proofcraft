@@ -24,15 +24,15 @@ export default function Track3AcademyStudio({ userId, profile, setProfile, track
   const presets = TRACK3_PRESETS.map((p) => ({
     label: p.label,
     headline: p.headline,
-    projectTitle: p.v3Title,
-    projectSummary: p.v3Summary,
+    projectTitle: p.projectTitle,
+    projectSummary: p.projectSummary,
   }));
 
   return (
     <SpaciousMilestoneCanvas
       userId={userId}
       trackNumber={3}
-      trackLabel="Systems & Web3 Architect · v3.0"
+      trackLabel="Systems & Webhooks Architect · v3.0"
       accentColor="#818cf8"
       modules={TRACK3_MODULES}
       presets={presets}
@@ -40,7 +40,7 @@ export default function Track3AcademyStudio({ userId, profile, setProfile, track
       fullName={profile.fullName}
       headline={profile.headline || preset.headline}
       primaryTools={profile.primaryTools}
-      quickToolsList={["Signed Webhooks", "Telegram Bot API", "Resend Email API", "Cloudflare WAF", "Web3 / BaseScan", "Sentry"]}
+      quickToolsList={["HMAC-SHA256 Webhooks", "Server Route Handlers", "Stripe / Billing APIs", "Idempotency Keys", "Edge Rate Limiting"]}
       onToggleTool={(tl) => {
         const curr = profile.primaryTools || "";
         if (!curr.toLowerCase().includes(tl.toLowerCase())) {
@@ -51,26 +51,25 @@ export default function Track3AcademyStudio({ userId, profile, setProfile, track
       onApplyPreset={(idx) => {
         setSelectedPresetIdx(idx);
         const ch = TRACK3_PRESETS[idx];
-        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.v3Title, projectProblemSolved: ch.v3Summary }));
-        onNotify(`✓ ארכיטקטורת ${ch.label} הוגדרה!`);
+        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.projectTitle, projectProblemSolved: ch.projectSummary }));
+        onNotify(`Selected ${ch.label} automation preset!`);
       }}
       completedStepIds={profile.completedStepIds}
-
       liveUrlInput={liveUrl}
       onLiveUrlChange={setLiveUrl}
       urlPlaceholder="https://vercel.app"
       onCompleteModule={async (mod, quizChoice, onNext) => {
-        if (quizChoice !== mod.correctQuizIdx) return "בחר את התשובה הנכונה בבדיקת ההבנה כדי לאמת את המודול.";
+        if (quizChoice !== mod.correctQuizIdx) return "Please select the correct engineering scenario answer to verify this milestone.";
         if (mod.stepNumber === 3) {
           const check = sanitizeExternalUrl(liveUrl);
-          if (!check.valid) return check.error || "הזן קישור HTTPS תקין של מערכת v3.0.";
-          const nextProj = { ...trackProjects, "3": { title: preset.v3Title, url: check.cleanUrl, summary: preset.v3Summary, verifiedAt: new Date().toISOString() } };
+          if (!check.valid) return check.error || "Enter a valid live HTTPS URL for your v3.0 Automation & Billing system.";
+          const nextProj = { ...trackProjects, "3": { title: preset.projectTitle, url: check.cleanUrl, summary: preset.projectSummary, verifiedAt: new Date().toISOString() } };
           setTrackProjects(nextProj);
           const nextCompleted = Array.from(new Set([...profile.completedStepIds, mod.id, "step-8"]));
-          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.v3Title, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.v3Summary, completedStepIds: nextCompleted };
+          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.projectTitle, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.projectSummary, completedStepIds: nextCompleted };
           setProfile(nextProf);
           await syncProfileToCloud(userId, nextProf, { track_projects: nextProj });
-          onNotify("🎉 עבודה #3 (v3.0 Automation & Payments) נוספה לתיק העבודות!");
+          onNotify("Project #3 (v3.0 Verified Webhooks & APIs) locked into your Verified Portfolio!");
           onNext();
           return null;
         }
@@ -78,7 +77,7 @@ export default function Track3AcademyStudio({ userId, profile, setProfile, track
         const nextProf = { ...profile, headline: preset.headline, completedStepIds: nextCompleted };
         setProfile(nextProf);
         await syncProfileToCloud(userId, nextProf);
-        onNotify(`✓ ${mod.badgeUnlocked} נוסף לפרופיל!`);
+        onNotify(`${mod.badgeUnlocked} badge added to your profile!`);
         onNext();
         return null;
       }}

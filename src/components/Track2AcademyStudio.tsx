@@ -24,8 +24,8 @@ export default function Track2AcademyStudio({ userId, profile, setProfile, track
   const presets = TRACK2_PRESETS.map((p) => ({
     label: p.label,
     headline: p.headline,
-    projectTitle: p.v2Title,
-    projectSummary: p.v2Summary,
+    projectTitle: p.projectTitle,
+    projectSummary: p.projectSummary,
   }));
 
   return (
@@ -51,26 +51,25 @@ export default function Track2AcademyStudio({ userId, profile, setProfile, track
       onApplyPreset={(idx) => {
         setSelectedPresetIdx(idx);
         const ch = TRACK2_PRESETS[idx];
-        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.v2Title, projectProblemSolved: ch.v2Summary }));
-        onNotify(`✓ ארכיטקטורת ${ch.label} הוגדרה!`);
+        setProfile((p) => ({ ...p, headline: ch.headline, projectTitle: ch.projectTitle, projectProblemSolved: ch.projectSummary }));
+        onNotify(`Selected ${ch.label} SaaS architecture preset!`);
       }}
       completedStepIds={profile.completedStepIds}
-
       liveUrlInput={liveUrl}
       onLiveUrlChange={setLiveUrl}
-      urlPlaceholder="https://vercel.app"
+      urlPlaceholder="https://your-saas.vercel.app"
       onCompleteModule={async (mod, quizChoice, onNext) => {
-        if (quizChoice !== mod.correctQuizIdx) return "בחר את התשובה הנכונה בבדיקת ההבנה כדי לאמת את המודול.";
+        if (quizChoice !== mod.correctQuizIdx) return "Please select the correct engineering scenario answer to verify this milestone.";
         if (mod.stepNumber === 3) {
           const check = sanitizeExternalUrl(liveUrl);
-          if (!check.valid) return check.error || "הזן קישור HTTPS תקין של אפליקציית v2.0.";
-          const nextProj = { ...trackProjects, "2": { title: preset.v2Title, url: check.cleanUrl, summary: preset.v2Summary, verifiedAt: new Date().toISOString() } };
+          if (!check.valid) return check.error || "Enter a valid live HTTPS URL for your v2.0 Cloud SaaS deployment.";
+          const nextProj = { ...trackProjects, "2": { title: preset.projectTitle, url: check.cleanUrl, summary: preset.projectSummary, verifiedAt: new Date().toISOString() } };
           setTrackProjects(nextProj);
           const nextCompleted = Array.from(new Set([...profile.completedStepIds, mod.id, "step-6", "step-7"]));
-          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.v2Title, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.v2Summary, completedStepIds: nextCompleted };
+          const nextProf = { ...profile, headline: preset.headline, projectTitle: preset.projectTitle, projectLiveUrl: check.cleanUrl, projectProblemSolved: preset.projectSummary, completedStepIds: nextCompleted };
           setProfile(nextProf);
           await syncProfileToCloud(userId, nextProf, { track_projects: nextProj });
-          onNotify("🎉 עבודה #2 (v2.0 SaaS) נוספה לתיק העבודות לצד v1.0!");
+          onNotify("Project #2 (v2.0 Cloud SaaS) locked into your Verified Portfolio!");
           onNext();
           return null;
         }
@@ -78,7 +77,7 @@ export default function Track2AcademyStudio({ userId, profile, setProfile, track
         const nextProf = { ...profile, headline: preset.headline, completedStepIds: nextCompleted };
         setProfile(nextProf);
         await syncProfileToCloud(userId, nextProf);
-        onNotify(`✓ ${mod.badgeUnlocked} נוסף לפרופיל!`);
+        onNotify(`${mod.badgeUnlocked} badge added to your profile!`);
         onNext();
         return null;
       }}

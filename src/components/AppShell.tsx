@@ -3,93 +3,88 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Wrench, Layers, Users, Briefcase, Shield, Accessibility, MessageCircle, Globe, Smartphone, AlertTriangle, Megaphone } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import {
+  Home, BookOpen, Layers, Wrench, Users, Briefcase, Smartphone,
+  Shield, Accessibility, MessageCircle, Globe, AlertTriangle, Megaphone
+} from "lucide-react";
+import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
+import { setStoredStudioLang } from "@/lib/i18n-engine";
 import GlobalModal from "./GlobalModal";
 import PocketFieldStudio from "./PocketFieldStudio";
-import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
-
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
-
-interface SupportTicketRow {
-  id: string;
-  category: string;
-  message: string;
-  admin_reply: string;
-  status: string;
-  created_at: string;
-}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState<"he" | "en">("en");
+  const [lang, setLang] = useState<"en" | "he">("en");
+  const [largeText, setLargeText] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
+
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isBanned, setIsBanned] = useState(false);
+  const [banReason, setBanReason] = useState("");
+  const [warningMsg, setWarningMsg] = useState("");
 
-  const [warningMsg, setWarningMsg] = useState<string>("");
-  const [isBanned, setIsBanned] = useState<boolean>(false);
-  const [banReason, setBanReason] = useState<string>("");
   const [broadcastBanner, setBroadcastBanner] = useState<{ active: boolean; text: string; tone: string }>({ active: false, text: "", tone: "info" });
-
-  const [a11yOpen, setA11yOpen] = useState(false);
-  const [largeText, setLargeText] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [pocketOpen, setPocketOpen] = useState(false);
-
   const [legalDocs, setLegalDocs] = useState<LegalDocumentItem[]>(FINTECH_LEGAL_DOCS);
   const [legalDoc, setLegalDoc] = useState<LegalDocumentItem | null>(null);
 
+  const [pocketOpen, setPocketOpen] = useState(false);
+  const [a11yOpen, setA11yOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
-  const [supportCategory, setSupportCategory] = useState("תמיכה טכנית");
+  const [supportCategory, setSupportCategory] = useState("Technical Support");
   const [supportEmail, setSupportEmail] = useState("");
   const [supportText, setSupportText] = useState("");
   const [supportSent, setSupportSent] = useState(false);
-  const [myTickets, setMyTickets] = useState<SupportTicketRow[]>([]);
+  const [myTickets, setMyTickets] = useState<{ id: string; category: string; message: string; admin_reply: string; status: string; created_at: string }[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
-        setUserEmail(data.user.email || null);
-        setSupportEmail(data.user.email || "");
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("full_name, warning_message, is_banned, ban_reason")
-          .eq("id", data.user.id)
-          .single();
+    const savedLang = localStorage.getItem("pc_studio_lang_v1") === "he" ? "he" : "en";
+    setLang(savedLang);
+    setStoredStudioLang(savedLang);
+
+    const loadSessionAndSite = async () => {
+      const [{ data: uData }, { data: sData }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from("site_settings").select("*"),
+      ]);
+
+      if (sData) {
+        const bRow = sData.find((r) => r.key === "broadcast_banner");
+        if (bRow?.value) setBroadcastBanner(bRow.value);
+        const lRow = sData.find((r) => r.key === "legal_docs");
+        if (Array.isArray(lRow?.value) && lRow.value.length > 0) setLegalDocs(lRow.value);
+      }
+
+      const u = uData?.user;
+      if (u) {
+        setUserId(u.id);
+        setUserEmail(u.email || null);
+        setSupportEmail(u.email || "");
+        const [{ data: prof }, { data: tData }] = await Promise.all([
+          supabase.from("profiles").select("full_name, is_banned, ban_reason, warning_message").eq("id", u.id).single(),
+          supabase.from("support_tickets").select("id, category, message, admin_reply, status, created_at").eq("user_id", u.id).order("created_at", { ascending: false }),
+        ]);
         if (prof) {
           setUserName(prof.full_name || "");
-          if (prof.warning_message) setWarningMsg(prof.warning_message);
-          if (prof.is_banned) {
-            setIsBanned(true);
-            setBanReason(prof.ban_reason || "הפרת תנאי השימוש של הפלטפורמה");
-          }
+          setIsBanned(Boolean(prof.is_banned));
+          setBanReason(prof.ban_reason || "");
+          setWarningMsg(prof.warning_message || "");
         }
-        const { data: tData } = await supabase
-          .from("support_tickets")
-          .select("id, category, message, admin_reply, status, created_at")
-          .eq("user_id", data.user.id)
-          .order("created_at", { ascending: false });
         if (tData) setMyTickets(tData);
       }
-    });
-
-    supabase.from("site_settings").select("key, value").then(({ data }) => {
-      if (!data) return;
-      const bRow = data.find((r) => r.key === "broadcast_banner");
-      if (bRow?.value) setBroadcastBanner(bRow.value);
-      const lRow = data.find((r) => r.key === "legal_docs");
-      if (Array.isArray(lRow?.value) && lRow.value.length > 0) setLegalDocs(lRow.value);
-    });
+    };
+    loadSessionAndSite();
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dir = lang === "he" ? "rtl" : "ltr";
-    document.documentElement.lang = lang;
-  }, [lang]);
+  const switchLanguage = (next: "en" | "he") => {
+    setLang(next);
+    setStoredStudioLang(next);
+    localStorage.setItem("pc_lang", next);
+    window.dispatchEvent(new CustomEvent("pc-lang-change", { detail: next }));
+  };
 
   const dismissWarning = async () => {
     setWarningMsg("");
@@ -103,7 +98,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (!cleanMsg) return;
     await supabase.from("support_tickets").insert({
       user_id: userId,
-      sender_name: userName || userEmail || "אורח באתר",
+      sender_name: userName || userEmail || (lang === "he" ? "אורח באתר" : "Guest Builder"),
       sender_email: supportEmail.trim().slice(0, 120),
       category: supportCategory,
       message: cleanMsg,
@@ -121,27 +116,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isHe = lang === "he";
   const navItems = [
-    { href: "/", label: lang === "he" ? "מרכז פיקוד" : "Home", icon: Home },
-    { href: "/method", label: lang === "he" ? "השיטה ופרומפטים" : "Method", icon: BookOpen },
-    { href: "/workspace", label: lang === "he" ? "סטודיו הכשרה" : "Studio", icon: Layers },
-    { href: "/toolkit", label: lang === "he" ? "ארגז כלים" : "Toolkit", icon: Wrench },
-    { href: "/feed", label: lang === "he" ? "קהילה ושיווק" : "Community", icon: Users },
-    { href: "/portfolio/live", label: lang === "he" ? "תיק עבודות" : "Portfolio", icon: Briefcase },
+    { href: "/", label: isHe ? "ראשי" : "Home", icon: Home },
+    { href: "/method", label: isHe ? "השיטה" : "Method", icon: BookOpen },
+    { href: "/workspace", label: isHe ? "סטודיו" : "Studio", icon: Layers },
+    { href: "/toolkit", label: isHe ? "כלים" : "Toolkit", icon: Wrench },
+    { href: "/feed", label: isHe ? "קהילה" : "Feed", icon: Users },
+    { href: "/portfolio/live", label: isHe ? "תיק עבודות" : "Portfolio", icon: Briefcase },
   ];
 
   const isAdmin = userEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   if (isBanned && !isAdmin) {
     return (
-      <div dir="rtl" style={{ minHeight: "100vh", background: "#0a0b0e", color: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
-        <div className="card-base" style={{ maxWidth: 460, borderColor: "rgba(248, 113, 113, 0.45)" }}>
-          <div style={{ fontSize: 36, marginBottom: 10 }}>🚫</div>
-          <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f87171", marginBottom: 8 }}>הגישה לחשבונך הושעתה</h1>
+      <div dir={isHe ? "rtl" : "ltr"} style={{ minHeight: "100vh", background: "#0a0b0e", color: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
+        <div className="card-surface" style={{ maxWidth: 460, padding: 24, border: "1px solid rgba(248, 113, 113, 0.45)" }}>
+          <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f87171", marginBottom: 8 }}>
+            {isHe ? "הגישה לחשבונך הושעתה" : "Account Access Suspended"}
+          </h1>
           <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 14 }}>
-            סיבת החסימה שנרשמה ע״י הנהלת המערכת: <strong>{banReason}</strong>
+            {isHe ? "סיבת החסימה שנרשמה:" : "Suspension reason:"} <strong>{banReason}</strong>
           </p>
           <button type="button" onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }} className="btn-ghost">
-            התנתק מהחשבון
+            {isHe ? "התנתק מהחשבון" : "Sign Out"}
           </button>
         </div>
       </div>
@@ -149,13 +146,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div suppressHydrationWarning style={{ fontSize: mounted && largeText ? "112%" : "100%", filter: mounted && highContrast ? "contrast(1.18)" : "none", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div dir={isHe ? "rtl" : "ltr"} suppressHydrationWarning style={{ fontSize: mounted && largeText ? "112%" : "100%", filter: mounted && highContrast ? "contrast(1.18)" : "none", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
         background: "rgba(10, 11, 14, 0.94)", backdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(255,255,255,0.09)"
       }}>
-        {/* Live Admin Broadcast Banner */}
         {broadcastBanner.active && broadcastBanner.text && (
           <div style={{
             background: broadcastBanner.tone === "warning" ? "rgba(251, 191, 36, 0.18)" : "rgba(56, 189, 248, 0.18)",
@@ -163,25 +159,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             padding: "6px 16px", textAlign: "center", fontSize: 12, fontWeight: 700,
             color: broadcastBanner.tone === "warning" ? "#fbbf24" : "#38bdf8"
           }}>
-            <Megaphone size={13} style={{ display: "inline", marginLeft: 6 }} />
+            <Megaphone size={13} style={{ display: "inline", marginRight: 6 }} />
             {broadcastBanner.text}
           </div>
         )}
 
-        {/* Official Admin Warning Banner for User */}
         {warningMsg && (
           <div style={{
             background: "rgba(248, 113, 113, 0.22)", borderBottom: "1px solid rgba(248, 113, 113, 0.45)",
             padding: "8px 16px", display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 12, color: "#fecaca"
           }}>
-            <span><AlertTriangle size={14} style={{ display: "inline", marginLeft: 5 }} /> <strong>אזהרה מהנהלת המערכת:</strong> {warningMsg}</span>
+            <span><AlertTriangle size={14} style={{ display: "inline", marginRight: 5 }} /> <strong>{isHe ? "אזהרה מהנהלת המערכת:" : "Official Admin Notice:"}</strong> {warningMsg}</span>
             <button type="button" onClick={dismissWarning} style={{ background: "#f87171", color: "#0a0b0e", border: "none", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-              קראתי והבנתי
+              {isHe ? "קראתי והבנתי" : "Acknowledge"}
             </button>
           </div>
         )}
 
-        {/* Row 1: Brand & Quick Actions */}
         <div style={{ maxWidth: 1060, margin: "0 auto", height: 60, padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, color: "#f8fafc" }}>
             <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
@@ -189,18 +183,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <path d="M10 16.5L14 20.5L22.5 11.5" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
               <defs><linearGradient id="pcObsidian" x1="0" y1="0" x2="32" y2="32"><stop stopColor="#0284c7" /><stop offset="1" stopColor="#6366f1" /></linearGradient></defs>
             </svg>
-            <div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}><span style={{ fontWeight: 900, fontSize: 16, color: "#f8fafc" }}>ProofCraft</span><span style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>Studio</span></div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
+              <span style={{ fontWeight: 900, fontSize: 16, color: "#f8fafc" }}>ProofCraft</span>
+              <span style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>Studio</span>
             </div>
           </Link>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button type="button" onClick={() => setPocketOpen(true)} className="badge-pill" style={{ background: "rgba(52, 211, 153, 0.14)", color: "#34d399", fontSize: 11, cursor: "pointer", border: "1px solid rgba(52, 211, 153, 0.35)" }}>
-              <Smartphone size={13} /> <span>{lang === "he" ? "סנכרון נייד ↔ מחשב" : "Field Sync"}</span>
+              <Smartphone size={13} /> <span>{isHe ? "סנכרון נייד" : "Field Sync"}</span>
             </button>
 
-            <button type="button" onClick={() => setLang(lang === "he" ? "en" : "he")} aria-label="Switch Language" className="btn-ghost" style={{ height: 34, padding: "0 10px", fontSize: 11 }}>
-              <Globe size={13} /> {lang === "he" ? "EN" : "עב"}
+            <button type="button" onClick={() => switchLanguage(isHe ? "en" : "he")} aria-label="Switch Language" className="btn-ghost" style={{ height: 34, padding: "0 10px", fontSize: 11 }}>
+              <Globe size={13} /> {isHe ? "EN" : "עב"}
             </button>
 
             {isAdmin && (
@@ -210,13 +205,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
 
             <Link href="/auth" className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 11 }}>
-              {userEmail ? userEmail.split("@")[0] : (lang === "he" ? "התחבר" : "Sign In")}
+              {userEmail ? userEmail.split("@") : (isHe ? "התחבר" : "Sign In")}
             </Link>
           </div>
         </div>
-
-        {/* Row 2: Horizontal Desktop Navigation Tabs */}
-        <nav className="desktop-subnav" aria-label="ניווט ראשי" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(18, 20, 26, 0.7)" }}>
+        <nav className="desktop-subnav" aria-label="Main Navigation" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(18, 20, 26, 0.7)" }}>
           <div style={{ maxWidth: 1060, margin: "0 auto", width: "100%", padding: "0 20px", display: "flex", alignItems: "center", gap: 6 }}>
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -238,19 +231,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="obsidian-container" style={{ flex: 1, width: "100%" }}>{children}</main>
+
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px 20px 96px", background: "#07080b", fontSize: 12, color: "#94a3b8" }}>
         <div style={{ maxWidth: 1060, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-          <div>© 2026 ProofCraft Studio · הכשרה מעשית, בניית נכסים וקהילת יוצרי AI</div>
+          <div>© 2026 ProofCraft Studio · {isHe ? "הכשרה מעשית, בניית נכסים ותיק עבודות מאומת" : "Global AI Product Engineering & Verified Portfolio OS"}</div>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 18px" }}>
             {legalDocs.map((doc) => {
-              const shortLabels: Record<string, string> = {
-                about: "אודות",
-                pricing: "מחירון",
-                terms: "תנאי שימוש",
-                privacy: "פרטיות",
-                refunds: "ביטולים",
-                accessibility: "הצהרת נגישות",
-              };
+              const labels: Record<string, string> = isHe
+                ? { about: "אודות", pricing: "מחירון", terms: "תנאי שימוש", privacy: "פרטיות", refunds: "ביטולים", accessibility: "נגישות" }
+                : { about: "About", pricing: "Pricing", terms: "Terms", privacy: "Privacy", refunds: "Refunds", accessibility: "Accessibility" };
               return (
                 <button
                   key={doc.id}
@@ -258,21 +247,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setLegalDoc(doc)}
                   style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, padding: "4px 2px", whiteSpace: "nowrap" }}
                 >
-                  {shortLabels[doc.id] || doc.title}
+                  {labels[doc.id] || doc.title}
                 </button>
               );
             })}
             <button type="button" onClick={() => setA11yOpen(true)} style={{ background: "none", border: "none", color: "#38bdf8", cursor: "pointer", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
-              <Accessibility size={13} style={{ display: "inline" }} /> נגישות
+              <Accessibility size={13} style={{ display: "inline" }} /> {isHe ? "נגישות" : "A11y"}
             </button>
             <button type="button" onClick={() => { setSupportOpen(true); setSupportSent(false); }} style={{ background: "none", border: "none", color: "#34d399", cursor: "pointer", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
-              <MessageCircle size={13} style={{ display: "inline" }} /> תמיכה שקטה {myTickets.some((t) => t.admin_reply) ? "●" : ""}
+              <MessageCircle size={13} style={{ display: "inline" }} /> {isHe ? "תמיכה" : "Support"} {myTickets.some((t) => t.admin_reply) ? "●" : ""}
             </button>
           </div>
         </div>
       </footer>
 
-      <nav className="mobile-bottom-nav" aria-label="ניווט תחתון" style={{
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation" style={{
         position: "fixed", bottom: 0, left: 0, right: 0, height: 64, zIndex: 40,
         background: "rgba(10, 11, 14, 0.96)", backdropFilter: "blur(16px)",
         borderTop: "1px solid rgba(255,255,255,0.09)",
@@ -287,35 +276,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               gap: 3, color: active ? "#38bdf8" : "#94a3b8", fontSize: 10, fontWeight: active ? 800 : 600
             }}>
               <Icon size={18} />
-              <span>{item.label.split(" ")}</span>
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <GlobalModal isOpen={pocketOpen} onClose={() => setPocketOpen(false)} title="📲 סנכרון דו-כיווני (נייד ↔ מחשב) ומחולל הצעות מחיר">
+      <GlobalModal isOpen={pocketOpen} onClose={() => setPocketOpen(false)} title={isHe ? "סנכרון נייד ↔ מחשב" : "Field Sync (Mobile ↔ Desktop)"}>
         <PocketFieldStudio />
       </GlobalModal>
 
-      <GlobalModal isOpen={a11yOpen} onClose={() => setA11yOpen(false)} title="♿ התאמות נגישות">
+      <GlobalModal isOpen={a11yOpen} onClose={() => setA11yOpen(false)} title={isHe ? "התאמות נגישות" : "Accessibility Settings"}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button type="button" onClick={() => setLargeText(!largeText)} className="btn-ghost" style={{ justifyContent: "space-between" }}>
-            <span>הגדלת טקסט באתר (112%)</span>
-            <strong>{largeText ? "פעיל ✓" : "כבוי"}</strong>
+            <span>{isHe ? "הגדלת טקסט באתר (112%)" : "Large Text Scale (112%)"}</span>
+            <strong>{largeText ? (isHe ? "פעיל" : "ON") : (isHe ? "כבוי" : "OFF")}</strong>
           </button>
           <button type="button" onClick={() => setHighContrast(!highContrast)} className="btn-ghost" style={{ justifyContent: "space-between" }}>
-            <span>ניגודיות גבוהה (High Contrast)</span>
-            <strong>{highContrast ? "פעיל ✓" : "כבוי"}</strong>
+            <span>{isHe ? "ניגודיות גבוהה" : "High Contrast Mode"}</span>
+            <strong>{highContrast ? (isHe ? "פעיל" : "ON") : (isHe ? "כבוי" : "OFF")}</strong>
           </button>
         </div>
       </GlobalModal>
 
       <GlobalModal isOpen={Boolean(legalDoc)} onClose={() => setLegalDoc(null)} title={legalDoc?.title || ""}>
         {legalDoc && (
-          <div dir="rtl" style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 12 }}>
-            <span className="badge-pill" style={{ alignSelf: "flex-start", background: "rgba(56, 189, 248, 0.14)", color: "#38bdf8", fontSize: 11 }}>
-              {legalDoc.badge}
-            </span>
+          <div dir={isHe ? "rtl" : "ltr"} style={{ textAlign: isHe ? "right" : "left", display: "flex", flexDirection: "column", gap: 12 }}>
+            <span className="badge-pill" style={{ alignSelf: "flex-start", background: "rgba(56, 189, 248, 0.14)", color: "#38bdf8", fontSize: 11 }}>{legalDoc.badge}</span>
             {legalDoc.sections.map((sec, i) => (
               <div key={i} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc", marginBottom: 4 }}>{sec.heading}</div>
@@ -326,44 +313,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </GlobalModal>
 
-      <GlobalModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} title="💬 מרכז תמיכה שקטה ובקשות (דו-כיווני)">
-        <div dir="rtl" style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 12 }}>
+      <GlobalModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} title={isHe ? "מרכז תמיכה ופניות" : "Direct Support & Inquiries"}>
+        <div dir={isHe ? "rtl" : "ltr"} style={{ textAlign: isHe ? "right" : "left", display: "flex", flexDirection: "column", gap: 12 }}>
           {supportSent ? (
             <div style={{ padding: 14, borderRadius: 12, background: "rgba(52, 211, 153, 0.14)", color: "#34d399", fontSize: 13, fontWeight: 700 }}>
-              ✓ פנייתך נשמרה ונשלחה להנהלת המערכת. מענה האדמין יופיע כאן מיד כשיישלח.
+              {isHe ? "פנייתך נשלחה ותיענה בהקדם." : "Your inquiry has been submitted. Admin replies appear right here."}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <select dir="rtl" value={supportCategory} onChange={(e) => setSupportCategory(e.target.value)} className="input-field" style={{ textAlign: "right" }}>
-                <option value="תמיכה טכנית">🛠️ תמיכה טכנית / שאלה על מסלול</option>
-                <option value="בקשת ביטול / זיכוי">💳 בקשת ביטול עסקה / זיכוי</option>
-                <option value="דיווח אבטחה / תוכן">🛡️ דיווח אבטחה או קישור חריג</option>
+              <select value={supportCategory} onChange={(e) => setSupportCategory(e.target.value)} className="input-dark">
+                <option value="Technical Support">{isHe ? "תמיכה טכנית / שאלה על מסלול" : "Technical Support / Track Inquiry"}</option>
+                <option value="Billing & Refund">{isHe ? "בקשת ביטול / זיכוי" : "Billing & Refund Request"}</option>
+                <option value="Security Report">{isHe ? "דיווח אבטחה או קישור חריג" : "Security or Abuse Report"}</option>
               </select>
               {!userEmail && (
-                <input dir="ltr" type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="your@email.com (לקבלת מענה)" className="input-field" style={{ textAlign: "left" }} />
+                <input type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="your@email.com" className="input-dark" />
               )}
-              <textarea dir="rtl" rows={3} value={supportText} onChange={(e) => setSupportText(e.target.value)} placeholder="כתוב כאן את פנייתך..." className="input-field" style={{ textAlign: "right" }} />
-              <button type="button" onClick={submitSupportTicket} className="btn-primary">
-                שלח פנייה להנהלה
-              </button>
-            </div>
-          )}
-
-          {myTickets.length > 0 && (
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#38bdf8" }}>הפניות הקודמות שלך ומענה האדמין:</div>
-              {myTickets.map((tk) => (
-                <div key={tk.id} style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
-                  <div style={{ fontWeight: 700, color: "#cbd5e1", marginBottom: 4 }}>[{tk.category}] {tk.message}</div>
-                  {tk.admin_reply ? (
-                    <div style={{ padding: 8, borderRadius: 8, background: "rgba(52, 211, 153, 0.12)", color: "#34d399", fontWeight: 700 }}>
-                      מענה אדמין: {tk.admin_reply}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 11, color: "#fbbf24" }}>⏳ ממתין למענה הנהלה</div>
-                  )}
-                </div>
-              ))}
+              <textarea rows={3} value={supportText} onChange={(e) => setSupportText(e.target.value)} placeholder={isHe ? "תאר את פנייתך..." : "Describe your question or issue..."} className="input-dark" />
+              <button type="button" onClick={submitSupportTicket} className="btn-primary">{isHe ? "שלח פנייה" : "Submit Ticket"}</button>
             </div>
           )}
         </div>

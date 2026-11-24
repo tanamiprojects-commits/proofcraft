@@ -1,4 +1,4 @@
-﻿export interface LegalDocumentItem {
+export interface LegalDocumentItem {
   id: string;
   title: string;
   badge: string;
@@ -8,92 +8,54 @@
 export const FINTECH_LEGAL_DOCS: LegalDocumentItem[] = [
   {
     id: "about",
-    title: "אודות ProofCraft Studio",
-    badge: "פלטפורמת הכשרה ובניית נכסי AI",
+    title: "About ProofCraft Studio",
+    badge: "PLATFORM OVERVIEW",
     sections: [
-      {
-        heading: "החזון והמתודולוגיה",
-        text: "ProofCraft נבנתה כדי לגשר על הפער שבין למידה תיאורטית של כלי AI לבין הקמה ומכירה של נכסים דיגיטליים אמיתיים בייצור (Production). במקום העתק-הדבק ידני ומסורבל, המערכת מבוססת על ארכיטקטורה מודולרית ופקודות PowerShell מבוקרות."
-      },
-      {
-        heading: "אימות תיק עבודות וקהילה",
-        text: "כל נכס שנבנה בסטודיו ננעל בתיק עבודות ציבורי מאומת (Certified Portfolio) הכולל קישורים חיים, פירוט טכנולוגי ומדדי בשלות עסקית, לצד קהילת ביקורת בונה ומנוע שיווק אורגני."
-      }
-    ]
+      { heading: "Proof-of-Execution Standard", text: "ProofCraft Studio is a practical AI product engineering environment and Verified Portfolio OS built for self-taught builders, developers, and consultants." },
+      { heading: "4-Tier Architecture Roadmap", text: "Builders start free with v1.0 (Conversion Landing Engine) and progress through v2.0 (Cloud SaaS & RLS), v3.0 (Verified Webhooks & Billing), and v4.0 (Enterprise Multi-Tenant AI Architect)." },
+    ],
   },
   {
     id: "pricing",
-    title: "מחירון ושקיפות פיננסית",
-    badge: "תשלום חד-פעמי · שדרוג בהפרש בלבד",
+    title: "Transparent Upgrade-Delta Pricing",
+    badge: "PRICING & CREDITS",
     sections: [
-      {
-        heading: "4 מסלולי התמחות (ללא דמי מנוי חודשיים)",
-        text: "מסלול 1 (Junior AI Builder — ₪0 חינם): בניית דפי נחיתה ממירים ומנוע הזמנות WhatsApp. מסלול 2 (Full-Stack AI Builder — ₪149): אפליקציות SaaS בענן, PostgreSQL ואבטחת RLS. מסלול 3 (Systems & Web3 Architect — ₪299): סליקה מאומתת, Webhooks ובוטים. מסלול 4 (Senior AI Systems Architect — ₪499): פלטפורמות ארגוניות ו-AI Copilot."
-      },
-      {
-        heading: "מנגנון Upgrade-Delta (אפס כפל תשלום)",
-        text: "בכל שלב שבו תבחר להתקדם למסלול גבוה יותר, המערכת מקזזת אוטומטית 100% מהסכום שכבר שילמת בעבר — כך שתשלם אך ורק את ההפרש."
-      }
-    ]
+      { heading: "Free Launchpad (Track 1)", text: "Track 1 (v1.0) is 100% free forever, including full studio access and a public Verified Portfolio URL." },
+      { heading: "100% Upgrade-Delta Credit", text: "Tracks 2 ($49), 3 ($89), and 4 ($149) credit 100% of your previous payments automatically — you only pay the difference when upgrading." },
+    ],
   },
   {
     id: "terms",
-    title: "תנאי שימוש ואבטחת מערכת",
-    badge: "תקן שימוש מסחרי מאובטח",
+    title: "Terms of Service",
+    badge: "TERMS",
     sections: [
-      {
-        heading: "בעלות על קוד ונכסים",
-        text: "כל קוד, פרויקט, דף נחיתה או מערכת שתבנה באמצעות הסטודיו וספריית הפרומפטים שייכים בבעלות מלאה לך (100% IP Ownership), וניתנים למכירה מסחרית ללקוחותיך ללא הגבלה."
-      },
-      {
-        heading: "אבטחת קישורים ומניעת ניצול לרעה",
-        text: "השיתוף בקיר הקהילה ובתיק העבודות מותר לקישורי HTTPS מאובטחים בלבד. חל איסור מוחלט על פרסום קבצים להורדה, קישורים מקוצרים לא מזוהים, ספאם או תוכן פוגעני. בקשות של אורחים עוברות סינון אוטומטי ואישור אדמין לפני פרסום."
-      }
-    ]
+      { heading: "Authentic Artifacts Only", text: "All submitted live URLs, code snippets, and SQL outputs must represent genuine work executed by the account holder." },
+      { heading: "Platform Governance", text: "ProofCraft reserves the right to revoke verification badges or suspend accounts submitting spam, phishing links, or forged credentials." },
+    ],
   },
   {
     id: "privacy",
-    title: "מדיניות פרטיות ואבטחת נתונים",
-    badge: "הגנת RLS · Zero-Secret Storage",
+    title: "Privacy & Security Policy",
+    badge: "SECURITY & RLS",
     sections: [
-      {
-        heading: "בידוד נתונים ברמת השורה (Row Level Security)",
-        text: "נתוני הפרופיל, ההתקדמות, הפרומפטים האישיים ותור הסנכרון נשמרים ב-Supabase PostgreSQL תחת מדיניות RLS קפדנית המבטיחה שרק אתה ניגש למידע האישי שלך."
-      },
-      {
-        heading: "הגנה על מפתחות פרטיים ושליטה במידע",
-        text: "הפלטפורמה אינה מבקשת ואינה שומרת מפתחות API פרטיים או סיסמאות של שירותים חיצוניים שלך. באפשרותך לערוך, לייצא או למחוק את הפרופיל והנכסים שלך בכל עת."
-      }
-    ]
+      { heading: "Row-Level Security Isolation", text: "Private builder workspaces are protected by PostgreSQL Row-Level Security (RLS). Only explicitly verified portfolio items are publicly visible." },
+      { heading: "Zero-Secret Policy", text: "Never submit private API keys or database credentials into public feed posts or milestone artifacts." },
+    ],
   },
   {
     id: "refunds",
-    title: "מדיניות ביטולים והחזרים",
-    badge: "בהתאם לחוק הגנת הצרכן",
+    title: "Cancellation & Refund Policy",
+    badge: "BILLING",
     sections: [
-      {
-        heading: "זכות ביטול תוך 14 ימים",
-        text: "בהתאם להוראות חוק הגנת הצרכן, התשמ״א-1981, ניתן לבטל עסקת רכישה תוך 14 ימים ממועד ביצועה, ובלבד שלא בוצעה צריכה מהותית של תכני ההדרכה הדיגיטליים המתקדמים."
-      },
-      {
-        heading: "אופן הגשת בקשת ביטול וזיכוי",
-        text: "בקשת ביטול מוגשת בקלות דרך כפתור 'תמיכה שקטה' בתחתית האתר בצירוף כתובת האימייל שאיתה נרשמת. ההחזר הכספי יבוצע לאמצעי התשלום המקורי תוך 7 ימי עסקים ממועד אישור הבקשה."
-      }
-    ]
+      { heading: "14-Day Satisfaction Guarantee", text: "Paid tier upgrades (Tracks 2–4) are eligible for a full refund within 14 days of purchase if fewer than 50% of track modules have been completed." },
+    ],
   },
   {
     id: "accessibility",
-    title: "הצהרת נגישות (WCAG 2.1 AA)",
-    badge: "מותאם לנייד, מקלדת וקוראי מסך",
+    title: "Accessibility Statement",
+    badge: "WCAG AA+",
     sections: [
-      {
-        heading: "התאמות נגישות מובנות במערכת",
-        text: "האתר תוכנן ונבנה בהתאם להנחיות הנגישות לתוכן באינטרנט (WCAG 2.1 ברמה AA) ותקן ישראלי 5568. המערכת כוללת ניגודיות צבעים גבוהה, תמיכת RTL מלאה, מבנה כותרות סמנטי, ותפריט נגישות ייעודי להגדלת גופן (112%) והגברת ניגודיות."
-      },
-      {
-        heading: "פנייה בנושא נגישות",
-        text: "נתקלת ברכיב הדורש התאמה נוספת? פנה אלינו דרך 'תמיכה שקטה' בתחתית המסך ונטפל בכך בעדיפות עליונה."
-      }
-    ]
-  }
+      { heading: "High-Contrast & Responsive Support", text: "ProofCraft Studio enforces AA+ contrast ratios, keyboard navigation, responsive mobile/desktop viewports, and built-in text scaling controls." },
+    ],
+  },
 ];

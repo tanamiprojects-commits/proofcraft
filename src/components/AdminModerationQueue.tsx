@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { ShieldAlert, CheckCircle2, XCircle, Lightbulb, MessageSquare, FileCheck2 } from "lucide-react";
+import { ShieldAlert, CheckCircle2, XCircle, Lightbulb, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface PendingPost { id: string; author_name: string; project_title: string; summary: string; live_url: string; }
@@ -14,7 +14,7 @@ export default function AdminModerationQueue() {
   const [toolSuggestions, setToolSuggestions] = useState<ToolSuggestion[]>([]);
   const [toast, setToast] = useState("");
 
-  const notify = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3000); };
+  const notify = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3200); };
 
   const loadQueue = async () => {
     const [pRes, cRes, tRes] = await Promise.all([
@@ -32,10 +32,10 @@ export default function AdminModerationQueue() {
   const handlePostDecision = async (id: string, approve: boolean) => {
     if (approve) {
       await supabase.from("feed_posts").update({ status: "approved" }).eq("id", id);
-      notify("✓ פרסום האורח אושר והוצג בקיר הקהילה!");
+      notify("Submission approved and published live to Builder Feed!");
     } else {
       await supabase.from("feed_posts").delete().eq("id", id);
-      notify("✕ פרסום האורח נדחה ונמחק.");
+      notify("Submission rejected and removed.");
     }
     loadQueue();
   };
@@ -43,41 +43,37 @@ export default function AdminModerationQueue() {
   const handleCommentDecision = async (id: string, approve: boolean) => {
     if (approve) {
       await supabase.from("feed_comments").update({ status: "approved" }).eq("id", id);
-      notify("✓ תגובת האורח אושרה!");
+      notify("Review comment approved!");
     } else {
       await supabase.from("feed_comments").delete().eq("id", id);
-      notify("✕ תגובת האורח נמחקה.");
+      notify("Review comment deleted.");
     }
     loadQueue();
   };
 
   const handleToolDecision = async (item: ToolSuggestion, approve: boolean) => {
     if (approve) {
-      await supabase.from("tool_suggestions").update({ status: "approved" }).eq("id", item.id);
       await supabase.from("dev_tools").insert({
-        id: `community-tool-${Date.now()}`,
-        stage_number: item.stage_number,
-        stage_title: `כלי מומלץ מהקהילה (שלב ${item.stage_number})`,
+        id: `tool-${Date.now()}`,
+        stage_number: item.stage_number || 3,
+        stage_title: "Community Verified Stack",
         name: item.tool_name,
-        category: "Community Verified",
+        category: "Community Vetted Tool",
         short_desc: item.reason,
         full_explanation: item.reason,
-        actions_list: ["התחבר לכלי הרשמי", "הגדר סביבת עבודה", "סמן שליטה ב-ProofCraft"],
-        pricing_summary: "מומלץ קהילה",
-        user_requirements: ["חשבון פעיל"],
-        core_capabilities: ["פיתוח וייעול"],
+        actions_list: ["Connect API / Workspace", "Verify Production Output"],
+        pricing_summary: "Freemium / Usage-Based",
+        user_requirements: ["HTTPS Account"],
+        core_capabilities: ["Builder Recommended"],
         official_url: item.tool_url,
-        verification_label: "הוטמע בהצלחה",
+        verification_label: `Verify ${item.tool_name}`,
         is_active: true,
       });
-      if (item.user_id) {
-        const { data: prof } = await supabase.from("profiles").select("peer_karma").eq("id", item.user_id).single();
-        await supabase.from("profiles").update({ peer_karma: (prof?.peer_karma || 0) + 15 }).eq("id", item.user_id);
-      }
-      notify(`✓ הכלי ${item.tool_name} אושר, נוסף לארגז הכלים והמציע זוכה ב-+15 קרמה!`);
+      await supabase.from("tool_suggestions").update({ status: "approved" }).eq("id", item.id);
+      notify(`Added "${item.tool_name}" to the Global Toolkit Matrix!`);
     } else {
       await supabase.from("tool_suggestions").update({ status: "rejected" }).eq("id", item.id);
-      notify("✕ הצעת הכלי נדחתה.");
+      notify("Tool suggestion declined.");
     }
     loadQueue();
   };
@@ -85,58 +81,63 @@ export default function AdminModerationQueue() {
   const totalPending = pendingPosts.length + pendingComments.length + toolSuggestions.length;
 
   return (
-    <div className="card-hero" style={{ padding: 20, marginBottom: 20 }} dir="rtl">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 900, color: "#fbbf24", display: "flex", alignItems: "center", gap: 6 }}>
-          <ShieldAlert size={17} /> מרכז בקרה ואישור אדמין (אורחים והצעות כלים)
+    <div dir="ltr" className="card-surface" style={{ padding: 18 }}>
+      {toast && (
+        <div style={{ marginBottom: 10, padding: "8px 14px", borderRadius: 10, background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 12, fontWeight: 700 }}>
+          {toast}
         </div>
-        <span className="badge-pill tabular-nums" style={{ background: totalPending > 0 ? "rgba(251, 191, 36, 0.2)" : "rgba(52, 211, 153, 0.15)", color: totalPending > 0 ? "#fbbf24" : "#34d399" }}>
-          {totalPending} ממתינים לבדיקה
-        </span>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 900, color: "#f8fafc", display: "flex", alignItems: "center", gap: 7 }}>
+          <ShieldAlert size={18} color="#fbbf24" /> Pending Moderation & Tool Proposals ({totalPending})
+        </h2>
       </div>
 
       {totalPending === 0 ? (
-        <div style={{ fontSize: 12, color: "#94a3b8" }}>אין בקשות אורחים או הצעות כלים ממתינות כרגע. המערכת מוגנת ונקייה.</div>
+        <p style={{ fontSize: 13, color: "#94a3b8" }}>All submissions, reviews, and tool proposals are up to date.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {pendingPosts.map((p) => (
-            <div key={p.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(251, 191, 36, 0.3)", fontSize: 12 }}>
-              <div style={{ fontWeight: 800, color: "#38bdf8", marginBottom: 3 }}><FileCheck2 size={13} style={{ display: "inline" }} /> בקשת פרסום אורח: {p.project_title} ({p.author_name})</div>
-              <p style={{ color: "#cbd5e1", marginBottom: 6 }}>{p.summary}</p>
-              {p.live_url && <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8 }}>{p.live_url}</div>}
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => handlePostDecision(p.id, true)} className="btn-ghost" style={{ height: 32, color: "#34d399" }}><CheckCircle2 size={13} /> אשר ופרסם</button>
-                <button type="button" onClick={() => handlePostDecision(p.id, false)} className="btn-ghost" style={{ height: 32, color: "#f87171" }}><XCircle size={13} /> דחה ומחק</button>
+            <div key={p.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#38bdf8" }}>{p.project_title} · <span style={{ color: "#94a3b8" }}>{p.author_name}</span></div>
+                <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 3 }}>{p.summary}</p>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => handlePostDecision(p.id, true)} className="btn-primary" style={{ width: "auto", padding: "5px 12px", fontSize: 11.5 }}><CheckCircle2 size={13} /> Approve</button>
+                <button onClick={() => handlePostDecision(p.id, false)} className="btn-ghost" style={{ padding: "5px 12px", fontSize: 11.5, color: "#f87171" }}><XCircle size={13} /> Reject</button>
               </div>
             </div>
           ))}
 
           {pendingComments.map((c) => (
-            <div key={c.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(129, 140, 248, 0.3)", fontSize: 12 }}>
-              <div style={{ fontWeight: 800, color: "#818cf8", marginBottom: 3 }}><MessageSquare size={13} style={{ display: "inline" }} /> תגובת אורח: {c.author_name} ({c.review_tag})</div>
-              <p style={{ color: "#f8fafc", marginBottom: 8 }}>{c.body}</p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => handleCommentDecision(c.id, true)} className="btn-ghost" style={{ height: 32, color: "#34d399" }}><CheckCircle2 size={13} /> אשר תגובה</button>
-                <button type="button" onClick={() => handleCommentDecision(c.id, false)} className="btn-ghost" style={{ height: 32, color: "#f87171" }}><XCircle size={13} /> מחק</button>
+            <div key={c.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                <MessageSquare size={13} style={{ display: "inline", marginRight: 5 }} />
+                <strong>{c.author_name}:</strong> {c.body}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => handleCommentDecision(c.id, true)} className="btn-primary" style={{ width: "auto", padding: "5px 12px", fontSize: 11.5 }}>Approve</button>
+                <button onClick={() => handleCommentDecision(c.id, false)} className="btn-ghost" style={{ padding: "5px 12px", fontSize: 11.5, color: "#f87171" }}>Delete</button>
               </div>
             </div>
           ))}
 
           {toolSuggestions.map((t) => (
-            <div key={t.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(52, 211, 153, 0.3)", fontSize: 12 }}>
-              <div style={{ fontWeight: 800, color: "#34d399", marginBottom: 3 }}><Lightbulb size={13} style={{ display: "inline" }} /> הצעת כלי חדש: {t.tool_name} (מאת {t.author_name})</div>
-              <p style={{ color: "#cbd5e1", marginBottom: 4 }}>{t.reason}</p>
-              <div style={{ fontSize: 11, color: "#38bdf8", marginBottom: 8 }}>{t.tool_url}</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => handleToolDecision(t, true)} className="btn-ghost" style={{ height: 32, color: "#34d399" }}><CheckCircle2 size={13} /> אשר והוסף לארגז (+15 קרמה)</button>
-                <button type="button" onClick={() => handleToolDecision(t, false)} className="btn-ghost" style={{ height: 32, color: "#f87171" }}><XCircle size={13} /> דחה</button>
+            <div key={t.id} style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#34d399" }}><Lightbulb size={13} style={{ display: "inline", marginRight: 5 }} />{t.tool_name} (Stage {t.stage_number})</div>
+                <p style={{ fontSize: 12, color: "#cbd5e1" }}>{t.reason} · {t.tool_url}</p>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => handleToolDecision(t, true)} className="btn-primary" style={{ width: "auto", padding: "5px 12px", fontSize: 11.5 }}>Add to Toolkit</button>
+                <button onClick={() => handleToolDecision(t, false)} className="btn-ghost" style={{ padding: "5px 12px", fontSize: 11.5, color: "#f87171" }}>Decline</button>
               </div>
             </div>
           ))}
         </div>
       )}
-
-      {toast && <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "#34d399" }}>{toast}</div>}
     </div>
   );
 }
