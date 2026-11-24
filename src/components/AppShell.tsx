@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
-import { setStoredStudioLang } from "@/lib/i18n-engine";
+import { detectNaturalVisitorLang, setStoredStudioLang } from "@/lib/i18n-engine";
 import GlobalModal from "./GlobalModal";
 import PocketFieldStudio from "./PocketFieldStudio";
 
@@ -42,7 +42,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const savedLang = localStorage.getItem("pc_studio_lang_v1") === "he" ? "he" : "en";
+    const savedLang = detectNaturalVisitorLang();
     setLang(savedLang);
     setStoredStudioLang(savedLang);
 

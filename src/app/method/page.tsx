@@ -1,4 +1,5 @@
 "use client";
+import { useStudioLang } from "@/lib/i18n-engine";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ const DOMAIN_CONTEXTS = [
 ];
 
 export default function MethodPage() {
+  const { isHe, dir, t } = useStudioLang();
   const [customPrompts, setCustomPrompts] = useState<VaultPromptItem[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<Record<string, string>>({});
   const [selectedChainIds, setSelectedChainIds] = useState<string[]>([]);
@@ -116,7 +118,7 @@ export default function MethodPage() {
   };
 
   return (
-    <div dir="ltr" style={{ textAlign: "left" }}>
+    <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       <StudioVisualArtwork variant="method" />
 
       {toast && (
@@ -131,7 +133,7 @@ export default function MethodPage() {
             <span className="badge-pill" style={{ background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)", fontSize: 11, marginBottom: 6 }}>
               <Sparkles size={12} /> 8-STAGE PRODUCTION PROMPT VAULT & SECURITY PROTOCOL
             </span>
-            <h1 style={{ fontSize: 21, fontWeight: 900, color: "#f8fafc" }}>ProofCraft Engineering Method & Prompt Vault</h1>
+            <h1 style={{ fontSize: 21, fontWeight: 900, color: "#f8fafc" }}>{t("ProofCraft Engineering Method & Prompt Vault", "מתודולוגיית ProofCraft וכספת הפרומפטים")}</h1>
             <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 2 }}>
               Copy production-grade PowerShell prompts, enforce .env secret isolation, and bundle multi-stage workflows.
             </p>

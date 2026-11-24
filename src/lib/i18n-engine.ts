@@ -4,13 +4,25 @@ import { useEffect, useState } from "react";
 
 export type StudioLang = "en" | "he";
 
-const LANG_STORAGE_KEY = "pc_studio_lang_v1";
+const LANG_STORAGE_KEY = "pc_studio_lang_v2";
 const LANG_EVENT_NAME = "pc_lang_changed";
 
-export function getStoredStudioLang(): StudioLang {
+export function detectNaturalVisitorLang(): StudioLang {
   if (typeof window === "undefined") return "en";
   const saved = window.localStorage.getItem(LANG_STORAGE_KEY);
-  return saved === "he" ? "he" : "en";
+  if (saved === "he" || saved === "en") return saved;
+
+  // Automatic detection for local Israel vs Global visitors
+  const navLang = (navigator.language || "").toLowerCase();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  if (navLang.startsWith("he") || navLang.startsWith("iw") || tz === "Asia/Jerusalem" || tz === "Israel") {
+    return "he";
+  }
+  return "en";
+}
+
+export function getStoredStudioLang(): StudioLang {
+  return detectNaturalVisitorLang();
 }
 
 export function setStoredStudioLang(lang: StudioLang): void {
@@ -32,7 +44,7 @@ export function useStudioLang(): {
   const [lang, setLangState] = useState<StudioLang>("en");
 
   useEffect(() => {
-    const initial = getStoredStudioLang();
+    const initial = detectNaturalVisitorLang();
     setLangState(initial);
     document.documentElement.lang = initial;
     document.documentElement.dir = initial === "he" ? "rtl" : "ltr";

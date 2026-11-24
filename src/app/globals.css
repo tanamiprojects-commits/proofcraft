@@ -204,3 +204,15 @@ textarea.input-field {
     display: none !important;
   }
 }
+
+/* Hide mobile bottom nav on desktop viewports */
+@media (min-width: 769px) {
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+@media (max-width: 768px) {
+  .desktop-subnav {
+    display: none !important;
+  }
+}

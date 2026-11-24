@@ -1,4 +1,5 @@
 "use client";
+import { useStudioLang } from "@/lib/i18n-engine";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -81,6 +82,7 @@ function extractMediaFromTools(toolsStr: string): { cleanTools: string; mediaTyp
 }
 
 export default function FeedbackWallPage() {
+  const { isHe, dir, t } = useStudioLang();
   const [posts, setPosts] = useState<CloudFeedPost[]>([]);
   const [filter, setFilter] = useState<"all" | "mine" | "verified">("all");
   const [selectedTags, setSelectedTags] = useState<Record<string, string>>({});
@@ -342,7 +344,7 @@ export default function FeedbackWallPage() {
   });
 
   return (
-    <div dir="ltr" style={{ textAlign: "left" }}>
+    <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       <StudioVisualArtwork variant="feed" />
 
       {toast && (
@@ -357,7 +359,7 @@ export default function FeedbackWallPage() {
             <span className="badge-pill" style={{ background: "rgba(56,189,248,0.14)", color: "#38bdf8", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11, marginBottom: 8 }}>
               <Sparkles size={13} /> ZERO-TYPING SMART PUBLISHER & GA TELEMETRY WALL
             </span>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc" }}>Verified Builder Proof Feed</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc" }}>{t("Verified Builder Proof Feed", "פיד הוכחות חיות של קהילת הבונים")}</h1>
             <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 3 }}>
               Publish your verified ProofCraft deliverables in one click, track real-time GA engagement metrics, or request commercial promotion.
             </p>

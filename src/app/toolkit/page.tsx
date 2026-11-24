@@ -1,4 +1,5 @@
 "use client";
+import { useStudioLang } from "@/lib/i18n-engine";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ const TOOLKIT_STAGES = [
 ];
 
 export default function ToolkitPage() {
+  const { isHe, dir, t } = useStudioLang();
   const [tools, setTools] = useState<CloudDevTool[]>([]);
   const [selectedStage, setSelectedStage] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -66,7 +68,7 @@ export default function ToolkitPage() {
   const masteryPct = tools.length > 0 ? Math.round((completedTools.length / tools.length) * 100) : 0;
 
   return (
-    <div dir="ltr" style={{ textAlign: "left" }}>
+    <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       <StudioVisualArtwork variant="toolkit" />
 
       {toast && (
@@ -77,7 +79,7 @@ export default function ToolkitPage() {
       <div className="card-hero" style={{ padding: 20, marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>Curated AI & Cloud Stack Matrix</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>{t("Curated AI & Cloud Stack Matrix", "מטריצת כלי AI וענן מאומתים")}</h1>
             <p style={{ fontSize: 12, color: "#94a3b8" }}>Mark tools you have deployed — they sync automatically to your public Verified Portfolio</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

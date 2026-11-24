@@ -1,4 +1,4 @@
-﻿import { supabase, ADMIN_EMAIL } from "./supabase";
+import { supabase, ADMIN_EMAIL } from "./supabase";
 import { BuilderProfile, DEFAULT_PROFILE, VERIFICATION_STEPS, loadBuilderProfile, saveBuilderProfile } from "./proofcraft-store";
 import { DEV_TOOLS } from "./dev-toolkit-data";
 
@@ -95,8 +95,8 @@ export function evaluateStepVerification(
     if (selectedQuizIdx === null || selectedQuizIdx !== (step.quiz_correct_index ?? 0)) {
       return {
         passed: false,
-        reason: "התשובה לשאלת ההבנה המקצועית אינה מדויקת — קרא שוב את ההנחיה למעלה ובחר את התשובה הנכונה.",
-        badgeType: "נדרשת תשובה נכונה ⚠️",
+        reason: "Selected answer is inaccurate — review the engineering brief above and select the verified solution.",
+        badgeType: "Answer Required",
       };
     }
   }
@@ -106,14 +106,14 @@ export function evaluateStepVerification(
 
   if (mode === "admin_verified") {
     return isAdminVerified
-      ? { passed: true, reason: "אומת ונחתם רשמית ע״י צוות ProofCraft", badgeType: "Admin-Certified 🏅" }
-      : { passed: false, reason: "כל השלבים הושלמו! ממתין לחתימת אישור סופית של האדמין ב-/admin", badgeType: "ממתין לאדמין ⏳" };
+      ? { passed: true, reason: "Officially verified and signed by ProofCraft Governance", badgeType: "Admin-Certified 🏅" }
+      : { passed: false, reason: "All milestones completed! Awaiting final verification signature in /admin", badgeType: "Pending Admin Review" };
   }
 
   if (mode === "peer_verified") {
     return hasPeerEngagement
-      ? { passed: true, reason: "אומת אוטומטית בזכות פרסום ומעורבות בקיר הפידבק!", badgeType: "Peer-Verified 🤝" }
-      : { passed: false, reason: "הפרויקט פורסם בקיר הפידבק — יאומת אוטומטית עם קבלת פרגון/ביקורת", badgeType: "ממתין לקהילה 🤝" };
+      ? { passed: true, reason: "Automatically verified via live community feed engagement!", badgeType: "Peer-Verified 🤝" }
+      : { passed: false, reason: "Published to Builder Feed — auto-verifies upon peer review", badgeType: "Pending Peer Review" };
   }
 
   const patterns = (step.expected_patterns || []).map((p) => p.toLowerCase()).filter(Boolean);
@@ -122,16 +122,16 @@ export function evaluateStepVerification(
     if (!matched || clean.length < 6) {
       return {
         passed: false,
-        reason: "הפלט הטכני שהוזן עדיין לא תואם את הדרישה המעשית של שלב זה. הזן את הפלט/הפתרון המדויק.",
-        badgeType: "נדרש דיוק פלט ⚠️",
+        reason: "Submitted technical output does not yet match this milestone's rubric requirements.",
+        badgeType: "Artifact Precision Needed",
       };
     }
-    return { passed: true, reason: "שאלת ההבנה והפלט המעשי אומתו בהצלחה בשרת!", badgeType: "Auto-Verified ⚡" };
+    return { passed: true, reason: "Engineering scenario and practical artifact verified!", badgeType: "Auto-Verified ⚡" };
   }
 
   return clean.length >= 4
-    ? { passed: true, reason: "השלב אומת בהצלחה!", badgeType: "Verified ✓" }
-    : { passed: false, reason: "נא להזין תוכן מלא לפני אימות.", badgeType: "חסר תוכן" };
+    ? { passed: true, reason: "Milestone verified successfully!", badgeType: "Verified ✓" }
+    : { passed: false, reason: "Please enter complete execution proof before verifying.", badgeType: "Missing Content" };
 }
 
 export async function fetchCareerTracks(): Promise<CareerTrack[]> {
@@ -203,7 +203,7 @@ export async function getActiveUserProfile(): Promise<{
   const mapped: BuilderProfile = {
     fullName: row.full_name || "",
     headline: row.headline || "",
-    yearsWithAI: row.years_with_ai || "מעל 3 שנים (חלוץ בתחום)",
+    yearsWithAI: row.years_with_ai || "3+ Years Production AI Engineering",
     primaryTools: row.primary_tools || "",
     architectureCase: row.architecture_case || "",
     projectTitle: row.project_title || "",
@@ -211,7 +211,7 @@ export async function getActiveUserProfile(): Promise<{
     projectProblemSolved: row.project_problem_solved || "",
     debuggingStory: row.debugging_story || "",
     portfolioPitch: row.portfolio_pitch || "",
-    targetAudience: row.target_audience || "גיוס לקוחות לפיתוח פלטפורמות",
+    targetAudience: row.target_audience || "B2B SaaS Clients & Technical Hiring Teams",
     shareOnFeed: row.share_on_feed ?? true,
     completedStepIds: row.completed_step_ids || [],
     adminVerified: row.admin_verified ?? false,

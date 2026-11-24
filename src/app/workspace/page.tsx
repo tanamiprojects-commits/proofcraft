@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Lock, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
-import { STRATEGIC_TRACK_GUIDES } from "@/lib/plg-career-strategy";
+import { Lock, ShieldCheck, UserPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import { getStrategicTrackGuides } from "@/lib/plg-career-strategy";
 import { getActiveUserProfile, TrackProjectEntry } from "@/lib/cloud-store";
 import { BuilderProfile, DEFAULT_PROFILE } from "@/lib/proofcraft-store";
+import { useStudioLang } from "@/lib/i18n-engine";
 import Track1AcademyStudio from "@/components/Track1AcademyStudio";
 import Track2AcademyStudio from "@/components/Track2AcademyStudio";
 import Track3AcademyStudio from "@/components/Track3AcademyStudio";
@@ -13,6 +14,7 @@ import Track4AcademyStudio from "@/components/Track4AcademyStudio";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
 
 export default function WorkspacePage() {
+  const { lang, isHe, dir, t } = useStudioLang();
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<BuilderProfile>(DEFAULT_PROFILE);
   const [trackProjects, setTrackProjects] = useState<Record<string, TrackProjectEntry>>({});
@@ -37,14 +39,16 @@ export default function WorkspacePage() {
     });
   }, []);
 
-  if (loading) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>Loading Production Studio...</div>;
+  if (loading) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>{t("Loading Production Studio...", "טוען את סטודיו הייצור...")}</div>;
 
-  const activeGuide = STRATEGIC_TRACK_GUIDES.find((g) => g.level === selectedTrack) || STRATEGIC_TRACK_GUIDES[0];
+  const guides = getStrategicTrackGuides(lang);
+  const activeGuide = guides.find((g) => g.level === selectedTrack) || guides[0];
   const isTrackUnlocked = purchasedLevel >= selectedTrack;
-  const deltaPrice = Math.max(0, activeGuide.priceIls - totalPaidIls);
+  const deltaIls = Math.max(0, activeGuide.priceIls - totalPaidIls);
+  const deltaUsd = Math.max(0, activeGuide.priceUsd - Math.round(totalPaidIls / 3.65));
 
   return (
-    <div dir="ltr" style={{ textAlign: "left" }}>
+    <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       <StudioVisualArtwork variant="workspace" />
 
       {toast && (
@@ -56,43 +60,49 @@ export default function WorkspacePage() {
       <div className="card-hero" style={{ padding: 20, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>AI Engineering & Asset Production Studio</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>
+              {t("AI Engineering & Asset Production Studio", "סטודיו הנדסת AI ובניית נכסים חיים")}
+            </h1>
             <p style={{ fontSize: 12, color: "#94a3b8" }}>
-              Track 1 is 100% free to build your profile & v1.0 portfolio · Tracks 2–4 include full strategic previews & upgrade-delta pricing
+              {t(
+                "Track 1 is 100% free to build your profile & v1.0 portfolio · Tracks 2–4 include strategic previews & upgrade-delta pricing",
+                "מסלול 1 חינמי ב-100% לבניית פרופיל ותיק עבודות v1.0 · מסלולים 2–4 כוללים תצוגה מקדימה וזיכוי Upgrade-Delta"
+              )}
             </p>
           </div>
           {!userId ? (
             <Link href="/auth" className="btn-primary" style={{ width: "auto", height: 38, fontSize: 12 }}>
-              <UserPlus size={14} /> Free Sign Up to Save Portfolio
+              <UserPlus size={14} /> {t("Free Sign Up to Save Portfolio", "הרשמה חינמית לשמירת התיק")}
             </Link>
           ) : (
             <Link href="/portfolio/live" className="btn-ghost" style={{ height: 36, fontSize: 12, color: "#38bdf8" }}>
-              <ShieldCheck size={14} /> View Public Verified Portfolio
+              <ShieldCheck size={14} /> {t("View Public Verified Portfolio", "צפה בתיק העבודות המאומת")}
             </Link>
           )}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8 }}>
-          {STRATEGIC_TRACK_GUIDES.map((tr) => {
+          {guides.map((tr) => {
             const unlocked = purchasedLevel >= tr.level;
             const active = selectedTrack === tr.level;
+            const trDelta = isHe ? `₪${Math.max(0, tr.priceIls - totalPaidIls)}` : `$${Math.max(0, tr.priceUsd - Math.round(totalPaidIls / 3.65))}`;
             return (
               <button
                 key={tr.level}
                 type="button"
                 onClick={() => setSelectedTrack(tr.level)}
                 style={{
-                  padding: "11px 12px", borderRadius: 12, textAlign: "left", cursor: "pointer",
+                  padding: "11px 12px", borderRadius: 12, textAlign: isHe ? "right" : "left", cursor: "pointer",
                   background: active ? "rgba(56, 189, 248, 0.16)" : "#0a0b0e",
                   border: `1px solid ${active ? "#38bdf8" : tr.highlightFlagship ? "rgba(251, 191, 36, 0.35)" : "rgba(255,255,255,0.08)"}`,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
                   <span style={{ fontSize: 10, fontWeight: 800, color: unlocked ? "#34d399" : tr.highlightFlagship ? "#fbbf24" : "#94a3b8" }}>
-                    {unlocked ? "UNLOCKED" : tr.highlightFlagship ? "FLAGSHIP (4 BUILDS)" : "STRATEGIC PREVIEW"}
+                    {unlocked ? t("UNLOCKED", "פתוח") : tr.highlightFlagship ? t("FLAGSHIP (4 BUILDS)", "הסמכת הדגל (4 מערכות)") : t("STRATEGIC PREVIEW", "תצוגה מקדימה")}
                   </span>
                   <span className="tabular-nums" style={{ fontSize: 11, fontWeight: 800, color: "#f8fafc" }}>
-                    {tr.priceIls === 0 ? "FREE" : unlocked ? "" : `$${Math.max(0, tr.priceIls - totalPaidIls)}`}
+                    {tr.priceUsd === 0 ? t("FREE", "חינם") : unlocked ? "" : trDelta}
                   </span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>{tr.name}</div>
@@ -104,10 +114,11 @@ export default function WorkspacePage() {
       {!userId && selectedTrack === 1 && (
         <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(52, 211, 153, 0.4)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 12, color: "#cbd5e1" }}>
-            <strong style={{ color: "#34d399" }}>Open Sandbox Mode (Track 1):</strong> Explore all lessons and builder tools right now. Create a free account to lock your verified portfolio in the cloud.
+            <strong style={{ color: "#34d399" }}>{t("Open Sandbox Mode (Track 1):", "מצב התנסות פתוח (מסלול 1):")}</strong>{" "}
+            {t("Explore all milestones and tools right now. Create a free account to save your verified portfolio in the cloud.", "סקור את כל אבני הדרך והכלים כבר עכשיו. צור חשבון חינמי כדי לשמור את תיק העבודות בענן.")}
           </div>
           <Link href="/auth" className="btn-ghost" style={{ height: 34, fontSize: 11, color: "#34d399" }}>
-            Create Free Account <ArrowRight size={13} />
+            {t("Create Free Account", "צור חשבון חינמי")} {isHe ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}
           </Link>
         </div>
       )}
@@ -123,10 +134,10 @@ export default function WorkspacePage() {
         <div className="card-hero" style={{ padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
             <span className="badge-pill" style={{ background: "rgba(251, 191, 36, 0.18)", color: "#fbbf24", fontSize: 11 }}>
-              <Lock size={13} /> Strategic Tier Preview · {activeGuide.badge}
+              <Lock size={13} /> {t("Strategic Tier Preview", "תצוגה מקדימה למסלול")} · {activeGuide.badge}
             </span>
             <span className="tabular-nums" style={{ fontSize: 18, fontWeight: 900, color: "#34d399" }}>
-              Upgrade-Delta Price: ${deltaPrice}
+              {t(`Upgrade-Delta Price: $${deltaUsd}`, `מחיר שדרוג (Upgrade-Delta): ₪${deltaIls}`)}
             </span>
           </div>
 
@@ -135,26 +146,26 @@ export default function WorkspacePage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 18 }}>
             <div style={{ padding: 14, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#34d399", marginBottom: 4 }}>Target Builder Profile</div>
-              <p style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{activeGuide.whoIsItFor}</p>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{t("TARGET BUILDER PROFILE", "למי המסלול מיועד")}</div>
+              <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.55 }}>{activeGuide.whoIsItFor}</p>
             </div>
             <div style={{ padding: 14, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#38bdf8", marginBottom: 4 }}>Portfolio Deliverable Unlocked</div>
-              <p style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{activeGuide.concreteDeliverable}</p>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#38bdf8", marginBottom: 4 }}>{t("VERIFIED DELIVERABLE", "תוצר הנדסי מאומת")}</div>
+              <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.55 }}>{activeGuide.concreteDeliverable}</p>
             </div>
             <div style={{ padding: 14, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#fbbf24", marginBottom: 4 }}>Career & Client Impact</div>
-              <p style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{activeGuide.careerAndMarketImpact}</p>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#34d399", marginBottom: 4 }}>{t("CAREER & CLIENT IMPACT", "השפעה עסקית וקרייריסטית")}</div>
+              <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.55 }}>{activeGuide.careerAndMarketImpact}</p>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link href="/auth" className="btn-primary" style={{ width: "auto", padding: "0 20px" }}>
-              Unlock Track {activeGuide.level} (${deltaPrice} Upgrade-Delta) <ArrowRight size={15} />
-            </Link>
-            <button type="button" onClick={() => setSelectedTrack(1)} className="btn-ghost" style={{ padding: "0 16px" }}>
-              Return to Free Track 1
+            <button type="button" onClick={() => setSelectedTrack(1)} className="btn-primary" style={{ width: "auto" }}>
+              {t("Continue Free in Track 1 Studio", "המשך בחינם בסטודיו מסלול 1")}
             </button>
+            <Link href="/portfolio/live" className="btn-ghost">
+              {t("Preview 4-Project Portfolio Layout", "צפה בתצוגת תיק 4 הפרויקטים")}
+            </Link>
           </div>
         </div>
       )}
