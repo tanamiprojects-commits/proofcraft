@@ -12,6 +12,8 @@ import Track2AcademyStudio from "@/components/Track2AcademyStudio";
 import Track3AcademyStudio from "@/components/Track3AcademyStudio";
 import Track4AcademyStudio from "@/components/Track4AcademyStudio";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
+import UpgradeIntentModal from "@/components/UpgradeIntentModal";
+import { supabase } from "@/lib/supabase";
 
 export default function WorkspacePage() {
   const { lang, isHe, dir, t } = useStudioLang();
@@ -23,12 +25,15 @@ export default function WorkspacePage() {
   const [selectedTrack, setSelectedTrack] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<string>("");
+  const [reserveModalOpen, setReserveModalOpen] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const showNotify = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3200); };
 
   useEffect(() => {
     getActiveUserProfile().then((res) => {
       setUserId(res.userId);
+      supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || ""));
       setProfile(res.profile);
       setTrackProjects(res.trackProjects || {});
       const lvl = res.purchasedTrackLevel || 1;
@@ -174,7 +179,10 @@ export default function WorkspacePage() {
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => setSelectedTrack(1)} className="btn-primary" style={{ width: "auto" }}>
+            <button type="button" onClick={() => setReserveModalOpen(true)} className="btn-primary" style={{ width: "auto", background: "#fbbf24", color: "#0a0b0e" }}>
+              {t(`Reserve Founder Spot (${isHe ? `₪${deltaIls}` : `$${deltaUsd}`} · $0 Today)`, `שריין מחיר מייסדים (${isHe ? `₪${deltaIls}` : `$${deltaUsd}`} · ₪0 היום)`)}
+            </button>
+            <button type="button" onClick={() => setSelectedTrack(1)} className="btn-ghost" style={{ width: "auto" }}>
               {t("Continue Free in Track 1 Studio", "המשך בחינם בסטודיו מסלול 1")}
             </button>
             <Link href="/portfolio/live" className="btn-ghost">

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdminModerationQueue from "@/components/AdminModerationQueue";
+import AdminDemandRadar from "@/components/AdminDemandRadar";
 import VerifiedProofsPanel from "@/components/VerifiedProofsPanel";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
@@ -305,7 +306,8 @@ export default function AdminCommandCenterPage() {
 
       {activeTab === "queue" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <AdminModerationQueue />
+          <AdminDemandRadar onGrantTier={async (uid, tier) => { await supabase.from("profiles").update({ purchased_track_level: tier }).eq("id", uid); showMsg(`Unlocked v${tier}.0 for user!`); }} />
+      <AdminModerationQueue />
           <VerifiedProofsPanel isAdminView />
         </div>
       )}
