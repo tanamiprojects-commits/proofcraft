@@ -216,3 +216,24 @@ textarea.input-field {
     display: none !important;
   }
 }
+
+/* High-contrast mobile & autofill input fix */
+.input-dark, .input-field, input, textarea, select {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 16px !important; /* Prevents iOS auto-zoom & ensures sharp readability */
+}
+.input-dark::placeholder, .input-field::placeholder, input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

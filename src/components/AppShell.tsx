@@ -2,37 +2,35 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  Home, BookOpen, Layers, Wrench, Users, Briefcase, Smartphone,
-  Shield, Accessibility, MessageCircle, Globe, AlertTriangle, Megaphone
-} from "lucide-react";
-import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+import { usePathname, useRouter } from "next/navigation";
+import { Home, BookOpen, Layers, Wrench, Users, Briefcase, Globe, Shield, Smartphone, Accessibility, MessageCircle, AlertTriangle, Megaphone, LogOut, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
 import { detectNaturalVisitorLang, setStoredStudioLang } from "@/lib/i18n-engine";
 import GlobalModal from "./GlobalModal";
 import PocketFieldStudio from "./PocketFieldStudio";
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<"en" | "he">("en");
-  const [largeText, setLargeText] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [userTier, setUserTier] = useState<number>(1);
   const [isBanned, setIsBanned] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [warningMsg, setWarningMsg] = useState("");
-
   const [broadcastBanner, setBroadcastBanner] = useState<{ active: boolean; text: string; tone: string }>({ active: false, text: "", tone: "info" });
   const [legalDocs, setLegalDocs] = useState<LegalDocumentItem[]>(FINTECH_LEGAL_DOCS);
-  const [legalDoc, setLegalDoc] = useState<LegalDocumentItem | null>(null);
-
   const [pocketOpen, setPocketOpen] = useState(false);
   const [a11yOpen, setA11yOpen] = useState(false);
+  const [largeText, setLargeText] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDocumentItem | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportCategory, setSupportCategory] = useState("Technical Support");
   const [supportEmail, setSupportEmail] = useState("");
@@ -40,50 +38,71 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [supportSent, setSupportSent] = useState(false);
   const [myTickets, setMyTickets] = useState<{ id: string; category: string; message: string; admin_reply: string; status: string; created_at: string }[]>([]);
 
+  const hydrateUserProfile = async (uid: string | null, email: string | null, metaName?: string) => {
+    setUserId(uid);
+    setUserEmail(email);
+    if (!uid) {
+      setUserName("");
+      setUserTier(1);
+      setIsBanned(false);
+      setWarningMsg("");
+      return;
+    }
+    setSupportEmail(email || "");
+    const [{ data: prof }, { data: tData }] = await Promise.all([
+      supabase.from("profiles").select("full_name, purchased_track_level, is_banned, ban_reason, warning_message").eq("id", uid).single(),
+      supabase.from("support_tickets").select("id, category, message, admin_reply, status, created_at").eq("user_id", uid).order("created_at", { ascending: false }),
+    ]);
+    setUserName(prof?.full_name || metaName || (email ? email.split("@") : "Builder"));
+    setUserTier(prof?.purchased_track_level || 1);
+    setIsBanned(Boolean(prof?.is_banned));
+    setBanReason(prof?.ban_reason || "");
+    setWarningMsg(prof?.warning_message || "");
+    if (tData) setMyTickets(tData);
+  };
+
   useEffect(() => {
     setMounted(true);
     const savedLang = detectNaturalVisitorLang();
     setLang(savedLang);
     setStoredStudioLang(savedLang);
 
-    const loadSessionAndSite = async () => {
-      const [{ data: uData }, { data: sData }] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase.from("site_settings").select("*"),
-      ]);
-
+    supabase.from("site_settings").select("*").then(({ data: sData }) => {
       if (sData) {
         const bRow = sData.find((r) => r.key === "broadcast_banner");
         if (bRow?.value) setBroadcastBanner(bRow.value);
         const lRow = sData.find((r) => r.key === "legal_docs");
         if (Array.isArray(lRow?.value) && lRow.value.length > 0) setLegalDocs(lRow.value);
       }
+    });
 
-      const u = uData?.user;
-      if (u) {
-        setUserId(u.id);
-        setUserEmail(u.email || null);
-        setSupportEmail(u.email || "");
-        const [{ data: prof }, { data: tData }] = await Promise.all([
-          supabase.from("profiles").select("full_name, is_banned, ban_reason, warning_message").eq("id", u.id).single(),
-          supabase.from("support_tickets").select("id, category, message, admin_reply, status, created_at").eq("user_id", u.id).order("created_at", { ascending: false }),
-        ]);
-        if (prof) {
-          setUserName(prof.full_name || "");
-          setIsBanned(Boolean(prof.is_banned));
-          setBanReason(prof.ban_reason || "");
-          setWarningMsg(prof.warning_message || "");
-        }
-        if (tData) setMyTickets(tData);
-      }
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      hydrateUserProfile(u?.id || null, u?.email || null, u?.user_metadata?.full_name);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user;
+      hydrateUserProfile(u?.id || null, u?.email || null, u?.user_metadata?.full_name);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
     };
-    loadSessionAndSite();
   }, []);
   const switchLanguage = (next: "en" | "he") => {
     setLang(next);
     setStoredStudioLang(next);
     localStorage.setItem("pc_lang", next);
-    window.dispatchEvent(new CustomEvent("pc-lang-change", { detail: next }));
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUserId(null);
+    setUserEmail(null);
+    setUserName("");
+    router.push("/");
+    router.refresh();
   };
 
   const dismissWarning = async () => {
@@ -106,14 +125,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     });
     setSupportSent(true);
     setSupportText("");
-    if (userId) {
-      const { data: tData } = await supabase
-        .from("support_tickets")
-        .select("id, category, message, admin_reply, status, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-      if (tData) setMyTickets(tData);
-    }
   };
 
   const isHe = lang === "he";
@@ -135,11 +146,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {isHe ? "הגישה לחשבונך הושעתה" : "Account Access Suspended"}
           </h1>
           <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 14 }}>
-            {isHe ? "סיבת החסימה שנרשמה:" : "Suspension reason:"} <strong>{banReason}</strong>
+            {isHe ? "סיבת החסימה:" : "Suspension reason:"} <strong>{banReason}</strong>
           </p>
-          <button type="button" onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }} className="btn-ghost">
-            {isHe ? "התנתק מהחשבון" : "Sign Out"}
-          </button>
+          <button type="button" onClick={handleSignOut} className="btn-ghost">{isHe ? "התנתק" : "Sign Out"}</button>
         </div>
       </div>
     );
@@ -147,54 +156,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div dir={isHe ? "rtl" : "ltr"} suppressHydrationWarning style={{ fontSize: mounted && largeText ? "112%" : "100%", filter: mounted && highContrast ? "contrast(1.18)" : "none", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <header style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
-        background: "rgba(10, 11, 14, 0.94)", backdropFilter: "blur(16px)",
-        borderBottom: "1px solid rgba(255,255,255,0.09)"
-      }}>
+      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: "rgba(10, 11, 14, 0.94)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.09)" }}>
         {broadcastBanner.active && broadcastBanner.text && (
-          <div style={{
-            background: broadcastBanner.tone === "warning" ? "rgba(251, 191, 36, 0.18)" : "rgba(56, 189, 248, 0.18)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
-            padding: "6px 16px", textAlign: "center", fontSize: 12, fontWeight: 700,
-            color: broadcastBanner.tone === "warning" ? "#fbbf24" : "#38bdf8"
-          }}>
+          <div style={{ background: broadcastBanner.tone === "warning" ? "rgba(251, 191, 36, 0.18)" : "rgba(56, 189, 248, 0.18)", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "6px 16px", textAlign: "center", fontSize: 12, fontWeight: 700, color: broadcastBanner.tone === "warning" ? "#fbbf24" : "#38bdf8" }}>
             <Megaphone size={13} style={{ display: "inline", marginRight: 6 }} />
             {broadcastBanner.text}
           </div>
         )}
 
         {warningMsg && (
-          <div style={{
-            background: "rgba(248, 113, 113, 0.22)", borderBottom: "1px solid rgba(248, 113, 113, 0.45)",
-            padding: "8px 16px", display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 12, color: "#fecaca"
-          }}>
+          <div style={{ background: "rgba(248, 113, 113, 0.22)", borderBottom: "1px solid rgba(248, 113, 113, 0.45)", padding: "8px 16px", display: "flex", justifyContent: "center", alignItems: "center", gap: 12, fontSize: 12, color: "#fecaca" }}>
             <span><AlertTriangle size={14} style={{ display: "inline", marginRight: 5 }} /> <strong>{isHe ? "אזהרה מהנהלת המערכת:" : "Official Admin Notice:"}</strong> {warningMsg}</span>
-            <button type="button" onClick={dismissWarning} style={{ background: "#f87171", color: "#0a0b0e", border: "none", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
-              {isHe ? "קראתי והבנתי" : "Acknowledge"}
-            </button>
+            <button type="button" onClick={dismissWarning} style={{ background: "#f87171", color: "#0a0b0e", border: "none", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>{isHe ? "הבנתי" : "Acknowledge"}</button>
           </div>
         )}
 
-        <div style={{ maxWidth: 1060, margin: "0 auto", height: 60, padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, color: "#f8fafc" }}>
-            <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        <div style={{ maxWidth: 1060, margin: "0 auto", height: 60, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, color: "#f8fafc" }}>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="9" fill="url(#pcObsidian)" />
               <path d="M10 16.5L14 20.5L22.5 11.5" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
               <defs><linearGradient id="pcObsidian" x1="0" y1="0" x2="32" y2="32"><stop stopColor="#0284c7" /><stop offset="1" stopColor="#6366f1" /></linearGradient></defs>
             </svg>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 5, whiteSpace: "nowrap" }}>
               <span style={{ fontWeight: 900, fontSize: 16, color: "#f8fafc" }}>ProofCraft</span>
               <span style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>Studio</span>
             </div>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button type="button" onClick={() => setPocketOpen(true)} className="badge-pill" style={{ background: "rgba(52, 211, 153, 0.14)", color: "#34d399", fontSize: 11, cursor: "pointer", border: "1px solid rgba(52, 211, 153, 0.35)" }}>
-              <Smartphone size={13} /> <span>{isHe ? "סנכרון נייד" : "Field Sync"}</span>
+              <Smartphone size={13} /> <span>{isHe ? "סנכרון" : "Sync"}</span>
             </button>
 
-            <button type="button" onClick={() => switchLanguage(isHe ? "en" : "he")} aria-label="Switch Language" className="btn-ghost" style={{ height: 34, padding: "0 10px", fontSize: 11 }}>
+            <button type="button" onClick={() => switchLanguage(isHe ? "en" : "he")} aria-label="Switch Language" className="btn-ghost" style={{ height: 32, padding: "0 9px", fontSize: 11 }}>
               <Globe size={13} /> {isHe ? "EN" : "עב"}
             </button>
 
@@ -204,9 +199,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             )}
 
-            <Link href="/auth" className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 11 }}>
-              {userEmail ? userEmail.split("@") : (isHe ? "התחבר" : "Sign In")}
-            </Link>
+            {userId ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Link href="/workspace" className="badge-pill" style={{ background: "rgba(56, 189, 248, 0.16)", color: "#f8fafc", fontSize: 11, border: "1px solid rgba(56, 189, 248, 0.4)" }}>
+                  <CheckCircle2 size={12} color="#34d399" />
+                  <span>{isHe ? `ברוך הבא, ${userName}` : `Welcome, ${userName}`}</span>
+                  <span style={{ color: "#38bdf8", fontWeight: 800 }}>· v{userTier}.0</span>
+                </Link>
+                <button type="button" onClick={handleSignOut} title={isHe ? "התנתק" : "Sign Out"} className="btn-ghost" style={{ height: 32, padding: "0 8px", fontSize: 11, color: "#f87171" }}>
+                  <LogOut size={13} />
+                </button>
+              </div>
+            ) : (
+              <Link href="/auth" className="btn-primary" style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12 }}>
+                {isHe ? "התחבר / הרשמה" : "Sign In"}
+              </Link>
+            )}
           </div>
         </div>
         <nav className="desktop-subnav" aria-label="Main Navigation" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(18, 20, 26, 0.7)" }}>
@@ -234,23 +242,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px 20px 96px", background: "#07080b", fontSize: 12, color: "#94a3b8" }}>
         <div style={{ maxWidth: 1060, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-          <div>© 2026 ProofCraft Studio · {isHe ? "הכשרה מעשית, בניית נכסים ותיק עבודות מאומת" : "Global AI Product Engineering & Verified Portfolio OS"}</div>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 18px" }}>
-            {legalDocs.map((doc) => {
-              const labels: Record<string, string> = isHe
-                ? { about: "אודות", pricing: "מחירון", terms: "תנאי שימוש", privacy: "פרטיות", refunds: "ביטולים", accessibility: "נגישות" }
-                : { about: "About", pricing: "Pricing", terms: "Terms", privacy: "Privacy", refunds: "Refunds", accessibility: "Accessibility" };
-              return (
-                <button
-                  key={doc.id}
-                  type="button"
-                  onClick={() => setLegalDoc(doc)}
-                  style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, padding: "4px 2px", whiteSpace: "nowrap" }}
-                >
-                  {labels[doc.id] || doc.title}
-                </button>
-              );
-            })}
+          <div>© 2026 ProofCraft Studio · {isHe ? "הנדסת מוצרי AI ותיק עבודות מאומת" : "Global AI Product Engineering & Verified Portfolio OS"}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}>
+            {legalDocs.map((doc) => (
+              <button key={doc.id} type="button" onClick={() => setLegalDoc(doc)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>
+                {doc.title}
+              </button>
+            ))}
             <button type="button" onClick={() => setA11yOpen(true)} style={{ background: "none", border: "none", color: "#38bdf8", cursor: "pointer", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
               <Accessibility size={13} style={{ display: "inline" }} /> {isHe ? "נגישות" : "A11y"}
             </button>

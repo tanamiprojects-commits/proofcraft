@@ -111,6 +111,20 @@ export default function WorkspacePage() {
           })}
         </div>
       </div>
+            {userId && (
+        <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(56, 189, 248, 0.38)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ fontSize: 13, color: "#e2e8f0" }}>
+            <strong style={{ color: "#38bdf8" }}>
+              {t(`Welcome back, ${profile.fullName || "AI Builder"}!`, `ברוך הבא, ${profile.fullName || "בונה AI"}!`)}
+            </strong>{" "}
+            {t(`Cloud Sync Active · Tier v${purchasedLevel}.0 · ${profile.completedStepIds.length} Verified Proofs`, `סנכרון ענן פעיל · דרגה v${purchasedLevel}.0 · ${profile.completedStepIds.length} הוכחות מאומתות`)}
+          </div>
+          <Link href="/portfolio/live" className="btn-ghost" style={{ height: 34, fontSize: 11.5, color: "#34d399" }}>
+            {t("Open Public Portfolio", "פתח תיק עבודות ציבורי")}
+          </Link>
+        </div>
+      )}
+
       {!userId && selectedTrack === 1 && (
         <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(52, 211, 153, 0.4)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 12, color: "#cbd5e1" }}>
