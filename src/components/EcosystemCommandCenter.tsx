@@ -19,6 +19,9 @@ export default function EcosystemCommandCenter() {
     { id: "studio-biz", name: "Tanami360 Studio (Herzliya)", roleHe: "כרטיס ביקור עסקי ולידים לסטודיו", roleEn: "Executive Studio & Client Leads", publicUrl: `${mainSite}/studio`, adminUrl: `${mainSite}/studio/contact`, online: null, ms: null },
   ]);
   const [checking, setChecking] = useState(false);
+  const [newNodeName, setNewNodeName] = useState("");
+  const [newNodeUrl, setNewNodeUrl] = useState("");
+  const [newNodeAdmin, setNewNodeAdmin] = useState("");
 
   const probeEcosystem = async () => {
     setChecking(true);
@@ -37,7 +40,8 @@ export default function EcosystemCommandCenter() {
     setChecking(false);
   };
 
-  useEffect(() => { probeEcosystem(); }, []);
+  useEffect(() => { try { const saved = localStorage.getItem("pc_admin_custom_nodes_v1"); if (saved) setNodes(JSON.parse(saved)); } catch {} probeEcosystem(); }, []);
+  const addCustomNode = () => { if (!newNodeName.trim() || !newNodeUrl.trim()) return; const pub = newNodeUrl.trim().startsWith("http") ? newNodeUrl.trim() : `https://${newNodeUrl.trim()}`; const adm = newNodeAdmin.trim() ? (newNodeAdmin.trim().startsWith("http") ? newNodeAdmin.trim() : `https://${newNodeAdmin.trim()}`) : `${pub}/admin`; const next = [...nodes, { id: `node-${Date.now()}`, name: newNodeName.trim(), roleHe: "פלטפורמה מנוהלת באקוסיסטם", roleEn: "Managed Ecosystem Node", publicUrl: pub, adminUrl: adm, online: null, ms: null }]; setNodes(next); localStorage.setItem("pc_admin_custom_nodes_v1", JSON.stringify(next)); setNewNodeName(""); setNewNodeUrl(""); setNewNodeAdmin(""); };
 
   return (
     <section className="card-hero" style={{ padding: 20, marginBottom: 18, borderColor: "rgba(56, 189, 248, 0.35)" }}>
@@ -81,6 +85,7 @@ export default function EcosystemCommandCenter() {
           </div>
         ))}
       </div>
+<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}><input value={newNodeName} onChange={(e) => setNewNodeName(e.target.value)} placeholder={isHe ? "שם פלטפורמה חדשה" : "New Platform Name"} className="input-dark" style={{ height: 34, fontSize: 12 }} /><input value={newNodeUrl} onChange={(e) => setNewNodeUrl(e.target.value)} placeholder="https://tanami360.com" className="input-dark" style={{ height: 34, fontSize: 12 }} /><input value={newNodeAdmin} onChange={(e) => setNewNodeAdmin(e.target.value)} placeholder={isHe ? "כתובת אדמין (אופציונלי)" : "Admin URL (optional)"} className="input-dark" style={{ height: 34, fontSize: 12 }} /><button type="button" onClick={addCustomNode} className="btn-primary" style={{ height: 34, fontSize: 12, width: "auto" }}>{isHe ? "+ חבר פלטפורמה לחדר הבקרה" : "+ Connect Platform Node"}</button></div>
     </section>
   );
 }
