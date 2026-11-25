@@ -5,17 +5,8 @@ import { Lightbulb, ArrowRight, ArrowLeft, CheckCircle2, Sparkles } from "lucide
 import { supabase } from "@/lib/supabase";
 import { useStudioLang } from "@/lib/i18n-engine";
 
-interface Props {
-  userId: string | null;
-}
-
-interface Recommendation {
-  badge: string;
-  title: string;
-  reason: string;
-  cta: string;
-  route: string;
-}
+interface Props { userId: string | null; }
+interface Recommendation { badge: string; title: string; reason: string; cta: string; route: string; }
 
 export default function NextBestActionEngine({ userId }: Props) {
   const { isHe } = useStudioLang();
@@ -37,10 +28,10 @@ export default function NextBestActionEngine({ userId }: Props) {
 
     if (!prof?.full_name || !prof?.headline || !prof?.portfolio_pitch) {
       setRec({
-        badge: isHe ? "׳¢׳“׳™׳₪׳•׳× 1 ֲ· ׳׳™׳×׳•׳’" : "PRIORITY 1 ֲ· BRANDING",
-        title: isHe ? "׳”׳©׳׳ ׳׳× ׳›׳¨׳˜׳™׳¡ ׳”׳–׳”׳•׳× ׳•׳”׳׳™׳×׳•׳’ ׳”׳¦׳™׳‘׳•׳¨׳™ ׳©׳׳" : "Complete Your Public Creator Identity & Pitch",
-        reason: isHe ? "׳₪׳¨׳•׳₪׳™׳׳™׳ ׳¢׳ ׳©׳ ׳׳׳, ׳›׳•׳×׳¨׳× ׳•׳₪׳™׳¥' ׳‘׳¨׳•׳¨ ׳׳§׳‘׳׳™׳ ׳₪׳™ 3 ׳™׳•׳×׳¨ ׳¦׳₪׳™׳•׳× ׳•׳׳׳•׳ ׳׳׳§׳•׳—׳•׳×." : "Profiles with a clear headline and pitch earn 3x higher trust and directory clicks.",
-        cta: isHe ? "׳¢׳¨׳•׳ ׳׳™׳×׳•׳’ ׳‘׳¡׳˜׳•׳“׳™׳•" : "Complete Branding Now",
+        badge: isHe ? "עדיפות 1 · מיתוג" : "PRIORITY 1 · BRANDING",
+        title: isHe ? "השלם את כרטיס הזהות והמיתוג הציבורי שלך" : "Complete Your Public Creator Identity & Pitch",
+        reason: isHe ? "פרופילים עם שם מלא, כותרת ופיץ' ברור מקבלים פי 3 יותר צפיות ואמון מלקוחות." : "Profiles with a clear headline and pitch earn 3x higher trust and directory clicks.",
+        cta: isHe ? "ערוך מיתוג בסטודיו" : "Complete Branding Now",
         route: "/workspace"
       });
       return;
@@ -55,7 +46,6 @@ export default function NextBestActionEngine({ userId }: Props) {
       });
       return;
     }
-
     if (stepsCount === 0) {
       setRec({
         badge: isHe ? "עדיפות 3 · אימות" : "PRIORITY 3 · VERIFICATION",
@@ -66,7 +56,6 @@ export default function NextBestActionEngine({ userId }: Props) {
       });
       return;
     }
-
     if (postsCount === 0) {
       setRec({
         badge: isHe ? "עדיפות 4 · חשיפה" : "PRIORITY 4 · EXPOSURE",
@@ -77,7 +66,6 @@ export default function NextBestActionEngine({ userId }: Props) {
       });
       return;
     }
-
     setRec({
       badge: isHe ? "מוכן לצמיחה מקסימלית" : "ALL CORE MILESTONES ACTIVE",
       title: isHe ? "הפץ את הנכסים שלך והזמן שותפים (+25 Credits)" : "Scale Reach & Invite Partners (+25 Boost Credits)",
@@ -97,7 +85,7 @@ export default function NextBestActionEngine({ userId }: Props) {
   if (!userId || !rec) return null;
 
   return (
-    <div dir={isHe ? "rtl" : "ltr"} className="card-surface" style={{ padding: 14, marginBottom: 18, border: "1px solid rgba(251,191,36,0.35)", background: "linear-gradient(90deg, rgba(251,191,36,0.10), rgba(56,189,248,0.08))", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+    <div dir={isHe ? "rtl" : "ltr"} className="card-surface" style={{ padding: 16, marginBottom: 18, border: "1px solid rgba(251,191,36,0.35)", background: "linear-gradient(90deg, rgba(251,191,36,0.10), rgba(56,189,248,0.08))", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: "1 1 280px" }}>
         <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(251,191,36,0.16)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
           <Lightbulb size={18} color="#fbbf24" />
@@ -111,8 +99,7 @@ export default function NextBestActionEngine({ userId }: Props) {
           <div style={{ fontSize: 12, color: "#cbd5e1", marginTop: 2 }}>{rec.reason}</div>
         </div>
       </div>
-
-      <button type="button" onClick={() => router.push(rec.route)} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 14px", fontSize: 12, flexShrink: 0 }}>
+      <button type="button" onClick={() => router.push(rec.route)} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 14px", fontSize: 12, flexShrink: 0, whiteSpace: "nowrap" }}>
         <CheckCircle2 size={13} />
         <span>{rec.cta}</span>
         {isHe ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}

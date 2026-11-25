@@ -155,16 +155,16 @@ export default function ExpandedMarketingFeedPage() {
                   {p.author_name} · <strong style={{ color: "#fbbf24" }}>{p.boost_credits || 0} Boost</strong>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                <a href={p.live_url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ flex: 1, height: 38, fontSize: 12 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                <a href={p.live_url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ flex: "1 1 130px", minHeight: 38, padding: "0 12px", fontSize: 12, whiteSpace: "nowrap" }}>
                   <span>{t("Inspect & Open", "צפה ופתח")}</span> <ExternalLink size={13} />
                 </a>
-                <button type="button" onClick={() => handleBoostVote(p)} className="btn-ghost" style={{ height: 38, padding: "0 12px", fontSize: 12, color: "#34d399" }}>
+                <button type="button" onClick={() => handleBoostVote(p)} className="btn-ghost" style={{ minHeight: 38, padding: "0 12px", fontSize: 12, color: "#34d399", whiteSpace: "nowrap" }}>
                   <ThumbsUp size={13} /> {t("Verify (+2)", "אמת")}
                 </button>
                 <FeedBoostButton postId={p.id} postTitle={p.project_title} currentBoost={p.boost_credits || 0} userId={userId} isHe={isHe} onBoosted={loadPosts} onNotify={notify} />
 
-                <div style={{ marginTop: 8 }}>
+                <div style={{ width: "100%", paddingTop: 6, borderTop: "1px dashed rgba(255,255,255,0.07)" }}>
                   <ViralShareBar title={p.project_title} url={p.live_url} isHe={isHe} compact />
                 </div>              </div>
             </div>

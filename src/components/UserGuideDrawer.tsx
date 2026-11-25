@@ -19,32 +19,32 @@ export default function UserGuideDrawer({ context = "workspace" }: Props) {
   const steps: { step: string; title: string; badge: string; points: string[]; cta: string; action: () => void }[] = [
     {
       step: "01",
-      title: isHe ? "׳™׳¦׳™׳¨׳× ׳§׳™׳©׳•׳¨׳™ ׳©׳•׳×׳₪׳™׳ ׳—׳›׳׳™׳ ׳•׳“׳™׳׳™׳ ׳׳׳•׳׳×׳™׳" : "Smart Affiliate Links & Verified Deal Cards",
-      badge: isHe ? "׳”׳›׳ ׳¡׳” ׳™׳©׳™׳¨׳”" : "MONETIZATION",
+      title: isHe ? "יצירת קישורי שותפים חכמים ודילים מאומתים" : "Smart Affiliate Links & Verified Deal Cards",
+      badge: isHe ? "הכנסה ישירה" : "MONETIZATION",
       points: isHe
-        ? ["1. ׳‘׳—׳¨ ׳¨׳©׳× ׳©׳•׳×׳₪׳™׳ (AliExpress, Amazon, Temu, eBay, WeSell) ׳•׳”׳“׳‘׳§ ׳§׳™׳©׳•׳¨.", "2. ׳”׳׳¢׳¨׳›׳× ׳׳™׳™׳¦׳¨׳× ׳§׳™׳©׳•׳¨ ׳׳¢׳§׳‘ ׳§׳¦׳¨ (/go/slug) ׳•׳ ׳•׳¡׳— ׳₪׳¨׳¡׳•׳ ׳׳•׳›׳ ׳׳©׳™׳×׳•׳£.", "3. ׳•׳“׳ ׳׳™׳©׳•׳¨ HTTPS ׳™׳¨׳•׳§ ׳‘׳¡׳•׳¨׳§ ׳”׳‘׳¨׳™׳׳•׳× ׳׳₪׳ ׳™ ׳₪׳¨׳¡׳•׳."]
+        ? ["1. בחר רשת שותפים (AliExpress, Amazon, Temu, eBay, WeSell) והדבק קישור.", "2. המערכת מייצרת קישור מעקב קצר (/go/slug) ונוסח פרסום מוכן לשיתוף.", "3. ודא אישור HTTPS ירוק בסורק הבריאות לפני פרסום."]
         : ["1. Pick an affiliate network (AliExpress, Amazon, Temu, eBay, WeSell) and paste URL.", "2. Generate a clean tracked link (/go/slug) plus instant social promo copy.", "3. Confirm green HTTPS status in Link Health Watchdog before sharing."],
-      cta: isHe ? "׳₪׳×׳— ׳׳¨׳›׳– ׳©׳•׳×׳₪׳™׳ ׳•׳§׳™׳©׳•׳¨׳™׳" : "Open Affiliate Hub",
+      cta: isHe ? "פתח מרכז שותפים וקישורים" : "Open Affiliate Hub",
       action: () => { setOpen(false); router.push("/affiliate"); }
     },
     {
       step: "02",
-      title: isHe ? "׳”׳–׳׳ ׳× ׳—׳‘׳¨׳™׳ ׳•׳¦׳‘׳™׳¨׳× +25 Boost Credits ׳׳•׳˜׳•׳׳˜׳™׳×" : "Invite Friends & Earn +25 Boost Credits Automatically",
+      title: isHe ? "הזמנת חברים וצבירת +25 Boost Credits אוטומטית" : "Invite Friends & Earn +25 Boost Credits Automatically",
       badge: "+25 CREDITS",
       points: isHe
-        ? ["1. ׳”׳¢׳×׳§ ׳׳× ׳§׳™׳©׳•׳¨ ׳”׳”׳–׳׳ ׳” ׳”׳׳™׳©׳™ ׳׳›׳¨׳˜׳™׳¡ ׳”׳”׳₪׳ ׳™׳•׳× ׳‘׳׳¨׳›׳– ׳”׳©׳•׳×׳₪׳™׳.", "2. ׳›׳ ׳—׳‘׳¨ ׳©׳ ׳¨׳©׳ ׳׳–׳›׳” ׳׳× ׳©׳ ׳™׳›׳ ׳׳•׳˜׳•׳׳˜׳™׳× ׳‘-25 ׳§׳¨׳“׳™׳˜׳™׳ ׳׳§׳™׳“׳•׳.", "3. ׳¢׳§׳•׳‘ ׳׳—׳¨ ׳›׳ ׳×׳ ׳•׳¢׳” ׳‘׳™׳•׳׳ ׳”׳§׳¨׳“׳™׳˜׳™׳ ׳”׳©׳§׳•׳£ (Karma Ledger)."]
+        ? ["1. העתק את קישור ההזמנה האישי מכרטיס ההפניות במרכז השותפים.", "2. כל חבר שנרשם מזכה את שניכם אוטומטית ב-25 קרדיטים לקידום.", "3. עקוב אחר כל תנועה ביומן הקרדיטים השקוף (Karma Ledger)."]
         : ["1. Copy your personal invite URL from Referral Reward Card in Affiliate Hub.", "2. Every friend who joins automatically credits both accounts with +25 Credits.", "3. Track every reward entry inside your transparent Karma Ledger."],
-      cta: isHe ? "׳¢׳‘׳•׳¨ ׳׳›׳¨׳˜׳™׳¡ ׳”׳”׳₪׳ ׳™׳•׳× (+25)" : "Go to Referral Card (+25)",
+      cta: isHe ? "עבור לכרטיס ההפניות (+25)" : "Go to Referral Card (+25)",
       action: () => { setOpen(false); router.push("/affiliate"); }
     },
     {
       step: "03",
-      title: isHe ? "׳§׳™׳“׳•׳ ׳•׳”׳§׳₪׳¦׳× ׳₪׳•׳¡׳˜׳™׳ ׳•׳“׳™׳׳™׳ ׳‘׳₪׳™׳“ ׳”׳¦׳™׳‘׳•׳¨׳™ (+10)" : "Boost Posts & Deals on the Public Feed (+10 Credits)",
-      badge: isHe ? "׳—׳©׳™׳₪׳” ׳׳•׳¨׳’׳ ׳™׳×" : "ORGANIC REACH",
+      title: isHe ? "קידום והקפצת פוסטים ודילים בפיד הציבורי (+10)" : "Boost Posts & Deals on the Public Feed (+10 Credits)",
+      badge: isHe ? "חשיפה אורגנית" : "ORGANIC REACH",
       points: isHe
-        ? ["1. ׳₪׳¨׳¡׳ ׳”׳©׳§׳× ׳₪׳¨׳•׳™׳§׳˜ ׳׳• ׳“׳™׳ ׳׳׳•׳׳× ׳‘׳§׳™׳¨ ׳”׳₪׳™׳“ ׳”׳¦׳™׳‘׳•׳¨׳™ (/feed).", "2. ׳׳—׳¥ Boost ׳׳׳™׳׳•׳© 10 ׳§׳¨׳“׳™׳˜׳™׳ ׳•׳”׳¢׳׳׳× ׳”׳₪׳•׳¡׳˜ ׳׳¨׳׳© ׳”׳₪׳™׳“.", "3. ׳”׳₪׳¥ ׳‘׳׳”׳™׳¨׳•׳× ׳׳•׳•׳׳˜׳¡׳׳₪ ׳•׳׳׳™׳ ׳§׳“׳׳™׳ ׳“׳¨׳ ׳¡׳¨׳’׳ ׳”׳©׳™׳×׳•׳£."]
+        ? ["1. פרסם השקת פרויקט או דיל מאומת בקיר הפיד הציבורי (/feed).", "2. לחץ Boost למימוש 10 קרדיטים והעלאת הפוסט לראש הפיד.", "3. הפץ במהירות לוואטסאפ וללינקדאין דרך סרגל השיתוף."]
         : ["1. Publish a live project milestone or approved deal to the Feed Wall (/feed).", "2. Click Boost to redeem 10 Credits and elevate your post visibility.", "3. Distribute rich preview cards to WhatsApp & LinkedIn in 1 click."],
-      cta: isHe ? "׳¢׳‘׳•׳¨ ׳׳₪׳™׳“ ׳”׳¦׳™׳‘׳•׳¨׳™" : "Open Live Feed Wall",
+      cta: isHe ? "עבור לפיד הציבורי" : "Open Live Feed Wall",
       action: () => { setOpen(false); router.push("/feed"); }
     },
     {
