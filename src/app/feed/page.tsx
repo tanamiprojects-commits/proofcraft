@@ -6,6 +6,8 @@ import { Flame, ShieldCheck, ExternalLink, Sparkles, Plus, ThumbsUp, Layers, Tag
 import { supabase } from "@/lib/supabase";
 import { useStudioLang } from "@/lib/i18n-engine";
 import { sanitizePlainText } from "@/lib/security-utils";
+import ViralShareBar from "@/components/ViralShareBar";
+import FeedBoostButton from "@/components/FeedBoostButton";
 
 interface FeedPostRow {
   id: string;
@@ -43,7 +45,7 @@ export default function ExpandedMarketingFeedPage() {
   };
 
   useEffect(() => {
-    loadPosts();
+    loadPosts(); const onSync = () => loadPosts(); window.addEventListener("proofcraft:sync-now", onSync);
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
@@ -63,13 +65,13 @@ export default function ExpandedMarketingFeedPage() {
       lang_code: isHe ? "he" : "en", price_badge: sanitizePlainText(priceBadge, 40), boost_credits: 5, is_approved: true,
     });
     setTitle(""); setUrl(""); setPriceBadge(""); setSummary(""); setComposerOpen(false);
-    await loadPosts();
+    await loadPosts(); const onSync = () => loadPosts(); window.addEventListener("proofcraft:sync-now", onSync);
     notify(t("Published to the Organic Marketing & Proof Wall!", "הפרסום עלה לקיר השיווק והפידבק האורגני!"));
   };
 
   const handleBoostVote = async (post: FeedPostRow) => {
     await supabase.from("feed_posts").update({ boost_credits: (post.boost_credits || 0) + 2 }).eq("id", post.id);
-    await loadPosts();
+    await loadPosts(); const onSync = () => loadPosts(); window.addEventListener("proofcraft:sync-now", onSync);
     notify(t("Community verification recorded (+2 Boost Score)!", "האימות הקהילתי נרשם (+2 נקודות חשיפה)!"));
   };
   const langFiltered = posts.filter((p) => !p.lang_code || p.lang_code === (isHe ? "he" : "en"));
@@ -160,7 +162,11 @@ export default function ExpandedMarketingFeedPage() {
                 <button type="button" onClick={() => handleBoostVote(p)} className="btn-ghost" style={{ height: 38, padding: "0 12px", fontSize: 12, color: "#34d399" }}>
                   <ThumbsUp size={13} /> {t("Verify (+2)", "אמת")}
                 </button>
-              </div>
+                <FeedBoostButton postId={p.id} postTitle={p.project_title} currentBoost={p.boost_credits || 0} userId={userId} isHe={isHe} onBoosted={loadPosts} onNotify={notify} />
+
+                <div style={{ marginTop: 8 }}>
+                  <ViralShareBar title={p.project_title} url={p.live_url} isHe={isHe} compact />
+                </div>              </div>
             </div>
           );
         })}

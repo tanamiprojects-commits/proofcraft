@@ -16,6 +16,11 @@ import Link360Drawer from "@/components/affiliate/Link360Drawer";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
 import CustomNetworkModal from "@/components/affiliate/CustomNetworkModal";
 import AffiliateMonetizationModal from "@/components/affiliate/AffiliateMonetizationModal";
+import ReferralRewardCard from "@/components/affiliate/ReferralRewardCard";
+import PublicIdentityBar from "@/components/PublicIdentityBar";
+import AffiliateAnalyticsPanel from "@/components/affiliate/AffiliateAnalyticsPanel";
+import KarmaLedgerPanel from "@/components/affiliate/KarmaLedgerPanel";
+import LinkHealthWatchdog from "@/components/affiliate/LinkHealthWatchdog";
 
 const NETWORK_THEME: Record<string, { accent: string; glow: string; badgeHe: string; badgeEn: string }> = {
   aliexpress: { accent: "#fb923c", glow: "rgba(251, 146, 60, 0.22)", badgeHe: "אישור מיידי · מומלץ למתחילים", badgeEn: "Instant Approval · Beginner Friendly" },
@@ -81,8 +86,23 @@ export default function AffiliateIncomeHubPage() {
     supabase.auth.getUser().then(({ data }) => {
       const uid = data.user?.id || null;
       setUserId(uid); setUserEmail(data.user?.email || "");
-      reloadHub(uid);
+      reloadHub(uid); const onSync = () => reloadHub(uid); window.addEventListener("proofcraft:sync-now", onSync);
     });
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const toolParam = params.get("tool");
+      const urlParam = params.get("url");
+      if (toolParam) {
+        setNewTitle(toolParam);
+        setBridgeProduct(toolParam);
+        setNewFolder("Builder & AI Stack");
+        if (urlParam && urlParam.startsWith("https://")) {
+          setNewUrl(urlParam);
+        }
+        setActiveTab("portfolio");
+        notify(`Loaded "${toolParam}" — paste your partner referral URL below to publish!`);
+      }
+    }
   }, []);
 
   const activeNetwork = networks.find((n) => n.slug === selectedNetSlug) || networks.at(0);
@@ -176,6 +196,8 @@ export default function AffiliateIncomeHubPage() {
         </div>
 
         <div style={{ marginBottom: 14 }}><StudioVisualArtwork variant="affiliate" /></div>
+        
+        <ReferralRewardCard referralCode={referralCode} isHe={isHe} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 8 }}>
           {[
@@ -369,6 +391,9 @@ export default function AffiliateIncomeHubPage() {
         </div>
       )}
       {activeTab === "portfolio" && (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <AffiliateAnalyticsPanel links={links} clicks={clicks} networks={networks} isHe={isHe} onInspectLink={(lnk) => setActive360Link(lnk)} />
+          <LinkHealthWatchdog links={links} isHe={isHe} onUpdated={() => reloadHub(userId)} onNotify={notify} />
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {userId && (
             <div className="card-surface" style={{ padding: 14, border: "1px solid rgba(56,189,248,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -440,9 +465,11 @@ export default function AffiliateIncomeHubPage() {
             })}
           </div>
         </div>
+        </div>
       )}
       {activeTab === "bridge" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <KarmaLedgerPanel karma={karma} boostCredits={boostCredits} isHe={isHe} />
           <div className="card-hero" style={{ padding: 18 }}>
             <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>{t("External AI Tools & Dynamic Prompt Bridge", "גשר לכלי AI חיצוניים ומחולל פרומפטים דינמי")}</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>

@@ -9,6 +9,10 @@ import { supabase } from "@/lib/supabase";
 import AdminModerationQueue from "@/components/AdminModerationQueue";
 import AdminDemandRadar from "@/components/AdminDemandRadar";
 import AdminAffiliateManager from "@/components/affiliate/AdminAffiliateManager";
+import AdminModerationAudit from "@/components/AdminModerationAudit";
+import AdminEcosystemPulse from "@/components/AdminEcosystemPulse";
+import AdminDiagnosticsSuite from "@/components/AdminDiagnosticsSuite";
+import { downloadCsvReport } from "@/lib/csv-export";
 import VerifiedProofsPanel from "@/components/VerifiedProofsPanel";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
@@ -81,6 +85,7 @@ export default function AdminCommandCenterPage() {
 
   const [posts, setPosts] = useState<AdminPostRow[]>([]);
   const [tickets, setTickets] = useState<SupportRow[]>([]);
+  const [leads, setLeads] = useState<{ id: string; user_email?: string; target_tier?: string; status?: string }[]>([]);
   const [tracks, setTracks] = useState<TrackRow[]>([]);
   const [auditLogs, setAuditLogs] = useState<{ id: string; action_title: string; target_info: string; created_at: string }[]>([]);
   const [broadcast, setBroadcast] = useState<{ active: boolean; text: string; tone: string }>({ active: false, text: "", tone: "info" });
@@ -121,6 +126,7 @@ export default function AdminCommandCenterPage() {
     if (profRes.data) setUsers(profRes.data);
     if (postRes.data) setPosts(postRes.data);
     if (tktRes.data) setTickets(tktRes.data);
+    supabase.from("upgrade_intents").select("id,user_email,target_tier,status").order("created_at", { ascending: false }).limit(25).then(({ data }) => { if (data) setLeads(data); });
     if (trkRes.data && trkRes.data.length > 0) setTracks(trkRes.data);
     if (logRes.data) setAuditLogs(logRes.data);
 
@@ -130,7 +136,7 @@ export default function AdminCommandCenterPage() {
     }
   };
 
-  useEffect(() => { loadAllAdminData(); }, []);
+  useEffect(() => { loadAllAdminData(); const onSync = () => loadAllAdminData(); window.addEventListener("proofcraft:sync-now", onSync); return () => window.removeEventListener("proofcraft:sync-now", onSync); }, []);
 
   const toggleVerifyUser = async (u: AdminUserRow) => {
     const next = !u.admin_verified;
@@ -308,6 +314,8 @@ export default function AdminCommandCenterPage() {
       {activeTab === "queue" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <AdminDemandRadar onGrantTier={async (uid, tier) => { await supabase.from("profiles").update({ purchased_track_level: tier }).eq("id", uid); showMsg(`Unlocked v${tier}.0 for user!`); }} />
+      <AdminEcosystemPulse />
+      <AdminModerationAudit onNotify={showMsg} />
       <AdminAffiliateManager onNotify={showMsg} />
       <AdminModerationQueue />
           <VerifiedProofsPanel isAdminView />
@@ -360,6 +368,8 @@ export default function AdminCommandCenterPage() {
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => toggleVerifyUser(u)} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5 }}>{u.admin_verified ? "Revoke Verify" : "Verify Builder"}</button>
+                  <button onClick={async () => { const { data: pr } = await supabase.from("profiles").select("affiliate_boost_credits").eq("id", u.id).single(); const curr = Number(pr?.affiliate_boost_credits ?? 10); await Promise.all([supabase.from("profiles").update({ affiliate_boost_credits: curr + 25 }).eq("id", u.id), supabase.from("aff_karma_ledger").insert({ user_id: u.id, action_type: "admin_grant", credits_delta: 25, description_en: "Admin Boost Credit Award (+25)", description_he: "\u05DE\u05E2\u05E0\u05E7 \u05E0\u05E7\u05D5\u05D3\u05D5\u05EA \u05D7\u05E9\u05D9\u05E4\u05D4 \u05DE\u05D4\u05D0\u05D3\u05DE\u05D9\u05DF (+25)" })]); showMsg("Granted +25 Boost Credits!"); }} className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5, color: "#34d399" }}>+25 Credits</button>
+                  <a href={`/portfolio/${u.id}`} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11.5 }}>Portfolio</a>
                   {[1, 2, 3, 4].map((lvl) => (
                     <button key={lvl} onClick={() => updateUserTrackLevel(u, lvl)} className="btn-ghost" style={{ padding: "5px 9px", fontSize: 11 }}>T{lvl}</button>
                   ))}
@@ -375,6 +385,7 @@ export default function AdminCommandCenterPage() {
           })}
         </div>
       )}
+      {activeTab === "support" && leads.length > 0 && (<div className="card-surface" style={{ padding: 14, marginBottom: 12, border: "1px solid rgba(52,211,153,0.35)" }}><strong style={{ color: "#34d399", fontSize: 13 }}>Upgrade Leads ({leads.length})</strong>{leads.slice(0, 6).map((ld) => (<div key={ld.id} style={{ fontSize: 12, color: "#cbd5e1", marginTop: 4 }}>{ld.user_email || "User"} - {ld.target_tier || "Pro"} ({ld.status || "pending"})</div>))}</div>)}
       {activeTab === "support" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {tickets.length === 0 ? (
@@ -446,6 +457,7 @@ export default function AdminCommandCenterPage() {
       )}
       {activeTab === "broadcast" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <AdminDiagnosticsSuite />
           <div className="card-surface" style={{ padding: 18 }}>
             <h2 style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc", marginBottom: 10 }}>Global Live Broadcast Banner</h2>
             <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
@@ -457,7 +469,10 @@ export default function AdminCommandCenterPage() {
           </div>
 
           <div className="card-surface" style={{ padding: 18 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc", marginBottom: 10 }}>Admin Audit Log</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc", margin: 0 }}>Admin Audit Log</h2>
+              <button type="button" onClick={() => downloadCsvReport("proofcraft-admin-audit.csv", ["ID", "Action", "Target", "Created At"], auditLogs.map((a) => [a.id, a.action_title, a.target_info, a.created_at]))} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5 }}>Export Audit CSV</button>
+            </div>
             {auditLogs.map((log) => (
               <div key={log.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 12, color: "#cbd5e1" }}>
                 <strong>{log.action_title}</strong> — {log.target_info}

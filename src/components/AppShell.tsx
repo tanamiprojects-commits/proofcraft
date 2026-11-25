@@ -12,6 +12,8 @@ import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
 import { detectNaturalVisitorLang, setStoredStudioLang } from "@/lib/i18n-engine";
 import GlobalModal from "./GlobalModal";
 import PocketFieldStudio from "./PocketFieldStudio";
+import UniversalSyncBridge from "@/components/UniversalSyncBridge";
+import UserSupportInboxCard from "@/components/UserSupportInboxCard";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
 export type FocusMode = "full_os" | "affiliate_only" | "builder_only";
@@ -32,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [warningMsg, setWarningMsg] = useState("");
   const [broadcastBanner, setBroadcastBanner] = useState<{ active: boolean; text: string; tone: string }>({ active: false, text: "", tone: "info" });
   const [legalDocs, setLegalDocs] = useState<LegalDocumentItem[]>(FINTECH_LEGAL_DOCS);
-  const [pocketOpen, setPocketOpen] = useState(false);
+  const [pocketOpen, setPocketOpen] = useState(false); useEffect(() => { const openPocket = () => setPocketOpen(true); window.addEventListener("proofcraft:open-pocket", openPocket); return () => window.removeEventListener("proofcraft:open-pocket", openPocket); }, []);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [a11yOpen, setA11yOpen] = useState(false);
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
@@ -142,7 +144,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       user_id: userId, sender_name: userName || userEmail || (lang === "he" ? "אורח" : "Guest"),
       sender_email: supportEmail.trim().slice(0, 120), category: supportCategory, message: cleanMsg, status: "open"
     });
-    setSupportSent(true); setSupportText("");
+    setSupportSent(true); setSupportText(""); if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("proofcraft:sync-now"));
   };
 
   const isHe = lang === "he";
@@ -154,6 +156,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/toolkit", label: isHe ? "ארגז כלים" : "Toolkit", icon: Wrench, group: "all" },
     { href: "/method", label: isHe ? "השיטה" : "Method", icon: BookOpen, group: "bld" },
     { href: "/portfolio/live", label: isHe ? "תיק עבודות" : "Portfolio", icon: Briefcase, group: "bld" },
+    { href: "/creators", label: isHe ? "\u05D9\u05D5\u05E6\u05E8\u05D9\u05DD" : "Creators", icon: Users, group: "all" },
   ];
 
   const visibleNav = allNavItems.filter((item) => {
@@ -204,6 +207,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <option value="affiliate_only">{isHe ? "מיקוד: הכנסה משותפים בלבד" : "Focus: Affiliate Hub Only"}</option>
               <option value="builder_only">{isHe ? "מיקוד: בניית תיק עבודות בלבד" : "Focus: Builder Studio Only"}</option>
             </select>
+            <Link href="/legal" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: 12, fontWeight: 700 }}>{isHe ? "תנאים, פרטיות וגילוי נאות" : "Legal & Privacy"}</Link>
             <button type="button" onClick={() => setA11yOpen(true)} title={isHe ? "נגישות" : "Accessibility"} className="btn-ghost" style={{ height: 32, padding: "0 8px", fontSize: 11, color: "#38bdf8" }}><Accessibility size={14} /></button>
             <button type="button" onClick={() => switchLanguage(isHe ? "en" : "he")} className="btn-ghost" style={{ height: 32, padding: "0 9px", fontSize: 11 }}><Globe size={13} /> {isHe ? "EN" : "עב"}</button>
             {isAdmin && <Link href="/admin" className="badge-pill" style={{ background: "rgba(251,191,36,0.18)", color: "#fbbf24", fontSize: 11, border: "1px solid rgba(251,191,36,0.4)" }}><Shield size={12} /> Admin</Link>}
@@ -235,7 +239,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      <main className="obsidian-container" style={{ flex: 1, width: "100%" }}>{children}</main>
+      <main className="obsidian-container" style={{ flex: 1, width: "100%" }}><UniversalSyncBridge isHe={isHe} isAdmin={isAdmin} />{children}</main>
 
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px 20px 96px", background: "#07080b", fontSize: 12, color: "#94a3b8" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
@@ -244,6 +248,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {legalDocs.map((doc) => (
               <button key={doc.id} type="button" onClick={() => setLegalDoc(doc)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12 }}>{doc.title}</button>
             ))}
+            <Link href="/legal" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: 12, fontWeight: 700 }}>{isHe ? "תנאים, פרטיות וגילוי נאות" : "Legal & Privacy"}</Link>
             <button type="button" onClick={() => setA11yOpen(true)} style={{ background: "none", border: "none", color: "#38bdf8", cursor: "pointer", fontSize: 12, fontWeight: 700 }}><Accessibility size={13} style={{ display: "inline" }} /> {isHe ? "נגישות" : "A11y"}</button>
             <button type="button" onClick={() => { setSupportOpen(true); setSupportSent(false); }} style={{ background: "none", border: "none", color: "#34d399", cursor: "pointer", fontSize: 12, fontWeight: 700 }}><MessageCircle size={13} style={{ display: "inline" }} /> {isHe ? "תמיכה" : "Support"}</button>
           </div>
@@ -285,7 +290,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => { setMoreDrawerOpen(false); setPocketOpen(true); }} className="btn-ghost" style={{ flex: 1, fontSize: 12 }}><Smartphone size={13} /> {isHe ? "סנכרון" : "Sync"}</button>
+            <button type="button" onClick={() => { setMoreDrawerOpen(false); setPocketOpen(true); if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("proofcraft:sync-now")); supabase.auth.getUser().then(({ data }) => hydrateUserProfile(data.user?.id || null, data.user?.email || null)); router.refresh(); }} className="btn-ghost" style={{ flex: 1, fontSize: 12 }}><Smartphone size={13} /> {isHe ? "סנכרון" : "Sync"}</button>
             <button type="button" onClick={() => { setMoreDrawerOpen(false); setA11yOpen(true); }} className="btn-ghost" style={{ flex: 1, fontSize: 12 }}><Accessibility size={13} /> {isHe ? "נגישות" : "A11y"}</button>
           </div>
         </div>
@@ -331,6 +336,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <button type="button" onClick={submitSupportTicket} className="btn-primary">{isHe ? "שלח" : "Send"}</button>
             </>
           )}
+          <UserSupportInboxCard userId={userId} isHe={isHe} />
         </div>
       </GlobalModal>
     </div>

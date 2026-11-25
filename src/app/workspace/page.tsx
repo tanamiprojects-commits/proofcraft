@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Lock, ShieldCheck, UserPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import { Lock, ShieldCheck, UserPlus, ArrowRight, ArrowLeft, TrendingUp, Link2 } from "lucide-react";
 import { getStrategicTrackGuides } from "@/lib/plg-career-strategy";
 import { getActiveUserProfile, TrackProjectEntry } from "@/lib/cloud-store";
 import { BuilderProfile, DEFAULT_PROFILE } from "@/lib/proofcraft-store";
@@ -12,8 +12,13 @@ import Track2AcademyStudio from "@/components/Track2AcademyStudio";
 import Track3AcademyStudio from "@/components/Track3AcademyStudio";
 import Track4AcademyStudio from "@/components/Track4AcademyStudio";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
+import PublicIdentityBar from "@/components/PublicIdentityBar";
+import CreatorLaunchChecklist from "@/components/CreatorLaunchChecklist";
+import UserSupportInboxCard from "@/components/UserSupportInboxCard";
 import UpgradeIntentModal from "@/components/UpgradeIntentModal";
 import { supabase } from "@/lib/supabase";
+import { fetchAffiliateHubState } from "@/lib/affiliate-store";
+import { claimReferralBonusForNewUser } from "@/lib/referral-engine";
 
 export default function WorkspacePage() {
   const { lang, isHe, dir, t } = useStudioLang();
@@ -27,6 +32,7 @@ export default function WorkspacePage() {
   const [toast, setToast] = useState<string>("");
   const [reserveModalOpen, setReserveModalOpen] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [affStats, setAffStats] = useState<{ links: number; clicks: number; credits: number }>({ links: 0, clicks: 0, credits: 10 });
 
   const showNotify = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3200); };
 
@@ -40,6 +46,7 @@ export default function WorkspacePage() {
       setPurchasedLevel(lvl);
       setTotalPaidIls(res.totalPaidIls || 0);
       setSelectedTrack(lvl);
+      if (res.userId) { const uid = res.userId; const refreshWs = () => claimReferralBonusForNewUser(uid).then(() => fetchAffiliateHubState(uid)).then((h) => setAffStats({ links: h.links.length, clicks: h.clicks.length, credits: h.boostCredits })); refreshWs(); window.addEventListener("proofcraft:sync-now", refreshWs); }
       setLoading(false);
     });
   }, []);
@@ -55,6 +62,7 @@ export default function WorkspacePage() {
   return (
     <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       <StudioVisualArtwork variant="workspace" />
+      
 
       {toast && (
         <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 90, background: "#0f172a", border: "1px solid rgba(52,211,153,0.45)", color: "#34d399", padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>
@@ -130,6 +138,20 @@ export default function WorkspacePage() {
         </div>
       )}
 
+      {userId && (
+        <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(52, 211, 153, 0.32)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: 12.5, color: "#cbd5e1" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 900, color: "#34d399" }}><TrendingUp size={15} /> {isHe ? "מדדי שותפים וחנות:" : "Affiliate & Storefront Pulse:"}</span>
+            <span><strong>{affStats.links}</strong> {isHe ? "קישורים" : "Links"}</span><span>·</span>
+            <span><strong>{affStats.clicks}</strong> {isHe ? "קליקים" : "Clicks"}</span><span>·</span>
+            <span style={{ color: "#fbbf24" }}><strong>{affStats.credits}</strong> Boost</span>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Link href={`/deals/${encodeURIComponent(userId)}`} className="btn-ghost" style={{ height: 32, fontSize: 11.5 }}>{isHe ? "חנות הדילים שלי" : "My Storefront"}</Link>
+            <Link href="/affiliate" className="btn-primary" style={{ width: "auto", height: 32, fontSize: 11.5 }}><Link2 size={13} /> {isHe ? "מרכז השותפים" : "Affiliate Hub"}</Link>
+          </div>
+        </div>
+      )}
       {!userId && selectedTrack === 1 && (
         <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(52, 211, 153, 0.4)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 12, color: "#cbd5e1" }}>

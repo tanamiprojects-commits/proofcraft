@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ExternalLink, ShieldCheck, Sparkles, ThumbsUp, Award, AlertTriangle } from "lucide-react";
+import { ExternalLink, ShieldCheck, Sparkles, ThumbsUp, Award, AlertTriangle, Store } from "lucide-react";
+import ViralShareBar from "@/components/ViralShareBar";
 import { supabase } from "@/lib/supabase";
 import { AffLink, AffNetwork } from "@/lib/affiliate-store";
 import { useStudioLang } from "@/lib/i18n-engine";
@@ -32,7 +33,7 @@ export default function PublicDealCardPage() {
       setViewerId(uData?.user?.id || null);
       setLoading(false);
     };
-    if (slug) loadDeal();
+    if (slug) loadDeal(); const onSync = () => { if (slug) loadDeal(); }; window.addEventListener("proofcraft:sync-now", onSync); return () => window.removeEventListener("proofcraft:sync-now", onSync);
   }, [slug]);
 
   const handleCommunityVerify = async () => {
@@ -113,6 +114,12 @@ export default function PublicDealCardPage() {
           <span>{t(`Continue to Official Store (${netName})`, `המשך לחנות הרשמית (${netName})`)}</span>
           <ExternalLink size={16} />
         </a>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12, paddingTop: 6, borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+          <Link href={`/deals/${link.user_id}`} className="btn-ghost" style={{ height: 34, fontSize: 12 }}>
+            <Store size={14} /> <span>{isHe ? "\u05DC\u05DB\u05DC \u05D4\u05D3\u05D9\u05DC\u05D9\u05DD \u05D1\u05D7\u05E0\u05D5\u05EA \u05D4\u05D9\u05D5\u05E6\u05E8" : "View Full Creator Storefront"}</span>
+          </Link>
+          <ViralShareBar title={link.product_title} isHe={isHe} compact />
+        </div>
 
         {viewerId && viewerId !== link.user_id && (
           <button

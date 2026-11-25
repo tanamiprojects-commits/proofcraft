@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, LogIn, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, LogIn, UserPlus, AlertCircle, CheckCircle2, Gift } from "lucide-react";
+import { captureReferralFromUrl, claimReferralBonusForNewUser } from "@/lib/referral-engine";
 import { supabase } from "@/lib/supabase";
 import { useStudioLang } from "@/lib/i18n-engine";
 
 export default function AuthPage() {
   const router = useRouter();
   const { isHe, dir, t } = useStudioLang();
+  const [appliedRef, setAppliedRef] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +22,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+    setAppliedRef(captureReferralFromUrl());
       if (data.session?.user) {
         router.replace("/workspace");
       }
@@ -59,6 +62,7 @@ export default function AuthPage() {
         if (error) throw error;
 
         if (data.session) {
+          if (data.session.user?.id) await claimReferralBonusForNewUser(data.session.user.id);
           router.push("/workspace");
           router.refresh();
           return;
@@ -66,6 +70,7 @@ export default function AuthPage() {
 
         const { data: signInData } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (signInData?.session) {
+          if (signInData.session.user?.id) await claimReferralBonusForNewUser(signInData.session.user.id);
           router.push("/workspace");
           router.refresh();
           return;
@@ -98,6 +103,12 @@ export default function AuthPage() {
         <span className="badge-pill" style={{ background: "rgba(56,189,248,0.14)", color: "#38bdf8", border: "1px solid rgba(56,189,248,0.3)", marginBottom: 10 }}>
           <ShieldCheck size={13} /> {t("Secured Cloud Account · ProofCraft", "חשבון ענן מאובטח · ProofCraft")}
         </span>
+        {appliedRef && (
+          <div style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(16,185,129,0.14)", border: "1px solid rgba(52,211,153,0.4)", color: "#6ee7b7", fontSize: 12, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <Gift size={15} color="#34d399" />
+            <span>{isHe ? `\u05E7\u05D5\u05D3 \u05D4\u05D6\u05DE\u05E0\u05D4 ${appliedRef} \u05D4\u05D5\u05E4\u05E2\u05DC! +25 \u05E0\u05E7\u05D5\u05D3\u05D5\u05EA \u05D7\u05E9\u05D9\u05E4\u05D4 \u05D9\u05D9\u05E0\u05EA\u05E0\u05D5 \u05D1\u05E1\u05D9\u05D5\u05DD \u05D4\u05D4\u05E8\u05E9\u05DE\u05D4` : `Invite code ${appliedRef} applied! +25 Boost Credits unlocked upon signup`}</span>
+          </div>
+        )}
         <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 4 }}>
           {mode === "signup"
             ? t("Create AI Builder Account", "יצירת חשבון בונה AI")

@@ -58,6 +58,15 @@ export default function HomePage() {
         <StudioVisualArtwork variant="home" />
       </div>
 
+      {userId && (
+        <div className="card-surface" style={{ padding: 14, marginBottom: 14, border: "1px solid rgba(52,211,153,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ fontSize: 12.5, color: "#e2e8f0" }}>
+            <strong style={{ color: "#34d399" }}>{isHe ? "Recommended Next Action:" : "Smart Next Best Action:"}</strong>{" "}
+            <span>{affLinksCount === 0 ? (isHe ? "Create your first smart affiliate link in 60 seconds" : "Launch your first smart affiliate link in 60 seconds") : !isAffPro && affLinksCount >= 2 ? (isHe ? "Publish a verified deal to the community feed for organic clicks" : "Publish a verified deal to the community feed for organic reach") : (isHe ? "Lock your next live AI deployment in Production Studio" : "Ship your next verified AI deployment in Production Studio")}</span>
+          </div>
+          <Link href={affLinksCount === 0 ? "/affiliate" : !isAffPro && affLinksCount >= 2 ? "/feed" : "/workspace"} className="btn-primary" style={{ width: "auto", height: 32, fontSize: 11.5 }}>{isHe ? "Execute Now" : "Execute Now"}</Link>
+        </div>
+      )}
       {/* Logged-In Personalized Cockpit */}
       {userId && (
         <div className="card-surface" style={{ padding: 16, marginBottom: 18, border: "1px solid rgba(56,189,248,0.4)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>

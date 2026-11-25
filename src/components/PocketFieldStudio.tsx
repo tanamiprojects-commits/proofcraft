@@ -33,8 +33,7 @@ export default function PocketFieldStudio() {
 
   const notify = (txt: string) => { setMsg(txt); setTimeout(() => setMsg(""), 2800); };
 
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
+  useEffect(() => { const loadSyncQueue = () => supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
         const { data: prof } = await supabase.from("profiles").select("full_name, custom_prompts").eq("id", data.user.id).single();
@@ -43,14 +42,12 @@ export default function PocketFieldStudio() {
           const syncOnly = (prof.custom_prompts as SyncItem[]).filter((x) => x.direction === "to-desktop" || x.direction === "to-mobile");
           setQueue(syncOnly);
         }
-      }
-    });
-  }, []);
+      } }); loadSyncQueue(); window.addEventListener("proofcraft:sync-now", loadSyncQueue); return () => window.removeEventListener("proofcraft:sync-now", loadSyncQueue); }, []);
 
   const saveQueue = async (next: SyncItem[]) => {
     setQueue(next);
     if (userId) {
-      await supabase.from("profiles").update({ custom_prompts: next }).eq("id", userId);
+      await supabase.from("profiles").update({ custom_prompts: next }).eq("id", userId); if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("proofcraft:sync-now"));
     }
   };
 
@@ -112,7 +109,7 @@ export default function PocketFieldStudio() {
           {queue.map((item) => (
             <div key={item.id} style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
               <div>
-                <div style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>{item.direction === "to-desktop" ? "→ DESKTOP" : "→ MOBILE"} · {item.createdAt}</div>
+                <div style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>{item.direction === "to-desktop" ? t("-> DESKTOP", "-> \u05DC\u05DE\u05D7\u05E9\u05D1") : t("-> MOBILE", "-> \u05DC\u05E0\u05D9\u05D9\u05D3")} · {item.createdAt}</div>
                 <strong style={{ color: "#f8fafc" }}>{item.title}</strong>
                 <div style={{ color: "#cbd5e1", marginTop: 2 }}>{item.content}</div>
               </div>

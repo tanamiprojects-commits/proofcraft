@@ -7,11 +7,13 @@ import { ExternalLink, ShieldCheck, Sparkles, Tag, Award } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AffLink } from "@/lib/affiliate-store";
 import { useStudioLang } from "@/lib/i18n-engine";
+import ViralShareBar from "@/components/ViralShareBar";
 
 export default function PublicCuratorDealsPage() {
   const params = useParams<{ slug: string }>();
   const slug = decodeURIComponent(params?.slug || "");
-  const { isHe, dir, t } = useStudioLang();
+  const [curatorId, setCuratorId] = useState<string>("");
+  const { isHe, dir } = useStudioLang();
   const [curatorName, setCuratorName] = useState<string>("");
   const [links, setLinks] = useState<AffLink[]>([]);
   const [folder, setFolder] = useState<string>("ALL");
@@ -42,15 +44,22 @@ export default function PublicCuratorDealsPage() {
         .order("boost_score", { ascending: false })
         .order("created_at", { ascending: false });
 
+      setCuratorId(targetUserId);
       setCuratorName(displayName);
       setLinks((linkRows || []) as AffLink[]);
       setLoading(false);
     };
     if (slug) loadStorefront();
+    const onSync = () => { if (slug) loadStorefront(); };
+    window.addEventListener("proofcraft:sync-now", onSync);
+    return () => window.removeEventListener("proofcraft:sync-now", onSync);
   }, [slug]);
-
   if (loading) {
-    return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>{t("Loading Verified Deal Storefront...", "טוען חנות דילים מאומתת...")}</div>;
+    return (
+      <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>
+        {isHe ? "טוען חנות דילים מאומתת..." : "Loading Verified Deal Storefront..."}
+      </div>
+    );
   }
 
   const folders = ["ALL", ...Array.from(new Set(links.map((l) => l.folder_name)))];
@@ -61,26 +70,30 @@ export default function PublicCuratorDealsPage() {
       <div className="card-hero" style={{ padding: 22, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
           <span className="badge-pill" style={{ background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 11 }}>
-            <ShieldCheck size={13} /> {t("VERIFIED CURATOR DEAL STOREFRONT", "לוח דילים והמלצות מאומת")}
+            <ShieldCheck size={13} /> {isHe ? "לוח דילים והמלצות מאומת" : "VERIFIED CURATOR DEAL STOREFRONT"}
           </span>
-          <span className="badge-pill" style={{ background: "rgba(56,189,248,0.14)", color: "#38bdf8", fontSize: 11 }}>
-            {links.length} {t("Active Verified Deals", "דילים פעילים ומאומתים")}
-          </span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {curatorId && <Link href={`/portfolio/${curatorId}`} className="btn-ghost" style={{ height: 34, fontSize: 12 }}>{isHe ? "\u05DC\u05E4\u05D5\u05E8\u05D8\u05E4\u05D5\u05DC\u05D9\u05D5 \u05D4\u05D9\u05D5\u05E6\u05E8" : "Creator Portfolio"}</Link>}
+          <ViralShareBar
+            title={isHe ? `הדילים הנבחרים של ${curatorName}` : `${curatorName}'s Verified Deals`}
+            isHe={isHe}
+            compact
+          />
+          </div>
         </div>
 
         <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
-          {t(`${curatorName}'s Curated Deals & Smart Picks`, `הדילים וההמלצות הנבחרות של ${curatorName}`)}
+          {isHe ? `הדילים וההמלצות הנבחרות של ${curatorName}` : `${curatorName}'s Curated Deals & Smart Picks`}
         </h1>
         <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 12 }}>
-          {t(
-            "Affiliate Disclosure: As an Amazon Associate and verified partner, this curator may earn a commission from qualifying purchases at zero extra cost to you.",
-            "גילוי נאות: כשותף אמזון ורשתות מסחר מאומתות, מפרסם הלוח עשוי לקבל עמלה מרכישות מזכות ללא כל עלות נוספת עבורך."
-          )}
+          {isHe
+            ? "גילוי נאות: כשותף אמזון ורשתות מסחר מאומתות, מפרסם הלוח עשוי לקבל עמלה מרכישות מזכות ללא כל עלות נוספת עבורך."
+            : "Affiliate Disclosure: As an Amazon Associate and verified partner, this curator may earn a commission from qualifying purchases at zero extra cost to you."}
         </p>
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {folders.map((f) => (
-            <button key={f} type="button" onClick={() => setFolder(f)} className={folder === f ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11.5 }}>
+            <button key={f} type="button" onClick={() => setFolder(f)} className={folder === f ? "btn-primary" : "btn-ghost"} style={{ width: "auto", minHeight: 36, padding: "0 12px", fontSize: 11.5 }}>
               {f}
             </button>
           ))}
@@ -89,7 +102,7 @@ export default function PublicCuratorDealsPage() {
 
       {visible.length === 0 ? (
         <div className="card-surface" style={{ padding: 28, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-          {t("No public deals published in this storefront yet.", "טרם פורסמו דילים בחנות זו.")}
+          {isHe ? "טרם פורסמו דילים בחנות זו." : "No public deals published in this storefront yet."}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 14, marginBottom: 20 }}>
@@ -106,10 +119,18 @@ export default function PublicCuratorDealsPage() {
                 {lk.product_summary && <p style={{ fontSize: 12.5, color: "#cbd5e1", lineHeight: 1.55 }}>{lk.product_summary}</p>}
               </div>
 
-              <a href={`/go/${encodeURIComponent(lk.slug)}`} target="_blank" rel="noopener noreferrer nofollow sponsored" className="btn-primary" style={{ height: 40, fontSize: 12.5 }}>
-                <span>{t("Check Verified Offer", "לצפייה בדיל המאומת")}</span>
-                <ExternalLink size={14} />
-              </a>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <a href={`/go/${encodeURIComponent(lk.slug)}`} target="_blank" rel="noopener noreferrer nofollow sponsored" className="btn-primary" style={{ minHeight: 40, fontSize: 12.5 }}>
+                  <span>{isHe ? "לצפייה בדיל המאומת" : "Check Verified Offer"}</span>
+                  <ExternalLink size={14} />
+                </a>
+                <ViralShareBar
+                  title={lk.product_title}
+                  url={typeof window !== "undefined" ? `${window.location.origin}/affiliate/deal/${encodeURIComponent(lk.slug)}` : undefined}
+                  isHe={isHe}
+                  compact
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -118,10 +139,10 @@ export default function PublicCuratorDealsPage() {
       <div className="card-surface" style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div style={{ fontSize: 12, color: "#cbd5e1" }}>
           <Award size={14} color="#38bdf8" style={{ display: "inline", marginInlineEnd: 5 }} />
-          <strong>ProofCraft Fintech OS</strong> · {t("Launch your own verified deal storefront & smart links for free.", "פתח לוח דילים ציבורי וקישורים חכמים משלך בחינם.")}
+          <strong>ProofCraft Fintech OS</strong> · {isHe ? "פתח לוח דילים ציבורי וקישורים חכמים משלך בחינם." : "Launch your own verified deal storefront & smart links for free."}
         </div>
-        <Link href="/affiliate" className="btn-ghost" style={{ height: 34, fontSize: 11.5, color: "#34d399" }}>
-          <Sparkles size={13} /> {t("Create My Free Storefront", "צור לוח דילים בחינם")}
+        <Link href="/affiliate" className="btn-ghost" style={{ minHeight: 36, fontSize: 11.5, color: "#34d399" }}>
+          <Sparkles size={13} /> {isHe ? "צור לוח דילים בחינם" : "Create My Free Storefront"}
         </Link>
       </div>
     </div>

@@ -1,19 +1,24 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Shield, Plus, Save, Trash2, ExternalLink, Sparkles, DollarSign } from "lucide-react";
+import { Shield, Plus, Save, Trash2, ExternalLink, Sparkles, DollarSign, TrendingUp, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AffLink, AffNetwork, AffPromptItem } from "@/lib/affiliate-store";
 
+interface ExtendedNetwork extends AffNetwork {
+  is_custom?: boolean;
+  approval_status?: string;
+}
+
 export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: string) => void }) {
-  const [networks, setNetworks] = useState<AffNetwork[]>([]);
+  const [networks, setNetworks] = useState<ExtendedNetwork[]>([]);
   const [prompts, setPrompts] = useState<AffPromptItem[]>([]);
   const [links, setLinks] = useState<AffLink[]>([]);
+  const [referralCount, setReferralCount] = useState<number>(0);
   const [proPriceUsd, setProPriceUsd] = useState<number>(29);
   const [proPriceIls, setProPriceIls] = useState<number>(99);
   const [loading, setLoading] = useState(true);
 
-  // New Prompt Form
   const [pCat, setPCat] = useState("Social Ad Copy");
   const [pTool, setPTool] = useState("ChatGPT / Claude");
   const [pUrl, setPUrl] = useState("https://chatgpt.com");
@@ -25,15 +30,17 @@ export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: st
 
   const loadAdminAffData = async () => {
     setLoading(true);
-    const [nRes, pRes, lRes, sRes] = await Promise.all([
+    const [nRes, pRes, lRes, sRes, rRes] = await Promise.all([
       supabase.from("aff_networks").select("*").order("sort_order", { ascending: true }),
       supabase.from("aff_prompt_vault").select("*").order("sort_order", { ascending: true }),
-      supabase.from("aff_links").select("*").order("created_at", { ascending: false }).limit(60),
+      supabase.from("aff_links").select("*").order("created_at", { ascending: false }).limit(80),
       supabase.from("site_settings").select("*").eq("key", "affiliate_pro_pricing").single(),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).not("affiliate_referral_code", "is", null),
     ]);
-    if (nRes.data) setNetworks(nRes.data as AffNetwork[]);
+    if (nRes.data) setNetworks(nRes.data as ExtendedNetwork[]);
     if (pRes.data) setPrompts(pRes.data as AffPromptItem[]);
     if (lRes.data) setLinks(lRes.data as AffLink[]);
+    if (typeof rRes.count === "number") setReferralCount(rRes.count);
     if (sRes.data?.value) {
       setProPriceUsd(Number(sRes.data.value.usd || 29));
       setProPriceIls(Number(sRes.data.value.ils || 99));
@@ -44,7 +51,6 @@ export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: st
   useEffect(() => {
     loadAdminAffData();
   }, []);
-
   const saveProPricing = async () => {
     await supabase.from("site_settings").upsert({
       key: "affiliate_pro_pricing",
@@ -53,10 +59,16 @@ export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: st
     onNotify(`Affiliate Pro standalone pricing saved ($${proPriceUsd} / ₪${proPriceIls})!`);
   };
 
-  const toggleNetworkActive = async (net: AffNetwork) => {
+  const toggleNetworkActive = async (net: ExtendedNetwork) => {
     await supabase.from("aff_networks").update({ is_active: !net.is_active }).eq("id", net.id);
     await loadAdminAffData();
     onNotify(`Updated ${net.name_en} visibility.`);
+  };
+
+  const approveCustomNetwork = async (netId: string, name: string) => {
+    await supabase.from("aff_networks").update({ approval_status: "approved", is_active: true }).eq("id", netId);
+    await loadAdminAffData();
+    onNotify(`Approved custom network: ${name}`);
   };
 
   const handleAddPrompt = async (e: React.FormEvent) => {
@@ -93,10 +105,52 @@ export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: st
     await loadAdminAffData();
     onNotify("Removed affiliate link.");
   };
+
   if (loading) return <div style={{ padding: 24, color: "#94a3b8" }}>Loading Affiliate Hub Governance...</div>;
 
+  const publicDealsCount = links.filter((l) => l.is_public_deal).length;
+  const totalClicksCount = links.reduce((acc, l) => acc + Number(l.click_count || 0), 0);
+  const pendingNetworks = networks.filter((n) => n.is_custom && n.approval_status === "pending");
   return (
     <div dir="ltr" style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* 0. Organic Growth & Referral Telemetry */}
+      <div className="card-surface" style={{ padding: 18, border: "1px solid rgba(56, 189, 248, 0.3)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <TrendingUp size={16} color="#38bdf8" />
+          <h3 style={{ fontSize: 16, fontWeight: 900, color: "#f8fafc" }}>Organic Growth & Viral Telemetry</h3>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+          <div style={{ padding: 12, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>Public Deals Live</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#34d399" }}>{publicDealsCount}</div>
+          </div>
+          <div style={{ padding: 12, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>Pending Custom Networks</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: pendingNetworks.length > 0 ? "#fbbf24" : "#f8fafc" }}>{pendingNetworks.length}</div>
+          </div>
+          <div style={{ padding: 12, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>Total Tracked Clicks</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#38bdf8" }}>{totalClicksCount}</div>
+          </div>
+          <div style={{ padding: 12, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>Active Referral Profiles</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#818cf8" }}>{referralCount}</div>
+          </div>
+        </div>
+        {pendingNetworks.length > 0 && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            {pendingNetworks.map((pn) => (
+              <div key={pn.id} style={{ padding: 10, borderRadius: 10, background: "rgba(251, 191, 36, 0.08)", border: "1px solid rgba(251, 191, 36, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, color: "#fde68a", fontWeight: 700 }}>Pending Network: {pn.name_en} ({pn.slug})</span>
+                <button type="button" onClick={() => approveCustomNetwork(pn.id, pn.name_en)} className="btn-primary" style={{ width: "auto", height: 30, fontSize: 11 }}>
+                  <CheckCircle2 size={12} /> Approve Network
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* 1. Standalone Affiliate Pro Pricing Control */}
       <div className="card-surface" style={{ padding: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
@@ -115,7 +169,6 @@ export default function AdminAffiliateManager({ onNotify }: { onNotify: (msg: st
           </div>
         </div>
       </div>
-
       {/* 2. Partner Networks & Compliance Rules Manager */}
       <div className="card-surface" style={{ padding: 18 }}>
         <h3 style={{ fontSize: 16, fontWeight: 900, color: "#f8fafc", marginBottom: 12 }}>
