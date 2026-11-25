@@ -14,7 +14,7 @@ export default function PublicIdentityBar({ userId, isHe }: Props) {
   if (!userId) return null;
 
   const getFullUrl = (path: string) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://" + "proofcraft-seven.vercel.app";
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://" + "studio.tanami360.com";
     return `${origin}${path}`;
   };
 

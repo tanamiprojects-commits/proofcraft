@@ -6,7 +6,7 @@ import ViralShareBar from "@/components/ViralShareBar";
 export default function ReferralRewardCard({ referralCode, isHe }: { referralCode: string; isHe: boolean }) {
   const [copied, setCopied] = useState(false);
   const code = referralCode || "PROOFCRAFT25";
-  const inviteUrl = (typeof window !== "undefined" ? window.location.origin : "https://" + "proofcraft-seven.vercel.app") + "/auth?ref=" + encodeURIComponent(code);
+  const inviteUrl = (typeof window !== "undefined" ? window.location.origin : "https://" + "studio.tanami360.com") + "/auth?ref=" + encodeURIComponent(code);
   const copyInvite = () => {
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);

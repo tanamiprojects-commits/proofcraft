@@ -34,7 +34,7 @@ export default function VerifiedCredentialCard({ fullName, userId, purchasedLeve
   const tierLabel = tierMap[purchasedLevel] || tierMap[1];
 
   const copyMarkdownBadge = () => {
-    const pageUrl = typeof window !== "undefined" ? window.location.href : "https://" + "proofcraft-seven.vercel.app";
+    const pageUrl = typeof window !== "undefined" ? window.location.href : "https://" + "studio.tanami360.com";
     const md = `[![ProofCraft Verified AI Engineer](https://shields.io{encodeURIComponent(credentialId)}-10b981?style=for-the-badge&logo=vercel)](${pageUrl})`;
     navigator.clipboard.writeText(md);
     setCopiedBadge(true);
