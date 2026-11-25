@@ -135,6 +135,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/toolkit", label: isHe ? "כלים" : "Toolkit", icon: Wrench },
     { href: "/feed", label: isHe ? "קהילה" : "Feed", icon: Users },
     { href: "/portfolio/live", label: isHe ? "תיק עבודות" : "Portfolio", icon: Briefcase },
+    { href: "/affiliate", label: isHe ? "שותפים" : "Affiliate Hub", icon: Megaphone },
   ];
 
   const isAdmin = userEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -263,7 +264,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         position: "fixed", bottom: 0, left: 0, right: 0, height: 64, zIndex: 40,
         background: "rgba(10, 11, 14, 0.96)", backdropFilter: "blur(16px)",
         borderTop: "1px solid rgba(255,255,255,0.09)",
-        display: "grid", gridTemplateColumns: "repeat(6, 1fr)", alignItems: "center"
+        display: "grid", gridTemplateColumns: "repeat(7, 1fr)", alignItems: "center"
       }}>
         {navItems.map((item) => {
           const Icon = item.icon;

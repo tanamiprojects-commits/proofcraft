@@ -8,6 +8,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import AdminModerationQueue from "@/components/AdminModerationQueue";
 import AdminDemandRadar from "@/components/AdminDemandRadar";
+import AdminAffiliateManager from "@/components/affiliate/AdminAffiliateManager";
 import VerifiedProofsPanel from "@/components/VerifiedProofsPanel";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
@@ -307,6 +308,7 @@ export default function AdminCommandCenterPage() {
       {activeTab === "queue" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <AdminDemandRadar onGrantTier={async (uid, tier) => { await supabase.from("profiles").update({ purchased_track_level: tier }).eq("id", uid); showMsg(`Unlocked v${tier}.0 for user!`); }} />
+      <AdminAffiliateManager onNotify={showMsg} />
       <AdminModerationQueue />
           <VerifiedProofsPanel isAdminView />
         </div>
