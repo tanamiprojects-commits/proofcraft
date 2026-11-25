@@ -156,10 +156,10 @@ export default function ExpandedMarketingFeedPage() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <a href={p.live_url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ flex: "1 1 130px", minHeight: 38, padding: "0 12px", fontSize: 12, whiteSpace: "nowrap" }}>
+                <a href={p.live_url} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, fontWeight: 700, color: "#38bdf8", background: "rgba(56,189,248,0.10)", borderColor: "rgba(56,189,248,0.35)", whiteSpace: "nowrap" }}>
                   <span>{t("Inspect & Open", "צפה ופתח")}</span> <ExternalLink size={13} />
                 </a>
-                <button type="button" onClick={() => handleBoostVote(p)} className="btn-ghost" style={{ minHeight: 38, padding: "0 12px", fontSize: 12, color: "#34d399", whiteSpace: "nowrap" }}>
+                <button type="button" onClick={() => handleBoostVote(p)} className="btn-ghost" style={{ height: 34, padding: "0 11px", fontSize: 12, color: "#34d399", whiteSpace: "nowrap" }}>
                   <ThumbsUp size={13} /> {t("Verify (+2)", "אמת")}
                 </button>
                 <FeedBoostButton postId={p.id} postTitle={p.project_title} currentBoost={p.boost_credits || 0} userId={userId} isHe={isHe} onBoosted={loadPosts} onNotify={notify} />

@@ -46,19 +46,19 @@ export default function ViralShareBar({ title, url, isHe = false, compact = fals
       <button
         type="button"
         onClick={handleNativeShare}
-        className="btn-primary"
-        style={{ width: "auto", height: compact ? 32 : 36, padding: "0 12px", fontSize: 12 }}
+        className="btn-ghost"
+        style={{ height: compact ? 30 : 34, padding: "0 10px", fontSize: 11.5, color: "#38bdf8", borderColor: "rgba(56,189,248,0.35)" }}
       >
         <Share2 size={13} />
         <span>{isHe ? "שיתוף מהיר" : "Share"}</span>
       </button>
 
       <a
-        href={`https://wa.me{shareText}%20${shareUrl}`}
+        href={`https://whatsapp.com{shareText}%20${shareUrl}`}
         target="_blank"
         rel="noopener noreferrer"
         className="btn-ghost"
-        style={{ height: compact ? 32 : 36, padding: "0 10px", fontSize: 12, color: "#34d399" }}
+        style={{ height: compact ? 30 : 34, padding: "0 9px", fontSize: 11.5, color: "#34d399" }}
         title="WhatsApp"
       >
         <MessageCircle size={13} />
@@ -70,7 +70,7 @@ export default function ViralShareBar({ title, url, isHe = false, compact = fals
         target="_blank"
         rel="noopener noreferrer"
         className="btn-ghost"
-        style={{ height: compact ? 32 : 36, padding: "0 10px", fontSize: 12, color: "#38bdf8" }}
+        style={{ height: compact ? 30 : 34, padding: "0 9px", fontSize: 11.5, color: "#38bdf8" }}
         title="Telegram"
       >
         <Send size={13} />
@@ -81,7 +81,7 @@ export default function ViralShareBar({ title, url, isHe = false, compact = fals
         type="button"
         onClick={handleCopy}
         className="btn-ghost"
-        style={{ height: compact ? 32 : 36, padding: "0 10px", fontSize: 12 }}
+        style={{ height: compact ? 30 : 34, padding: "0 9px", fontSize: 11.5 }}
       >
         {copied ? <Check size={13} color="#34d399" /> : <Copy size={13} />}
         <span>{copied ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק קישור" : "Copy Link")}</span>
