@@ -359,7 +359,23 @@ export default function FeedbackWallPage() {
             <span className="badge-pill" style={{ background: "rgba(56,189,248,0.14)", color: "#38bdf8", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11, marginBottom: 8 }}>
               <Sparkles size={13} /> ZERO-TYPING SMART PUBLISHER & GA TELEMETRY WALL
             </span>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc" }}>{t("Verified Builder Proof Feed", "פיד הוכחות חיות של קהילת הבונים")}</h1>
+                  <div className="card-surface" style={{ padding: 14, marginBottom: 16, border: "1px solid rgba(52,211,153,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <span className="badge-pill" style={{ background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 10.5, marginBottom: 4 }}>
+            {t("ORGANIC TRAFFIC & GIVE-TO-GET ENGINE", "מנוע תנועה אורגנית וכלכלת קרמה")}
+          </span>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "#f8fafc" }}>
+            {t("Verified Deals & Organic Affiliate Spotlight", "חלון הראווה לדילים מאומתים ושיווק אורגני")}
+          </div>
+          <p style={{ fontSize: 12, color: "#94a3b8" }}>
+            {t("Publish approved smart links directly from your Affiliate Hub or verify community deals to earn +5 Boost Credits.", "פרסם קישורים מאושרים ישירות מתיק הקישורים שלך או אמת דילים של חברי קהילה לקבלת +5 נקודות חשיפה.")}
+          </p>
+        </div>
+        <a href="/affiliate" className="btn-primary" style={{ width: "auto", height: 36, padding: "0 14px", fontSize: 12, background: "#34d399", color: "#0a0b0e" }}>
+          {t("Manage & Publish Smart Links", "נהל ופרסם קישורים שיתופיים")}
+        </a>
+      </div>
+      <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc" }}>{t("Verified Builder Proof Feed", "פיד הוכחות חיות של קהילת הבונים")}</h1>
             <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 3 }}>
               Publish your verified ProofCraft deliverables in one click, track real-time GA engagement metrics, or request commercial promotion.
             </p>

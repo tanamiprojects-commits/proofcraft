@@ -237,3 +237,35 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Fintech A11y & Responsive Mobile Drawer Helpers */
+.a11y-highlight-links a, .a11y-highlight-links button {
+  outline: 2px solid #38bdf8 !important;
+  outline-offset: 2px !important;
+}
+.a11y-reduce-motion *, .a11y-reduce-motion *::before, .a11y-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.a11y-readable-spacing p, .a11y-readable-spacing li, .a11y-readable-spacing span {
+  line-height: 1.85 !important;
+  letter-spacing: 0.02em !important;
+}
+.horizontal-pill-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.horizontal-pill-scroll::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 768px) {
+  .obsidian-container {
+    padding-top: 76px !important;
+    padding-bottom: 92px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}

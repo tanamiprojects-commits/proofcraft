@@ -11,6 +11,7 @@ import {
   buildMultiChannelAdCopy, fetchAffiliateHubState, generateSmartSlug
 } from "@/lib/affiliate-store";
 import Link360Drawer from "@/components/affiliate/Link360Drawer";
+import StudioVisualArtwork from "@/components/StudioVisualArtwork";
 
 export default function AffiliateIncomeHubPage() {
   const { isHe, dir, t } = useStudioLang();
@@ -217,6 +218,32 @@ export default function AffiliateIncomeHubPage() {
             "השווה בין רשתות שותפים מהעולם ומישראל לפני ההרשמה, אמת מזהי מעקב עם הגנה מפני חסימות, והפק מודעות מוכנות לכל הרשתות בלחיצה אחת."
           )}
         </p>
+
+                <div style={{ marginBottom: 14 }}>
+          <StudioVisualArtwork variant="portfolio" />
+        </div>
+
+        {/* Built-in Smart Action Coach (Tailors next profitable step automatically) */}
+        <div style={{ padding: 12, borderRadius: 12, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.35)", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ fontSize: 12.5, color: "#e0f2fe" }}>
+            <strong style={{ color: "#38bdf8" }}>{t("Smart Action Coach:", "המלצת מנוע הפעולה החכם:")}</strong>{" "}
+            {accounts.filter((a) => a.is_verified).length === 0
+              ? t("Step 1: Open 'Setup & Verify IDs' and verify your first partner tag (AliExpress/Temu or WeSell Israel) to unlock safe link tracking.", "שלב 1: היכנס ללשונית ׳אשף הקמה ואימות׳ ואמת מזהה שותף ראשון כדי לפתוח יצירת קישורים מאובטחים.")
+              : links.length === 0
+                ? t("Step 2: Your partner ID is verified! Open 'Smart Links' to create your first /go/ link and auto-generate ads.", "שלב 2: מזהה השותף שלך מאומת! פתח את ׳תיק קישורים׳ ליצירת הקישור החכם הראשון ומודעות מוכנות.")
+                : totalClicks === 0
+                  ? t("Step 3: Copy your ready-made WhatsApp/Facebook ad from '360° Hub & Ads' and publish to the Organic Feed.", "שלב 3: העתק את מודעת הוואטסאפ/פייסבוק מתוך ׳ניהול 360°׳ ושגר את הדיל לפיד האורגני.")
+                  : t("Step 4: Great momentum! Open '360° Hub' on your top link to inspect peak hours or boost visibility.", "שלב 4: יש תנועה חיה! פתח ׳ניהול 360°׳ בקישור המוביל שלך לבדיקת שעות שיא או קידום בראש הפיד.")}
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab(accounts.filter((a) => a.is_verified).length === 0 ? "wizard" : "portfolio")}
+            className="btn-primary"
+            style={{ width: "auto", height: 32, padding: "0 14px", fontSize: 11.5 }}
+          >
+            {accounts.filter((a) => a.is_verified).length === 0 ? t("Verify First ID", "אמת מזהה ראשון") : t("Create / Manage Links", "נהל קישורים ומודעות")}
+          </button>
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
           {[
@@ -545,6 +572,13 @@ export default function AffiliateIncomeHubPage() {
           </div>
         </div>
       )}
+      <div style={{ marginTop: 18, padding: 12, borderRadius: 12, background: "rgba(15,23,42,0.65)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11.5, color: "#94a3b8", lineHeight: 1.55 }}>
+        <AlertTriangle size={13} style={{ display: "inline", marginInlineEnd: 5, color: "#fbbf24" }} />
+        {t(
+          "Affiliate & Legal Compliance Notice: Every public deal undergoes Admin security screening before publication. Users are solely responsible for including mandatory affiliate disclosures (FTC / Amazon Associates) and complying with anti-spam regulations.",
+          "הבהרה משפטית ובטיחותית: כל דיל ציבורי עובר סינון אבטחה ואישור אדמין לפני פרסום. המשתמש אחראי בלעדית להצגת גילוי נאות (חוק הגנת הצרכן / שותפי אמזון) ולעמידה מלאה בהוראות חוק הספאם (סעיף 30א)."
+        )}
+      </div>
     </div>
   );
 }
