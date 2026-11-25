@@ -169,6 +169,21 @@ export default function OrganicNetworkBuilderOS({ userId }: { userId: string | n
           ))}
         </div>
       </div>
+      {/* Channel Maintenance & Monetization Opportunities */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10, marginTop: 12 }}>
+        <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(52,211,153,0.25)" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 900, color: "#34d399", marginBottom: 4 }}>{isHe ? "תחזוקה שוטפת ותגובה נעוצה (Pinned CTA)" : "Channel Maintenance & Pinned CTA"}</div>
+          <p style={{ fontSize: 11.5, color: "#94a3b8", marginBottom: 8 }}>{isHe ? "הדבק תגובה נעוצה מתחת לכל סרטון או פוסט בערוצים שלך כדי להזרים תנועה קבועה לקישור האישי:" : "Pin this CTA comment under every post/video to drive continuous clicks:"}</p>
+          <button type="button" onClick={() => copyText(isHe ? `רוצים להשתמש בכלי או לבנות נכס דיגיטלי דומה? כניסה ישירה בחינם כאן 👇\n${userPrimaryLink}` : `Want to use this tool or build a similar digital asset? Direct access here 👇\n${userPrimaryLink}`, "pinned-cta")} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#34d399" }}>
+            <Copy size={11} /> {copiedKey === "pinned-cta" ? (isHe ? "התגובה הנעוצה הועתקה!" : "Pinned CTA Copied!") : (isHe ? "העתק תגובה נעוצה לפוסט/סרטון" : "Copy Pinned CTA Comment")}
+          </button>
+        </div>
+        <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(251,191,36,0.28)" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 900, color: "#fbbf24", marginBottom: 4 }}>{isHe ? "הרחבת רווחים: חסויות, פרסומות ושיתופי פעולה" : "Monetization Expansion: Sponsorships & Ads"}</div>
+          <p style={{ fontSize: 11.5, color: "#94a3b8", marginBottom: 8 }}>{isHe ? "בעל עסק או מפרסם? ניתן להציע שיתוף פעולה מסחרי, חסות ברשת היוצרים או קידום ממומן בפלטפורמה." : "Brand or advertiser? Submit a commercial sponsorship or co-marketing proposal directly to platform ops."}</p>
+          <a href="/feed" className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{isHe ? "הגש הצעה לשיתוף פעולה / חסות" : "Submit Sponsorship / Ad Inquiry"}</a>
+        </div>
+      </div>
     </section>
   );
 }

@@ -41,7 +41,7 @@ export default function AffiliateIncomeHubPage() {
   const ArrowIcon = isHe ? ArrowLeft : ArrowRight;
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"compass" | "wizard" | "portfolio" | "bridge">("compass");
+  const [activeTab, setActiveTab] = useState<"compass" | "wizard" | "portfolio" | "bridge" | "organic">("compass");
   const [networks, setNetworks] = useState<AffNetwork[]>([]);
   const [prompts, setPrompts] = useState<AffPromptItem[]>([]);
   const [accounts, setAccounts] = useState<AffUserAccount[]>([]);
@@ -193,7 +193,6 @@ export default function AffiliateIncomeHubPage() {
       <PublicIdentityBar userId={userId} isHe={isHe} />
       <CreatorRankBadge userId={userId} />
       <ExecutiveReportCard userId={userId} />
-      <OrganicNetworkBuilderOS userId={userId} />
       <SmartCampaignLauncher userId={userId} context="affiliate" />
       <div className="card-hero" style={{ padding: 22, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
@@ -218,6 +217,7 @@ export default function AffiliateIncomeHubPage() {
             { id: "wizard", icon: ShieldCheck, label: t("2. Guided Setup Wizard", "2. אשף הקמה ואימות שלב-אחר-שלב") },
             { id: "portfolio", icon: Link2, label: t(`3. Smart Links (${links.length})`, `3. תיק קישורים ומודעות (${links.length})`) },
             { id: "bridge", icon: Award, label: t("4. AI Bridge & Karma", "4. גשר כלי AI וקרמה") },
+            { id: "organic", icon: Sparkles, label: t("5. Organic Network Ring", "5. רשת שיווק אורגנית") },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -480,6 +480,7 @@ export default function AffiliateIncomeHubPage() {
         </div>
         </div>
       )}
+      {activeTab === "organic" && (<OrganicNetworkBuilderOS userId={userId} />)}
       {activeTab === "bridge" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <KarmaLedgerPanel karma={karma} boostCredits={boostCredits} isHe={isHe} />
