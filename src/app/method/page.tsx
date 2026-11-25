@@ -136,13 +136,13 @@ export default function MethodPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
           <div>
             <span className="badge-pill" style={{ background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)", fontSize: 11, marginBottom: 6 }}>
-              <Sparkles size={12} /> {isHe ? "׳›׳¡׳₪׳× ׳”׳₪׳¨׳•׳׳₪׳˜׳™׳ ׳”׳׳§׳¦׳•׳¢׳™׳× (10 ׳©׳׳‘׳™׳ + ׳ ׳™׳”׳•׳ ׳”׳§׳©׳¨)" : "10-STAGE PRODUCTION PROMPT VAULT & SESSION CONTINUITY"}
+              <Sparkles size={12} /> {isHe ? "׳›׳¡׳₪׳× ׳”׳₪׳¨׳•׳׳₪׳˜׳™׳ ׳”׳׳§׳¦׳•׳¢׳™׳× (10 ׳©׳׳‘׳™׳ + ׳ ׳™׳”׳•׳ ׳”׳§׳©׳¨)" : "11-STAGE PRODUCTION PROMPT VAULT & SESSION CONTINUITY"}
             </span>
             <h1 style={{ fontSize: 21, fontWeight: 900, color: "#f8fafc" }}>{isHe ? "׳׳×׳•׳“׳•׳׳•׳’׳™׳™׳× ProofCraft ׳•׳›׳¡׳₪׳× ׳”׳₪׳¨׳•׳׳₪׳˜׳™׳ ׳”׳—׳›׳׳”" : "ProofCraft Engineering Method & Smart Prompt Vault"}</h1>
             <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 2 }}>{isHe ? "׳׳׳“ ׳׳™׳ ׳׳”׳’׳™׳© ׳₪׳¨׳•׳׳₪׳˜׳™׳ ׳׳“׳•׳™׳§׳™׳ ׳׳›׳ ׳¦'׳׳˜ ׳—׳›׳, ׳׳¡׳›׳ ׳—׳׳•׳ ׳•׳× ׳©׳™׳—׳” ׳‘׳׳™ ׳׳׳‘׳“ ׳”׳§׳©׳¨ ׳•׳׳©׳—׳–׳¨ ׳₪׳§׳•׳“׳•׳× ׳©׳ ׳—׳×׳›׳•" : "Master context-rich prompting, seamless session handoffs, truncated command recovery, and zero-secret execution."}</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => setActiveIdx(8)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12, borderColor: "rgba(52,211,153,0.4)", color: "#34d399" }}><RefreshCw size={13} /> {isHe ? "׳₪׳¨׳•׳׳₪׳˜ ׳¡׳™׳›׳•׳ ׳©׳™׳—׳”" : "Session Handoff Prompt"}</button>
+            <button type="button" onClick={() => setActiveIdx(10)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12, borderColor: "rgba(52,211,153,0.4)", color: "#34d399" }}><RefreshCw size={13} /> {isHe ? "׳₪׳¨׳•׳׳₪׳˜ ׳¡׳™׳›׳•׳ ׳©׳™׳—׳”" : "Full Platform Handover"}</button>
             <button type="button" onClick={() => setActiveIdx(9)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12, borderColor: "rgba(251,191,36,0.4)", color: "#fbbf24" }}><ShieldAlert size={13} /> {isHe ? "׳©׳—׳–׳•׳¨ ׳₪׳§׳•׳“׳” ׳©׳ ׳—׳×׳›׳”" : "Truncated Recovery Prompt"}</button>
             <button type="button" onClick={() => setAddOpen(true)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12 }}><PlusCircle size={14} /> {isHe ? "׳”׳•׳¡׳£ ׳₪׳¨׳•׳׳₪׳˜ ׳׳™׳©׳™" : "Add Custom Prompt"}</button>
             <button type="button" onClick={() => setChainOpen(true)} className="btn-primary" style={{ width: "auto", minHeight: 38, fontSize: 12 }}><Package size={14} /> {isHe ? `׳‘׳•׳ ׳” ׳©׳¨׳©׳¨׳× (${selectedChainIds.length})` : `Chain Builder (${selectedChainIds.length})`}</button>

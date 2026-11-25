@@ -197,5 +197,23 @@ export const PROMPT_VAULT_CATALOG: VaultPromptItem[] = [
     securityNote: "Always split PowerShell scripts over 55 lines into Part A and Part B and avoid raw angle brackets in search anchors.",
     securityNoteHe: "פצל תמיד פקודות מעל 55 שורות לחלק א׳ וחלק ב׳ והימנע מתווי סוגריים משולשים בעוגני חיפוש.",
     sampleOutput: "Exact cut-off diagnosis + Part A / Part B short safe PowerShell scripts + verified build check."
+  },
+  {
+    id: "vp-11",
+    stageNumber: 11,
+    category: "11. Full-Platform Master Handover & Admin Continuity",
+    categoryHe: "11. העברת הקשר מלאה של פלטפורמה שלמה ותחזוקת אדמין",
+    title: "Enterprise Full-Platform Master Blueprint & Admin Handover Generator",
+    titleHe: "מחולל מסמך העברת הקשר מלא של פלטפורמה שלמה (Master Blueprint & Admin OS)",
+    goal: "Generate an exhaustive end-to-end engineering, operational, security, and legal Master Blueprint of an entire live platform so any fresh AI chat window can immediately maintain, audit, or upgrade the system from the exact latest commit without losing a single architectural detail.",
+    goalHe: "הפקת מסמך העברת הקשר מלא מקצה לקצה הכולל את כל ההיסטוריה מיום הרעיון, המחסנית הטכנולוגית, מפת הקבצים, תקנון העבודה, התקלות שנפתרו, מצב הייצור וה-Admin OS — כדי שכל חלון שיחה חדש יוכל להמשיך לתחזק ולשדרג מאותה שנייה בדיוק.",
+    howToUse: "Run this prompt at the end of a major milestone or before switching chat sessions. Copy the resulting Master Blueprint and paste it as Message #1 in any new AI chat window along with your next maintenance or feature request.",
+    howToUseHe: "הפעל פרומפט זה בסיום אבן דרך מרכזית או לפני פתיחת חלון שיחה חדש. העתק את מסמך ה-Master Blueprint שייווצר והדבק אותו כהודעה הראשונה בצ'אט החדש יחד עם משימת התחזוקה או השדרוג הבאה.",
+    expectedResult: "A comprehensive, copy-pasteable Master Handover Blueprint covering: 1) Project Identity & Live URLs, 2) Full Version History & Commits, 3) Complete File & Architecture Map, 4) Solved Technical Pitfalls & Safe PowerShell Rules, 5) Admin & Legal Readiness Audit, and 6) Exact Starting Point for Next Actions.",
+    expectedResultHe: "מסמך Master Handover Blueprint שלם ומוכן להדבקה הכולל: 1) תעודת זהות וכתובות ייצור חיות, 2) יומן בנייה מלא מ-v1.0 ועד הגרסה האחרונה, 3) מפת קבצים וארכיטקטורה מלאה, 4) כל התקלות שנפתרו וכללי PowerShell חסינים, 5) בקרת אדמין וכיסוי משפטי, ו-6) נקודת זינוק מדויקת להמשך.",
+    powershellReadyPrompt: "Act as Principal Systems Architect & Lead DevOps Engineer. Generate a complete, exhaustive Master Handover Blueprint for our live platform so we can continue maintenance, security audits, or feature upgrades in a brand-new AI chat session with 100% context continuity. Structure the output into 7 crystal-clear sections: (1) Project Identity, Tech Stack, Local Path, GitHub & Live Production URLs; (2) Complete Chronological Build Log from Idea (v1.0) to Latest Verified Commit; (3) Full File & Component Architecture Map (App Routes, Components, Lib Engines, Database Tables & RLS); (4) Mandatory Engineering Constitution (Zero-Mix HE/EN, Cross-Device Live Sync, Backups, Safe Split-Chunk UTF-8 PowerShell without raw angle brackets); (5) All Solved Technical Pitfalls & Root-Cause Fixes; (6) Admin Operations, 24/7 Watchdog & Legal Compliance Status; and (7) Exact Current State & Immediate Next-Step Action Protocol. Ensure zero secrets or API keys appear in the output.",
+    securityNote: "Verify that no .env.local secrets, SERVICE_ROLE_KEY, or private tokens are included in the generated Master Blueprint.",
+    securityNoteHe: "ודא שאף מפתח סודי מ-.env.local, SERVICE_ROLE_KEY או טוקן פרטי לא נכלל במסמך הסיכום שנוצר.",
+    sampleOutput: "Complete 7-Section Master Platform Blueprint ready to paste as Message #1 in any new AI chat session."
   }
 ];
