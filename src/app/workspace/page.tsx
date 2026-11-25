@@ -1,4 +1,5 @@
 "use client";
+import OrganicNetworkBuilderOS from "@/components/OrganicNetworkBuilderOS";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -81,6 +82,7 @@ export default function WorkspacePage() {
       <PublicIdentityBar userId={userId} isHe={isHe} />
       <CreatorRankBadge userId={userId} />
       <ExecutiveReportCard userId={userId} />
+      <OrganicNetworkBuilderOS userId={userId} />
       <SmartCampaignLauncher userId={userId} context="workspace" />
       <PublicBrandingEditor userId={userId} />
       <div className="card-hero" style={{ padding: 20, marginBottom: 18 }}>

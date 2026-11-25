@@ -1,4 +1,5 @@
 "use client";
+import OrganicNetworkBuilderOS from "@/components/OrganicNetworkBuilderOS";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -192,6 +193,7 @@ export default function AffiliateIncomeHubPage() {
       <PublicIdentityBar userId={userId} isHe={isHe} />
       <CreatorRankBadge userId={userId} />
       <ExecutiveReportCard userId={userId} />
+      <OrganicNetworkBuilderOS userId={userId} />
       <SmartCampaignLauncher userId={userId} context="affiliate" />
       <div className="card-hero" style={{ padding: 22, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
