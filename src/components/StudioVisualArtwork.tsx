@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 
 interface ArtworkProps {
-  variant: "home" | "method" | "workspace" | "toolkit" | "feed" | "portfolio";
+  variant: "home" | "method" | "workspace" | "toolkit" | "feed" | "portfolio" | "affiliate";
 }
 
 const THEMES: Record<
@@ -81,7 +81,19 @@ const THEMES: Record<
     stat2Label: "MODERATION",
     stat2Val: "ADMIN VERIFIED",
   },
-  portfolio: {
+      affiliate: {
+      badge: "VERIFIED AFFILIATE & SMART DEAL OS",
+      title: "Smart Edge Links & Multi-Channel Ads",
+      subtitle: "Edge 302 Telemetry · FTC & Amazon Compliant",
+      primaryGlow: "rgba(52, 211, 153, 0.25)",
+      secondaryGlow: "rgba(56, 189, 248, 0.2)",
+      accentHex: "#34d399",
+      stat1Label: "ROUTING",
+      stat1Val: "EDGE 302",
+      stat2Label: "COMPLIANCE",
+      stat2Val: "VERIFIED SAFE",
+    },
+    portfolio: {
     badge: "CERTIFIED BUILDER CREDENTIAL",
     title: "Live Proof-of-Work",
     subtitle: "Cryptographic Case Studies & Deployed Apps",

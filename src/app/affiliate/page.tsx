@@ -223,7 +223,7 @@ export default function AffiliateIncomeHubPage() {
         </p>
 
                 <div style={{ marginBottom: 14 }}>
-          <StudioVisualArtwork variant="portfolio" />
+          <StudioVisualArtwork variant="affiliate" />
         </div>
 
         {/* Built-in Smart Action Coach (Tailors next profitable step automatically) */}
@@ -284,44 +284,64 @@ export default function AffiliateIncomeHubPage() {
               )}
             </div>
           </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
           {networks.map((net) => {
             const verified = accounts.some((a) => a.network_slug === net.slug && a.is_verified);
+            const catLabel = isHe
+              ? (net.category === "Global E-Commerce" ? "מסחר גלובלי" : net.category === "High-Conversion Consumer" ? "צרכנות והמרה גבוהה" : net.category === "Global Marketplace & Tech" ? "טכנולוגיה ומרקטפלייס" : net.category)
+              : net.category;
             return (
-              <div key={net.id} className="card-surface" style={{ padding: 18 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc" }}>{isHe ? net.name_he : net.name_en}</h2>
-                      <span className="badge-pill" style={{ fontSize: 10, background: "rgba(56,189,248,0.14)", color: "#38bdf8" }}>{net.category}</span>
-                      {verified && <span className="badge-pill" style={{ fontSize: 10, background: "rgba(52,211,153,0.16)", color: "#34d399" }}>✓ {t("VERIFIED", "מאומת")}</span>}
+              <div key={net.id} className="card-surface" style={{ padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 14, border: verified ? "1px solid rgba(52,211,153,0.45)" : "1px solid rgba(255,255,255,0.09)" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <div>
+                      <span className="badge-pill" style={{ fontSize: 10, background: "rgba(56,189,248,0.14)", color: "#38bdf8", marginBottom: 6 }}>{catLabel}</span>
+                      <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc", lineHeight: 1.3 }}>{isHe ? net.name_he : net.name_en}</h2>
                     </div>
-                    <div style={{ fontSize: 12.5, color: "#34d399", fontWeight: 700 }}>
-                      {t("Commission:", "אחוז עמלה:")} {net.commission_range} · {t("Cookie Window:", "חלון עוגייה:")} {net.cookie_window}
+                    {verified && (
+                      <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(52,211,153,0.16)", color: "#34d399", border: "1px solid rgba(52,211,153,0.35)" }}>
+                        ✓ {t("VERIFIED", "מאומת")}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Separate Fintech KPI Telemetry Boxes */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", marginBottom: 2 }}>{t("COMMISSION YIELD", "טווח עמלה")}</div>
+                      <div dir="ltr" style={{ fontSize: 12.5, fontWeight: 800, color: "#34d399", textAlign: isHe ? "right" : "left" }}>{net.commission_range}</div>
+                    </div>
+                    <div style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", marginBottom: 2 }}>{t("COOKIE WINDOW", "חלון עוגייה")}</div>
+                      <div dir="ltr" style={{ fontSize: 12.5, fontWeight: 800, color: "#38bdf8", textAlign: isHe ? "right" : "left" }}>{net.cookie_window}</div>
                     </div>
                   </div>
-                  <button type="button" onClick={() => { setSelectedNetSlug(net.slug); setActiveTab("wizard"); }} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 16px", fontSize: 12 }}>
-                    {verified ? t("Manage Verified ID", "נהל מזהה מאומת") : t("Start Guided Setup", "התחל אשף הרשמה ואימות")}
-                  </button>
-                </div>
 
-                <div style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", fontSize: 12.5, color: "#e2e8f0", marginBottom: 10 }}>
-                  <strong style={{ color: "#38bdf8" }}>{t("Approval Threshold:", "תנאי סף לפני הרשמה:")}</strong> {isHe ? net.threshold_he : net.threshold_en}
-                </div>
-
-                <div style={{ padding: 10, borderRadius: 10, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.28)", fontSize: 12, color: "#fecaca" }}>
-                  <div style={{ fontWeight: 800, marginBottom: 4 }}>
-                    <AlertTriangle size={13} style={{ display: "inline", marginRight: 5 }} />
-                    {t("Critical Anti-Ban Rules:", "איסורים ומגבלות קריטיות למניעת חסימה:")}
+                  <div style={{ padding: 10, borderRadius: 10, background: "#0a0b0e", fontSize: 12.5, color: "#cbd5e1", lineHeight: 1.55 }}>
+                    <strong style={{ color: "#f8fafc" }}>{t("Approval Requirement:", "תנאי סף:")}</strong> {isHe ? net.threshold_he : net.threshold_en}
                   </div>
-                  <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-                    {(isHe ? net.strict_rules_he : net.strict_rules_en).map((rule, idx) => (
-                      <li key={idx} style={{ marginBottom: 2 }}>{rule}</li>
-                    ))}
-                  </ul>
+
+                  {/* Clean Collapsible Anti-Ban Compliance Drawer */}
+                  <details style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.25)", fontSize: 12, color: "#fecaca" }}>
+                    <summary style={{ cursor: "pointer", fontWeight: 800, listStyle: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                      <AlertTriangle size={13} color="#f87171" />
+                      <span>{t("View Anti-Ban & Compliance Rules", "צפה בכללי אבטחה ומניעת חסימה")}</span>
+                    </summary>
+                    <ul style={{ margin: "8px 0 0", paddingInlineStart: 18, lineHeight: 1.5 }}>
+                      {(isHe ? net.strict_rules_he : net.strict_rules_en).map((rule, idx) => (
+                        <li key={idx} style={{ marginBottom: 3 }}>{rule}</li>
+                      ))}
+                    </ul>
+                  </details>
                 </div>
+
+                <button type="button" onClick={() => { setSelectedNetSlug(net.slug); setActiveTab("wizard"); }} className={verified ? "btn-ghost" : "btn-primary"} style={{ width: "100%", height: 40, fontSize: 12.5 }}>
+                  {verified ? t("Manage Verified Partner Tag", "נהל מזהה שותף מאומת") : t("Start Guided Setup & Verify", "התחל אשף הקמה ואימות")}
+                </button>
               </div>
             );
           })}
+          </div>
         </div>
       )}
       {activeTab === "wizard" && activeNetwork && (
@@ -358,6 +378,23 @@ export default function AffiliateIncomeHubPage() {
               <ExternalLink size={14} /> {t(`Open Official ${activeNetwork.name_en} Portal`, `פתח את פורטל ההרשמה הרשמי של ${activeNetwork.name_he}`)}
             </a>
           </div>
+
+          {userId && (
+            <div className="card-surface" style={{ padding: 12, border: "1px solid rgba(56,189,248,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                <strong style={{ color: "#38bdf8" }}>{t("Your Public Deal Storefront URL:", "כתובת חנות הדילים הציבורית שלך לשיתוף בביו:")}</strong>{" "}
+                <code dir="ltr" style={{ color: "#34d399" }}>{`https://vercel.app{userId}`}</code>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" onClick={() => { navigator.clipboard?.writeText(`https://vercel.app{userId}`); notify(t("Public storefront link copied!", "קישור חנות הדילים הועתק!")); }} className="btn-ghost" style={{ height: 32, fontSize: 11 }}>
+                  <Copy size={12} /> {t("Copy Storefront URL", "העתק קישור לחנות")}
+                </button>
+                <a href={`/deals/${userId}`} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11 }}>
+                  <ExternalLink size={12} /> {t("Open Storefront", "צפה בחנות")}
+                </a>
+              </div>
+            </div>
+          )}
 
           <div className="card-hero" style={{ padding: 18 }}>
             <h3 style={{ fontSize: 16, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
@@ -401,6 +438,23 @@ export default function AffiliateIncomeHubPage() {
       )}
       {activeTab === "portfolio" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {userId && (
+            <div className="card-surface" style={{ padding: 12, border: "1px solid rgba(56,189,248,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                <strong style={{ color: "#38bdf8" }}>{t("Your Public Deal Storefront URL:", "כתובת חנות הדילים הציבורית שלך לשיתוף בביו:")}</strong>{" "}
+                <code dir="ltr" style={{ color: "#34d399" }}>{`https://vercel.app{userId}`}</code>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" onClick={() => { navigator.clipboard?.writeText(`https://vercel.app{userId}`); notify(t("Public storefront link copied!", "קישור חנות הדילים הועתק!")); }} className="btn-ghost" style={{ height: 32, fontSize: 11 }}>
+                  <Copy size={12} /> {t("Copy Storefront URL", "העתק קישור לחנות")}
+                </button>
+                <a href={`/deals/${userId}`} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11 }}>
+                  <ExternalLink size={12} /> {t("Open Storefront", "צפה בחנות")}
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="card-hero" style={{ padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
               <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc" }}>
@@ -474,6 +528,23 @@ export default function AffiliateIncomeHubPage() {
       )}
       {activeTab === "bridge" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {userId && (
+            <div className="card-surface" style={{ padding: 12, border: "1px solid rgba(56,189,248,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 12, color: "#cbd5e1" }}>
+                <strong style={{ color: "#38bdf8" }}>{t("Your Public Deal Storefront URL:", "כתובת חנות הדילים הציבורית שלך לשיתוף בביו:")}</strong>{" "}
+                <code dir="ltr" style={{ color: "#34d399" }}>{`https://vercel.app{userId}`}</code>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" onClick={() => { navigator.clipboard?.writeText(`https://vercel.app{userId}`); notify(t("Public storefront link copied!", "קישור חנות הדילים הועתק!")); }} className="btn-ghost" style={{ height: 32, fontSize: 11 }}>
+                  <Copy size={12} /> {t("Copy Storefront URL", "העתק קישור לחנות")}
+                </button>
+                <a href={`/deals/${userId}`} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11 }}>
+                  <ExternalLink size={12} /> {t("Open Storefront", "צפה בחנות")}
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="card-hero" style={{ padding: 18 }}>
             <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
               {t("External AI Tools & Dynamic Prompt Bridge", "גשר לכלי AI חיצוניים ומחולל פרומפטים דינמי")}
