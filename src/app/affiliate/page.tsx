@@ -12,6 +12,8 @@ import {
 } from "@/lib/affiliate-store";
 import Link360Drawer from "@/components/affiliate/Link360Drawer";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
+import CustomNetworkModal from "@/components/affiliate/CustomNetworkModal";
+import AffiliateMonetizationModal from "@/components/affiliate/AffiliateMonetizationModal";
 
 export default function AffiliateIncomeHubPage() {
   const { isHe, dir, t } = useStudioLang();
@@ -51,6 +53,7 @@ export default function AffiliateIncomeHubPage() {
   const [bridgePrice, setBridgePrice] = useState("");
   const [bridgeBenefit, setBridgeBenefit] = useState("");
   const [proModalOpen, setProModalOpen] = useState(false);
+  const [customNetOpen, setCustomNetOpen] = useState(false);
 
   const notify = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3400); };
 
@@ -264,7 +267,23 @@ export default function AffiliateIncomeHubPage() {
       </div>
 
       {activeTab === "compass" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="card-surface" style={{ padding: 14, border: "1px solid rgba(251,191,36,0.35)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ fontSize: 12.5, color: "#e2e8f0" }}>
+              <strong style={{ color: "#fbbf24" }}>{t("Fintech Partner Directory & Custom Networks:", "ספריית רשתות השותפים והוספת פלטפורמות:")}</strong>{" "}
+              {t("Compare verified commission yields or add any external affiliate program to track in one place.", "השווה אחוזי עמלה מאומתים או הוסף כל תוכנית שותפים חיצונית למעקב מרוכז.")}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => setCustomNetOpen(true)} className="btn-primary" style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12, background: "#38bdf8", color: "#0a0b0e" }}>
+                <Plus size={13} /> {t("Add Custom Platform", "הוסף פלטפורמה חיצונית")}
+              </button>
+              {!isPro && (
+                <button type="button" onClick={() => setProModalOpen(true)} className="btn-primary" style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12, background: "#fbbf24", color: "#0a0b0e" }}>
+                  <Sparkles size={13} /> {t("Upgrade Pro & Bundles", "שדרוג Pro וחבילות")}
+                </button>
+              )}
+            </div>
+          </div>
           {networks.map((net) => {
             const verified = accounts.some((a) => a.network_slug === net.slug && a.is_verified);
             return (
@@ -551,27 +570,9 @@ export default function AffiliateIncomeHubPage() {
         onNotify={notify}
       />
 
-      {proModalOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div className="card-hero" style={{ maxWidth: 440, width: "100%", padding: 22 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
-              {t("Upgrade to Affiliate Pro Workspace", "שדרוג למסלול Affiliate Pro")}
-            </h3>
-            <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 14 }}>
-              {t(
-                "Unlock unlimited smart links, viral TikTok/Reels & visual studio prompts, and priority public deal placement — standalone without requiring Tracks v1.0–v4.0.",
-                "פתח קישורים חכמים ללא הגבלה, פרומפטים מתקדמים לווידאו וגרפיקה, וקידום מועדף בפיד הדילים — חבילה עצמאית ללא צורך במסלולי הבנייה."
-              )}
-            </p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setProModalOpen(false)} className="btn-ghost" style={{ height: 38, fontSize: 12 }}>{t("Close", "סגור")}</button>
-              <Link href="/workspace" className="btn-primary" style={{ width: "auto", height: 38, padding: "0 16px", fontSize: 12, background: "#fbbf24", color: "#0a0b0e" }}>
-                {t("Reserve Affiliate Pro ($29 / ₪99)", "שריין Affiliate Pro (₪99 / $29)")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+            <CustomNetworkModal isOpen={customNetOpen} onClose={() => setCustomNetOpen(false)} userId={userId} onCreated={() => reloadHub(userId)} onNotify={notify} />
+      <AffiliateMonetizationModal isOpen={proModalOpen} onClose={() => setProModalOpen(false)} userId={userId} defaultEmail={userEmail} onNotify={notify} />
+
       <div style={{ marginTop: 18, padding: 12, borderRadius: 12, background: "rgba(15,23,42,0.65)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11.5, color: "#94a3b8", lineHeight: 1.55 }}>
         <AlertTriangle size={13} style={{ display: "inline", marginInlineEnd: 5, color: "#fbbf24" }} />
         {t(
