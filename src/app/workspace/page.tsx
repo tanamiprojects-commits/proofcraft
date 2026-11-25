@@ -13,6 +13,12 @@ import Track3AcademyStudio from "@/components/Track3AcademyStudio";
 import Track4AcademyStudio from "@/components/Track4AcademyStudio";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
 import PublicIdentityBar from "@/components/PublicIdentityBar";
+import UserGuideDrawer from "@/components/UserGuideDrawer";
+import NextBestActionEngine from "@/components/NextBestActionEngine";
+import CreatorRankBadge from "@/components/CreatorRankBadge";
+import ExecutiveReportCard from "@/components/ExecutiveReportCard";
+import SmartCampaignLauncher from "@/components/SmartCampaignLauncher";
+import PublicBrandingEditor from "@/components/PublicBrandingEditor";
 import CreatorLaunchChecklist from "@/components/CreatorLaunchChecklist";
 import UserSupportInboxCard from "@/components/UserSupportInboxCard";
 import UpgradeIntentModal from "@/components/UpgradeIntentModal";
@@ -70,6 +76,13 @@ export default function WorkspacePage() {
         </div>
       )}
 
+      <UserGuideDrawer context="workspace" />
+      <NextBestActionEngine userId={userId} />
+      <PublicIdentityBar userId={userId} isHe={isHe} />
+      <CreatorRankBadge userId={userId} />
+      <ExecutiveReportCard userId={userId} />
+      <SmartCampaignLauncher userId={userId} context="workspace" />
+      <PublicBrandingEditor userId={userId} />
       <div className="card-hero" style={{ padding: 20, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
           <div>

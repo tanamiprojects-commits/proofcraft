@@ -18,6 +18,11 @@ import CustomNetworkModal from "@/components/affiliate/CustomNetworkModal";
 import AffiliateMonetizationModal from "@/components/affiliate/AffiliateMonetizationModal";
 import ReferralRewardCard from "@/components/affiliate/ReferralRewardCard";
 import PublicIdentityBar from "@/components/PublicIdentityBar";
+import UserGuideDrawer from "@/components/UserGuideDrawer";
+import NextBestActionEngine from "@/components/NextBestActionEngine";
+import CreatorRankBadge from "@/components/CreatorRankBadge";
+import ExecutiveReportCard from "@/components/ExecutiveReportCard";
+import SmartCampaignLauncher from "@/components/SmartCampaignLauncher";
 import AffiliateAnalyticsPanel from "@/components/affiliate/AffiliateAnalyticsPanel";
 import KarmaLedgerPanel from "@/components/affiliate/KarmaLedgerPanel";
 import LinkHealthWatchdog from "@/components/affiliate/LinkHealthWatchdog";
@@ -182,6 +187,12 @@ export default function AffiliateIncomeHubPage() {
     <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       {toast && <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 95, background: "#0f172a", border: "1px solid rgba(52,211,153,0.45)", color: "#34d399", padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>{toast}</div>}
 
+      <UserGuideDrawer context="affiliate" />
+      <NextBestActionEngine userId={userId} />
+      <PublicIdentityBar userId={userId} isHe={isHe} />
+      <CreatorRankBadge userId={userId} />
+      <ExecutiveReportCard userId={userId} />
+      <SmartCampaignLauncher userId={userId} context="affiliate" />
       <div className="card-hero" style={{ padding: 22, marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <span className="badge-pill" style={{ background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 11 }}>
