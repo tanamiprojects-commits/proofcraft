@@ -80,7 +80,7 @@ export default function EcosystemCommandCenter() {
       setNodes(initial);
       try { const { data: vg } = await supabase.from("site_settings").select("value").eq("key", "vip_access_grants").single(); if (Array.isArray(vg?.value)) setVipGrants(vg.value);
       try { const { data: vt } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").single(); if (Array.isArray(vt?.value)) setVaultTickets(vt.value); } catch {} } catch {}
-      try { const { data: vSet } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").single(); if (vSet?.value) { setVaultEnabled(vSet.value.enabled !== false); setVaultNotice(vSet.value.notice || ""); setRequireAdminReset(vSet.value.requireAdminForReset !== false); } } catch {}
+      try { const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); if (j.governance) { setVaultEnabled(j.governance.enabled !== false); setVaultNotice(j.governance.notice || ""); setRequireAdminReset(j.governance.requireAdminForReset !== false); } if (Array.isArray(j.tickets)) setVaultTickets(j.tickets); } catch {}
       probeList(initial);
     })();
   }, []);

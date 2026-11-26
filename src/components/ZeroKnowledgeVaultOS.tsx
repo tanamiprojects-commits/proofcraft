@@ -66,7 +66,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
   const [infoMsg, setInfoMsg] = useState("");
   const [govNotice, setGovNotice] = useState("");
   const [govDisabled, setGovDisabled] = useState(false);
-  const [requireAdminReset, setRequireAdminReset] = useState(false);
+  const [requireAdminReset, setRequireAdminReset] = useState(true);
   const [fontScale, setFontScale] = useState<number>(100);
   const [a11yHighContrast, setA11yHighContrast] = useState(false);
   const [exportLang, setExportLang] = useState<"he" | "en" | "both">("he");
@@ -112,7 +112,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
     (async () => {
       try {
         const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); const data = { value: j.governance };
-        if (data?.value) { setGovDisabled(data.value.enabled === false); setGovNotice(data.value.notice || ""); setRequireAdminReset(data.value.requireAdminForReset === true); }
+        if (data?.value) { setGovDisabled(data.value.enabled === false); setGovNotice(data.value.notice || ""); setRequireAdminReset(data.value.requireAdminForReset !== false); }
       } catch {}
     })();
   }, [storageKey]);
@@ -219,7 +219,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
   const executeSafeWipe = async () => {
     if (wipeConfirmText.trim() !== "RESET VAULT") { setErrorMsg(isHe ? "הקלד RESET VAULT במדויק לאישור." : "Type exact RESET VAULT."); return; }
     let mustAdmin = requireAdminReset;
-    try { const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); const data = { value: j.governance }; if (data?.value) mustAdmin = data.value.requireAdminForReset === true; } catch {}
+    try { const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); const data = { value: j.governance }; if (data?.value) mustAdmin = data.value.requireAdminForReset !== false; } catch {}
     if (mustAdmin) {
       if (!recAdminCode.trim()) { setErrorMsg(isHe ? "נדרש קוד אישור אדמין (VLT-...) לאיפוס." : "Admin approval code required."); return; }
       const rt = await fetch("/api/vault-governance", { cache: "no-store" }); const jt = await rt.json(); const data = { value: jt.tickets };
