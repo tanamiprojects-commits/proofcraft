@@ -51,7 +51,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [recUserCode, setRecUserCode] = useState("");
   const [recAdminCode, setRecAdminCode] = useState("");
   const [recNewPass, setRecNewPass] = useState("");
-  const [requireAdminReset, setRequireAdminReset] = useState(true);
+  const [requireAdminReset, setRequireAdminReset] = useState(false);
   const [reqEmail, setReqEmail] = useState("");
   const [reqNote, setReqNote] = useState("");
   const [reqType, setReqType] = useState<"recover_with_key" | "full_wipe_reset">("recover_with_key");
@@ -97,7 +97,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
     (async () => {
       try {
         const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").single();
-        if (data?.value) { if (data.value.enabled === false) setGovDisabled(true); if (data.value.notice) setGovNotice(data.value.notice); if (data.value.requireAdminForReset === false) setRequireAdminReset(false); }
+        if (data?.value) { if (data.value.enabled === false) setGovDisabled(true); if (data.value.notice) setGovNotice(data.value.notice); setRequireAdminReset(data.value.requireAdminForReset === true); }
       } catch {}
     })();
   }, [storageKey]);
@@ -197,7 +197,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
       const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").single();
       const existing: VaultResetTicket[] = Array.isArray(data?.value) ? data.value : [];
       const ticket: VaultResetTicket = { id: `tk-${Date.now()}`, userEmail: reqEmail.trim().toLowerCase(), requestType: reqType, verificationNote: reqNote.trim(), status: "pending", approvalCode: "", createdAt: new Date().toISOString() };
-      await supabase.from("site_settings").upsert({ key: "vault_reset_tickets", value: [ticket, ...existing], updated_at: new Date().toISOString() });
+      await supabase.from("site_settings").upsert({ key: "vault_reset_tickets", value: [ticket, ...existing], updated_at: new Date().toISOString() }, { onConflict: "key" });
       setInfoMsg(isHe ? "בקשת האימות נשלחה לאדמין! לאחר אימות זהותך לחץ על 'בדוק אישור אדמין'." : "Verification request sent to Admin! Click 'Check Admin Approval' once verified.");
     } catch { setErrorMsg(isHe ? "שגיאה בשליחת הבקשה." : "Failed to submit request."); }
   };
@@ -476,7 +476,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
               <div style={{ borderTop: "1px solid rgba(248,113,113,0.25)", paddingTop: 8, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ fontSize: 11, color: "#fca5a5" }}>{isHe ? "איפוס הרסני מאפס (מוחק לצמיתות את כל הנתונים): הקלד RESET VAULT:" : "Permanent Wipe Reset (destroys all data): Type RESET VAULT:"}</span>
                 <input value={wipeConfirmText} onChange={(e) => setWipeConfirmText(e.target.value)} placeholder="RESET VAULT" className="input-dark" style={{ width: 130, height: 30, fontSize: 11 }} />
-                <button type="button" onClick={async () => { if (wipeConfirmText.trim() !== "RESET VAULT") { setErrorMsg(isHe ? "הקלד RESET VAULT במדויק לאישור." : "Type exact RESET VAULT."); return; } if (requireAdminReset) { if (!recAdminCode.trim()) { setErrorMsg(isHe ? "נדרש קוד אישור אדמין (VLT-...) לביצוע איפוס." : "Admin approval code required."); return; } const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").single(); const list: VaultResetTicket[] = Array.isArray(data?.value) ? data.value : []; const ok = list.find((t) => t.approvalCode === recAdminCode.trim() && t.status === "approved"); if (!ok) { setErrorMsg(isHe ? "קוד האדמין אינו מאושר או שגוי." : "Invalid or unapproved admin code."); return; } } localStorage.removeItem(storageKey); setBlob(null); setEntries([]); setUnlocked(false); setShowRecoverBox(false); setWipeConfirmText(""); setErrorMsg(""); setInfoMsg(isHe ? "הכספת הישנה הושמדה לצמיתות באישור. הקם כספת חדשה כעת." : "Old vault wiped with authorization. Create a new vault now."); }} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#f87171" }}>{isHe ? "השמד כספת ישנה והתחל מאפס" : "Wipe & Start Fresh"}</button>
+                <button type="button" onClick={async () => { if (wipeConfirmText.trim() !== "RESET VAULT") { setErrorMsg(isHe ? "הקלד RESET VAULT במדויק לאישור." : "Type exact RESET VAULT."); return; } let mustHaveAdmin = requireAdminReset; try { const { data: gLive } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").single(); if (gLive?.value) mustHaveAdmin = gLive.value.requireAdminForReset === true; } catch {} if (mustHaveAdmin) { if (!recAdminCode.trim()) { setErrorMsg(isHe ? "נדרש קוד אישור אדמין (VLT-...) לביצוע איפוס." : "Admin approval code required."); return; } const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").single(); const list: VaultResetTicket[] = Array.isArray(data?.value) ? data.value : []; const ok = list.find((t) => t.approvalCode === recAdminCode.trim() && t.status === "approved"); if (!ok) { setErrorMsg(isHe ? "קוד האדמין אינו מאושר או שגוי." : "Invalid or unapproved admin code."); return; } } localStorage.removeItem(storageKey); setBlob(null); setEntries([]); setUnlocked(false); setShowRecoverBox(false); setWipeConfirmText(""); setErrorMsg(""); setInfoMsg(isHe ? "הכספת הישנה הושמדה לצמיתות באישור. הקם כספת חדשה כעת." : "Old vault wiped with authorization. Create a new vault now."); }} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#f87171" }}>{isHe ? "השמד כספת ישנה והתחל מאפס" : "Wipe & Start Fresh"}</button>
               </div>
             </div>
           )}
