@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Accessibility, CheckCircle2, Copy, Download, Edit3, Eye, EyeOff, ExternalLink, FileSpreadsheet, KeyRound, Lock, Plus, Printer, RefreshCw, Search, Share2, ShieldAlert, Trash2, Unlock } from "lucide-react";
+import { Accessibility, ArrowUpRight, CheckCircle2, Copy, Download, Edit3, Eye, EyeOff, ExternalLink, FileSpreadsheet, Globe, KeyRound, Lock, Plus, Printer, RefreshCw, RotateCcw, Search, Share2, Trash2, Unlock } from "lucide-react";
 import { useStudioLang } from "@/lib/i18n-engine";
 import { supabase } from "@/lib/supabase";
 import { decryptVaultJson, EncryptedVaultBlob, encryptVaultJson } from "@/lib/zero-knowledge-crypto";
@@ -15,8 +15,12 @@ export interface VaultEntry {
 }
 
 export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { userId?: string | null; standalone?: boolean }) {
-  const { isHe } = useStudioLang();
+  const { isHe: globalHe, toggleLang } = useStudioLang();
+  const [localLang, setLocalLang] = useState<"he" | "en" | null>(null);
+  const isHe = localLang ? localLang === "he" : globalHe;
+
   const storageKey = `pc_zk_vault_v2_${userId || "universal"}`;
+  const mainDomain = "https://" + "tanami360.com";
   const subDomain = "https://" + "studio" + ".tanami360.com";
 
   const [blob, setBlob] = useState<EncryptedVaultBlob | null>(null);
@@ -33,9 +37,11 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [govNotice, setGovNotice] = useState("");
   const [govDisabled, setGovDisabled] = useState(false);
 
-  const [a11yLargeText, setA11yLargeText] = useState(false);
+  const [fontScale, setFontScale] = useState<number>(100);
   const [a11yHighContrast, setA11yHighContrast] = useState(false);
   const [showHelperDeck, setShowHelperDeck] = useState(false);
+  const [exportLang, setExportLang] = useState<"he" | "en" | "both">("he");
+  const [externalTask, setExternalTask] = useState<{ itemId: string; title: string; targetAsset: string; url: string } | null>(null);
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<VaultCategory>("crypto_seed");
@@ -43,10 +49,14 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [originSource, setOriginSource] = useState("");
   const [actionUrl, setActionUrl] = useState("");
   const [secretValue, setSecretValue] = useState("");
-  const [exportLang, setExportLang] = useState<"he" | "en" | "both">("he");
-
   useEffect(() => {
     try {
+      const savedLang = localStorage.getItem("pc_vault_lang_pref");
+      if (savedLang === "he" || savedLang === "en") setLocalLang(savedLang);
+      else if (typeof navigator !== "undefined") {
+        const navLang = (navigator.language || "").toLowerCase();
+        setLocalLang(navLang.startsWith("he") ? "he" : "en");
+      }
       const raw = localStorage.getItem(storageKey);
       if (raw) setBlob(JSON.parse(raw));
     } catch {}
@@ -57,6 +67,14 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
       } catch {}
     })();
   }, [storageKey]);
+
+  const switchVaultLanguage = () => {
+    const next = isHe ? "en" : "he";
+    setLocalLang(next);
+    setExportLang(next);
+    try { localStorage.setItem("pc_vault_lang_pref", next); } catch {}
+    if (toggleLang) toggleLang();
+  };
 
   const handleUnlockOrCreate = async () => {
     setErrorMsg(""); setInfoMsg("");
@@ -81,13 +99,14 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
     localStorage.setItem(storageKey, JSON.stringify(nextBlob));
     setBlob(nextBlob);
   };
+
   const handleSaveEntry = async () => {
     if (!title.trim() || !secretValue.trim()) return;
     const cleanAction = actionUrl.trim() ? (actionUrl.trim().startsWith("http") ? actionUrl.trim() : `https://${actionUrl.trim()}`) : "";
     if (editingId) {
       const updated = entries.map((item) => item.id === editingId ? { ...item, title: title.trim(), category, targetAsset: targetAsset.trim() || "General", originSource: originSource.trim() || "Manual", actionUrl: cleanAction, secretValue: secretValue.trim() } : item);
       await persistEncrypted(updated);
-      setEditingId(null);
+      setEditingId(null); setExternalTask(null);
       setInfoMsg(isHe ? "הפריט עודכן והוצפן מחדש בכספת." : "Entry updated & re-encrypted.");
     } else {
       const item: VaultEntry = { id: `sec-${Date.now()}`, title: title.trim(), category, targetAsset: targetAsset.trim() || (isHe ? "כללי" : "General"), originSource: originSource.trim() || (isHe ? "הזנה ידנית" : "Manual"), actionUrl: cleanAction, secretValue: secretValue.trim(), createdAt: new Date().toISOString() };
@@ -102,7 +121,6 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
     setTargetAsset(item.targetAsset); setOriginSource(item.originSource);
     setActionUrl(item.actionUrl); setSecretValue(item.secretValue);
   };
-
   const cleanCell = (v: string) => (v || "").replace(/[\r\n\t]+/g, " ").trim();
   const buildGoogleSheetsTable = (sep: "\t" | ",") => {
     const catHe: Record<VaultCategory, string> = { crypto_seed: "ארנק קריפטו (12/24 מילים)", api_secrets: "מפתחות API וסודות", passwords: "סיסמאות וחשבונות", project_memory: "זיכרון והקשר פרויקט" };
@@ -118,50 +136,75 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const copyForGoogleSheets = () => {
     navigator.clipboard?.writeText(buildGoogleSheetsTable("\t"));
     setCopiedId("gsheets"); setTimeout(() => setCopiedId(""), 2500);
-    setInfoMsg(isHe ? "הטבלה הועתקה ללוח! פתח גיליון חדש ב-Google Sheets ולחץ Ctrl+V להדבקה מעוצבת." : "Table copied! Open Google Sheets and press Ctrl+V.");
+    setInfoMsg(isHe ? "הטבלה הועתקה! פתח Google Sheets ולחץ Ctrl+V להדבקה מעוצבת." : "Table copied! Open Google Sheets and press Ctrl+V.");
   };
 
   const downloadUtf8BomCsv = () => {
     const bomCsv = "\uFEFF" + buildGoogleSheetsTable(",");
     const url = URL.createObjectURL(new Blob([bomCsv], { type: "text/csv;charset=utf-8;" }));
     const a = document.createElement("a"); a.href = url; a.download = `tanami360-vault-${exportLang}.csv`; a.click();
-    setInfoMsg(isHe ? "קובץ CSV עם תמיכת עברית מלאה (UTF-8 BOM) ירד. מומלץ למחוק אותו לאחר ההדפסה." : "UTF-8 BOM CSV downloaded. Delete file after printing for security.");
+    setInfoMsg(isHe ? "קובץ CSV בעברית תקינה (UTF-8 BOM) ירד. מומלץ למחוק אותו לאחר ההדפסה." : "UTF-8 BOM CSV downloaded. Delete file after printing.");
   };
-  const lockVaultNow = () => { setUnlocked(false); setEntries([]); setPassphrase(""); setRevealedIds({}); setEditingId(null); setInfoMsg(isHe ? "הכספת ננעלה והזיכרון נוקה." : "Vault locked & memory cleared."); };
+
+  const lockVaultNow = () => { setUnlocked(false); setEntries([]); setPassphrase(""); setRevealedIds({}); setEditingId(null); setExternalTask(null); setInfoMsg(isHe ? "הכספת ננעלה והזיכרון נוקה." : "Vault locked & memory cleared."); };
   const copyStr = (val: string, id: string) => { navigator.clipboard?.writeText(val); setCopiedId(id); setTimeout(() => setCopiedId(""), 2200); };
   const exportEncryptedBackup = () => { if (!blob) return; const url = URL.createObjectURL(new Blob([JSON.stringify(blob, null, 2)], { type: "application/json" })); const a = document.createElement("a"); a.href = url; a.download = "tanami360-zk-vault-backup.json"; a.click(); };
-  const shareVaultText = isHe ? `כלי אבטחה חינמי ושימושי: כספת Zero-Knowledge מוצפנת (AES-256) לשמירת סיסמאות, מפתחות פרויקטים וביטויי 12/24 מילים של קריפטו עם הקשר מלא + ייצוא ל-Google Sheets:\n${subDomain}/vault` : `Free Zero-Knowledge AES-256 Vault with full context, personal cipher clues & Google Sheets export:\n${subDomain}/vault`;
-  const catLabels: Record<VaultCategory, string> = isHe ? { crypto_seed: "ארנק קריפטו (12/24 מילים)", api_secrets: "מפתחות API וסודות", passwords: "סיסמאות וחשבונות", project_memory: "זיכרון והקשר פרויקט" } : { crypto_seed: "Crypto Seed (12/24)", api_secrets: "API & Dev Secrets", passwords: "Passwords", project_memory: "Project Memory" };
+  const shareVaultText = isHe ? `כלי אבטחה חינמי ושימושי: כספת Zero-Knowledge מוצפנת (AES-256) לשמירת סיסמאות, מפתחות וביטויי 12/24 מילים של קריפטו עם הקשר מלא + ייצוא ל-Google Sheets:\n${subDomain}/vault` : `Free Zero-Knowledge AES-256 Vault for passwords, dev keys & 12/24-word crypto seeds with full context & Google Sheets export:\n${subDomain}/vault`;
+  const catLabels: Record<VaultCategory, string> = isHe ? { crypto_seed: "ארנק קריפטו (12/24 מילים)", api_secrets: "מפתחות API וסודות", passwords: "סיסמאות וחשבונות", project_memory: "זיכרון והקשר פרויקט" } : { crypto_seed: "Crypto Seed (12/24)", api_secrets: "API & Dev Secrets", passwords: "Passwords & Logins", project_memory: "Project Memory" };
   const visibleEntries = entries.filter((e) => (filterCat === "all" || e.category === filterCat) && (!searchQ.trim() || `${e.title} ${e.targetAsset} ${e.originSource}`.toLowerCase().includes(searchQ.trim().toLowerCase())));
 
   const renderSecretDisplay = (item: VaultEntry) => {
     if (item.category === "crypto_seed") {
       const words = item.secretValue.split(/[\s,]+/).filter(Boolean);
-      return (<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 6, marginTop: 6 }}>{words.map((w, idx) => (<div key={idx} style={{ padding: "4px 7px", borderRadius: 6, background: "#05070a", border: "1px solid rgba(52,211,153,0.25)", fontFamily: "monospace", fontSize: 11.5, color: "#34d399" }}><span style={{ color: "#64748b", marginInlineEnd: 4 }}>#{idx + 1}</span>{w}</div>))}</div>);
+      return (<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(95px, 1fr))", gap: 6, marginTop: 6 }}>{words.map((w, idx) => (<div key={idx} style={{ padding: "5px 8px", borderRadius: 6, background: "#05070a", border: "1px solid rgba(52,211,153,0.25)", fontFamily: "monospace", fontSize: "0.85em", color: "#34d399" }}><span style={{ color: "#64748b", marginInlineEnd: 4 }}>#{idx + 1}</span>{w}</div>))}</div>);
     }
-    return <div style={{ marginTop: 6, padding: "7px 10px", borderRadius: 8, background: "#05070a", fontFamily: "monospace", fontSize: 12, color: "#34d399", wordBreak: "break-all" }}>{item.secretValue}</div>;
+    return <div style={{ marginTop: 6, padding: "8px 10px", borderRadius: 8, background: "#05070a", fontFamily: "monospace", fontSize: "0.88em", color: "#34d399", wordBreak: "break-all" }}>{item.secretValue}</div>;
   };
-
   return (
-    <section dir={isHe ? "rtl" : "ltr"} className="card-hero" style={{ padding: 20, marginBottom: 20, border: `1px solid ${a11yHighContrast ? "#ffffff" : "rgba(251,191,36,0.38)"}`, background: a11yHighContrast ? "#000000" : undefined, fontSize: a11yLargeText ? "112%" : "100%", textAlign: isHe ? "right" : "left" }}>
+    <section dir={isHe ? "rtl" : "ltr"} className="card-hero" style={{ padding: 20, marginBottom: 20, border: `1px solid ${a11yHighContrast ? "#ffffff" : "rgba(251,191,36,0.38)"}`, background: a11yHighContrast ? "#000000" : undefined, zoom: `${fontScale}%`, textAlign: isHe ? "right" : "left" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, paddingBottom: 10, marginBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span className="badge-pill" style={{ background: "rgba(251,191,36,0.16)", color: "#fbbf24", fontSize: 11 }}><KeyRound size={12} /> {isHe ? "כספת Zero-Knowledge AES-256" : "ZERO-KNOWLEDGE VAULT"}</span>
-          {!standalone && <a href="/vault" className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}><ExternalLink size={11} /> {isHe ? "מצב מסך נקי" : "Standalone"}</a>}
-          {unlocked && <button type="button" onClick={() => setShowHelperDeck(!showHelperDeck)} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{showHelperDeck ? (isHe ? "סגור תבניות ורמזים" : "Hide Templates") : (isHe ? "תבניות ומחולל סיסמאות" : "Templates & Generator")}</button>}
+          <button type="button" onClick={switchVaultLanguage} className="btn-ghost" style={{ height: 32, padding: "0 11px", fontSize: 11.5, color: "#38bdf8", borderColor: "rgba(56,189,248,0.4)" }}><Globe size={12} /> {isHe ? "English" : "עברית"}</button>
+          {!standalone && <a href="/vault" className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#34d399" }}><ExternalLink size={11} /> {isHe ? "מצב מסך נקי" : "Standalone"}</a>}
+          {unlocked && <button type="button" onClick={() => setShowHelperDeck(!showHelperDeck)} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{showHelperDeck ? (isHe ? "סגור תבניות ורמזים" : "Hide Templates") : (isHe ? "תבניות ומחולל סיסמאות" : "Templates & Generator")}</button>}
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          <button type="button" onClick={() => setA11yLargeText(!a11yLargeText)} className="btn-ghost" style={{ height: 30, padding: "0 9px", fontSize: 11 }} aria-label="Toggle Text Size"><Accessibility size={12} /> {isHe ? (a11yLargeText ? "טקסט רגיל" : "הגדל טקסט") : "A+"}</button>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8", display: "inline-flex", alignItems: "center", gap: 3 }}><Accessibility size={13} /></span>
+          <button type="button" onClick={() => setFontScale((s) => Math.max(85, s - 15))} className="btn-ghost" style={{ height: 30, padding: "0 8px", fontSize: 11 }} title="Decrease Font">A-</button>
+          <button type="button" onClick={() => setFontScale(100)} className="btn-ghost" style={{ height: 30, padding: "0 8px", fontSize: 11, color: fontScale !== 100 ? "#38bdf8" : undefined }} title="Reset Font"><RotateCcw size={11} /> {fontScale}%</button>
+          <button type="button" onClick={() => setFontScale((s) => Math.min(145, s + 15))} className="btn-ghost" style={{ height: 30, padding: "0 8px", fontSize: 11 }} title="Increase Font">A+</button>
           <button type="button" onClick={() => setA11yHighContrast(!a11yHighContrast)} className="btn-ghost" style={{ height: 30, padding: "0 9px", fontSize: 11 }}>{isHe ? "ניגודיות" : "Contrast"}</button>
           {unlocked && <button type="button" onClick={lockVaultNow} className="btn-primary" style={{ height: 30, padding: "0 10px", fontSize: 11, width: "auto", background: "#fbbf24", color: "#0a0b0e" }}><Lock size={11} /> {isHe ? "נעל" : "Lock"}</button>}
         </div>
       </div>
+
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+        <a href={mainDomain} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11 }}>{isHe ? "פורטל Tanami360" : "Tanami360 Portal"} <ArrowUpRight size={11} /></a>
+        <a href={`${mainDomain}/upload`} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11 }}>{isHe ? "מילוי PDF חינם" : "Free PDF Filler"} <ArrowUpRight size={11} /></a>
+        <a href={`${mainDomain}/studio`} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11 }}>{isHe ? "הסטודיו לפיתוח" : "Engineering Studio"} <ArrowUpRight size={11} /></a>
+        <a href={subDomain} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#38bdf8" }}>ProofCraft OS <ArrowUpRight size={11} /></a>
+      </div>
+
       <h2 style={{ fontSize: 18, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>{isHe ? "כספת חכמה עם זיכרון מלא, הצפנת רמזים וייצוא ל-Google Sheets" : "Context-Rich Vault, Personal Cipher Clues & Google Sheets Export"}</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 8, padding: 10, borderRadius: 12, background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.22)", fontSize: 11.5, color: "#cbd5e1", marginBottom: 12 }}>
-        <div><strong style={{ color: "#38bdf8" }}>{isHe ? "הצפנת רמז אישי:" : "Personal Cipher Clues:"}</strong> {isHe ? "במקום לשמור סיסמה גלויה, שמור רמז שרק אתה מבין (כמו תאריך לידה של חיית מחמד)." : "Save a personal clue only you understand instead of a raw password."}</div>
-        <div><strong style={{ color: "#34d399" }}>{isHe ? "ייצוא ל-Google Sheets:" : "Google Sheets Ready:"}</strong> {isHe ? "העתק בלחיצה טבלה מסודרת בעברית, באנגלית או בשתי השפות יחד והדבק ישירות בגיליון." : "1-click copy in Hebrew, English, or Bilingual format for Google Sheets."}</div>
-        <div><strong style={{ color: "#fbbf24" }}>{isHe ? "אזהרת אבטחה:" : "Security Notice:"}</strong> {isHe ? "סיסמת המאסטר לא נשמרת בשרת. מחק קובצי CSV לאחר הדפסה או הוספת פריט חדש." : "Master passphrase is never stored. Delete exported files after printing."}</div>
+        <div><strong style={{ color: "#38bdf8" }}>{isHe ? "הצפנת רמז אישי:" : "Personal Cipher Clues:"}</strong> {isHe ? "שמור נוסחת רמז שרק אתה מבין במקום סיסמה גלויה." : "Save a personal clue only you understand instead of a raw password."}</div>
+        <div><strong style={{ color: "#34d399" }}>{isHe ? "ייצוא ל-Google Sheets:" : "Google Sheets Ready:"}</strong> {isHe ? "העתקה בלחיצה בעברית, באנגלית או בשתי השפות יחד להדבקה ישירה." : "1-click copy in Hebrew, English, or Bilingual format for Google Sheets."}</div>
+        <div><strong style={{ color: "#fbbf24" }}>{isHe ? "מעקב פעולה מחוץ לכספת:" : "External Action Context:"}</strong> {isHe ? "בעת פתיחת יעד חיצוני הכספת שומרת עבורך תזכורת חיה לחזרה ועדכון." : "Opening an external link pins an active return reminder so you never lose context."}</div>
       </div>
+
+      {externalTask && (
+        <div style={{ padding: 12, borderRadius: 12, background: "rgba(251,191,36,0.14)", border: "1px solid rgba(251,191,36,0.45)", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ fontSize: 12, color: "#fef3c7" }}>
+            <strong>{isHe ? "משימה פעילה מחוץ לכספת:" : "Active External Task:"}</strong> {externalTask.title} ({externalTask.targetAsset}) — {isHe ? "ביצעת את הפעולה באתר החיצוני? לחץ לעדכון הערך בכספת:" : "Finished outside? Click to update this entry:"}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button type="button" onClick={() => { const found = entries.find((x) => x.id === externalTask.itemId); if (found) startEditEntry(found); }} className="btn-primary" style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>{isHe ? "עדכן ערך בכספת" : "Update Entry"}</button>
+            <button type="button" onClick={() => setExternalTask(null)} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11 }}>{isHe ? "סיום" : "Done"}</button>
+          </div>
+        </div>
+      )}
+
       {govDisabled && <div style={{ padding: 10, borderRadius: 10, background: "rgba(251,191,36,0.16)", color: "#fbbf24", fontSize: 12, fontWeight: 800, marginBottom: 10 }}>{isHe ? "הכספת בתחזוקה יזומה. הנתונים המוצפנים שלך שמורים בבטחה." : "Vault in scheduled maintenance."}</div>}
       {govNotice && <div style={{ padding: 10, borderRadius: 10, background: "rgba(56,189,248,0.14)", color: "#38bdf8", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>{govNotice}</div>}
       {errorMsg && <div style={{ padding: 10, borderRadius: 10, background: "rgba(248,113,113,0.15)", color: "#f87171", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>{errorMsg}</div>}
@@ -175,7 +218,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
           {showHelperDeck && (
             <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(251,191,36,0.3)", display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}><strong style={{ fontSize: 12, color: "#fbbf24" }}>{isHe ? "תבניות מהירות למפתחים וליום-יום:" : "Quick Dev & Daily Templates:"}</strong><button type="button" onClick={() => { setSecretValue(generateStrongPassword(20)); setInfoMsg(isHe ? "נוצרה סיסמה חזקה בת 20 תווים!" : "Generated 20-char password!"); }} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#34d399" }}><RefreshCw size={11} /> {isHe ? "חולל סיסמה חזקה (20 תווים)" : "Generate Strong Password"}</button></div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}><strong style={{ fontSize: 12, color: "#fbbf24" }}>{isHe ? "תבניות מהירות למפתחים וליום-יום:" : "Quick Dev & Daily Templates:"}</strong><button type="button" onClick={() => { setSecretValue(generateStrongPassword(20)); setInfoMsg(isHe ? "נוצרה סיסמה חזקה בת 20 תווים!" : "Generated 20-char strong password!"); }} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#34d399" }}><RefreshCw size={11} /> {isHe ? "חולל סיסמה חזקה (20 תווים)" : "Generate Strong Password"}</button></div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{VAULT_QUICK_TEMPLATES.map((tpl) => (<button key={tpl.id} type="button" onClick={() => { setTitle(isHe ? tpl.labelHe : tpl.labelEn); setCategory(tpl.category); setTargetAsset(tpl.targetAsset); setOriginSource(tpl.originSource); setActionUrl(tpl.actionUrl); }} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11 }}>{isHe ? tpl.labelHe : tpl.labelEn}</button>))}</div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#38bdf8" }}>{isHe ? "הצפנת רמז אישי (לחץ להזנה):" : "Personal Cipher Clue Ideas:"}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{PERSONAL_CIPHER_CLUES.map((cl, i) => (<button key={i} type="button" onClick={() => setSecretValue(isHe ? cl.he : cl.en)} className="btn-ghost" style={{ height: "auto", padding: "4px 9px", fontSize: 10.5, textAlign: isHe ? "right" : "left" }}>{isHe ? cl.he : cl.en}</button>))}</div>
@@ -219,7 +262,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
                     <button type="button" onClick={() => setRevealedIds({ ...revealedIds, [item.id]: !isShown })} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11 }}>{isShown ? <EyeOff size={11} /> : <Eye size={11} />} {isShown ? (isHe ? "הסתר" : "Hide") : (isHe ? "חשוף" : "Reveal")}</button>
                     <button type="button" onClick={() => copyStr(item.secretValue, item.id)} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#34d399" }}>{copiedId === item.id ? <CheckCircle2 size={11} /> : <Copy size={11} />} {copiedId === item.id ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק" : "Copy")}</button>
-                    {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#38bdf8" }}><ExternalLink size={11} /> {isHe ? "פתח יעד" : "Open Target"}</a>}
+                    {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noopener noreferrer" onClick={() => setExternalTask({ itemId: item.id, title: item.title, targetAsset: item.targetAsset, url: item.actionUrl })} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#38bdf8" }}><ExternalLink size={11} /> {isHe ? "פתח יעד + מעקב" : "Open & Track"}</a>}
                   </div>
                 </div>
               );
@@ -228,8 +271,12 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
         </div>
       )}
       <div style={{ padding: 12, borderRadius: 12, background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-        <div style={{ fontSize: 11.5, color: "#cbd5e1" }}><strong style={{ color: "#34d399" }}>{isHe ? "שתף את הכספת החינמית:" : "Share Free Vault:"}</strong> {isHe ? "הפץ את הכספת המוצפנת לחברים ומפתחים — כולל ייצוא ל-Google Sheets ורמזי הצפנה אישיים." : "Share standalone Zero-Knowledge Vault."}</div>
-        <button type="button" onClick={() => copyStr(shareVaultText, "share-vault")} className="btn-ghost" style={{ height: 30, padding: "0 12px", fontSize: 11.5, color: "#34d399" }}><Share2 size={12} /> {copiedId === "share-vault" ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק הודעת שיתוף" : "Copy Share Post")}</button>
+        <div style={{ fontSize: 11.5, color: "#cbd5e1" }}><strong style={{ color: "#34d399" }}>{isHe ? "שתף את הכספת החינמית בעולם:" : "Share Free Vault Globally:"}</strong> {isHe ? "הפץ את הכספת המוצפנת למשתמשים ומפתחים בישראל ובעולם (עברית + English)." : "Share standalone Zero-Knowledge Vault worldwide (Hebrew + English)."}</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => copyStr(shareVaultText, "share-vault")} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#34d399" }}><Share2 size={12} /> {copiedId === "share-vault" ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק פוסט שיתוף" : "Copy Share Post")}</button>
+          <a href={"https://" + "://whatsapp.com" + "/send?text=" + encodeURIComponent(shareVaultText)} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 30, padding: "0 9px", fontSize: 11 }}>WhatsApp</a>
+          <a href={"https://" + "www.linkedin.com" + "/sharing/share-offsite/?url=" + encodeURIComponent(subDomain + "/vault")} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 30, padding: "0 9px", fontSize: 11 }}>LinkedIn</a>
+        </div>
       </div>
     </section>
   );
