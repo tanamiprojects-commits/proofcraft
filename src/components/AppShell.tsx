@@ -1,4 +1,5 @@
 "use client";
+import PersistentFloatingToolsDock from './PersistentFloatingToolsDock';
 import { resolveVipGrantForUser, VipGrantRecord } from "@/lib/vip-access-engine";
 import ZeroKnowledgeVaultOS from "./ZeroKnowledgeVaultOS";
 
@@ -20,6 +21,7 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "guy@proofcraft.app";
 export type FocusMode = "full_os" | "affiliate_only" | "builder_only";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  if (typeof window !== 'undefined' && window.location.search.includes('floating=1')) { return <div style={{ background: '#0a0b0e', minHeight: '100vh', padding: 8 }}>{children}</div>; }
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -345,6 +347,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <UserSupportInboxCard userId={userId} isHe={isHe} />
         </div>
       </GlobalModal>
+      {typeof window !== 'undefined' && !window.location.search.includes('floating=1') && <PersistentFloatingToolsDock isHe={isHe} />}
     </div>
   );
 }
