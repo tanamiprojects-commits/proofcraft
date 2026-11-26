@@ -56,6 +56,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [reqNote, setReqNote] = useState("");
   const [reqType, setReqType] = useState<"recover_with_key" | "full_wipe_reset">("recover_with_key");
   const [wipeConfirmText, setWipeConfirmText] = useState("");
+  const [masterCertData, setMasterCertData] = useState<{ pass: string; rec: string; algo: string; date: string } | null>(null);
   const [installPromptEvt, setInstallPromptEvt] = useState<{ prompt: () => Promise<void> } | null>(null);
 
   const [title, setTitle] = useState("");
@@ -129,6 +130,22 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
       if (clipText && clipText.trim()) { setSecretValue(clipText.trim()); setInfoMsg(isHe ? "הסוד נקלט אוטומטית מהלוח! השלם שם ונכס ולחץ הצפן ושמור." : "Captured from clipboard!"); }
     } catch { setErrorMsg(isHe ? "אשר גישה ללוח בדפדפן או הדבק ידנית (Ctrl+V)." : "Allow clipboard access or paste manually."); }
   };
+    const copyMasterCertToSheets = () => {
+    if (!masterCertData) return;
+    const row = isHe
+      ? `נכס\tכתובת כניסה\tסיסמת מאסטר\tקוד שחזור אישי (24 תווים)\tהצפנה\tתאריך\nכספת ProofCraft\t${subDomain}/vault\t${masterCertData.pass}\t${masterCertData.rec}\t${masterCertData.algo} 256-bit\t${masterCertData.date}`
+      : `Asset\tVault URL\tMaster Passphrase\tPersonal Recovery Key (24 chars)\tEncryption\tDate\nProofCraft Vault\t${subDomain}/vault\t${masterCertData.pass}\t${masterCertData.rec}\t${masterCertData.algo} 256-bit\t${masterCertData.date}`;
+    copyStr(row, "cert-sheets");
+    setInfoMsg(isHe ? "תעודת המפתח הועתקה ללוח! פתח Google Sheets ולחץ Ctrl+V לשמירה בטוחה מחוץ לכספת." : "Master Key Certificate copied! Paste (Ctrl+V) into Google Sheets.");
+  };
+
+  const printMasterCertificate = () => {
+    if (!masterCertData || typeof window === "undefined") return;
+    const w = window.open("", "ProofCraftMasterCert", "width=640,height=620");
+    if (!w) return;
+    w.document.write(`<html dir="${isHe ? "rtl" : "ltr"}"><body style="font-family:sans-serif;padding:28px;line-height:1.7"><h2>${isHe ? "תעודת מפתח מאסטר וקוד שחזור — כספת ProofCraft" : "Master Key & Recovery Certificate — ProofCraft Vault"}</h2><p><strong>${isHe ? "כתובת הכספת:" : "Vault URL:"}</strong> ${subDomain}/vault</p><p><strong>${isHe ? "סיסמת המאסטר:" : "Master Passphrase:"}</strong> <code style="font-size:15px;background:#f1f5f9;padding:4px 8px">${masterCertData.pass}</code></p><p><strong>${isHe ? "קוד שחזור אישי (24 תווים):" : "Personal Recovery Code:"}</strong> <code style="font-size:15px;background:#f1f5f9;padding:4px 8px">${masterCertData.rec}</code></p><p><strong>${isHe ? "תאריך הקמה:" : "Created:"}</strong> ${masterCertData.date}</p><hr/><p style="color:#b91c1c;font-size:13px">${isHe ? "אזהרת אבטחה: שמור דף זה בכספת פיזית או בגיליון מאובטח. מחק קבצים זמניים לאחר ההדפסה." : "Security Notice: Store this printout safely and delete temporary files."}</p></body></html>`);
+    w.document.close(); w.print();
+  };
   const switchVaultLanguage = () => { const next = isHe ? "en" : "he"; setLocalLang(next); setExportLang(next); try { localStorage.setItem("pc_vault_lang_pref", next); } catch {} if (toggleLang) toggleLang(); };
 
   const persistEncrypted = async (nextList: VaultEntry[], customPass?: string, customAlgo?: CipherAlgo, customRec?: string) => {
@@ -150,7 +167,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
         setRecoveryKey(genRec);
         const fresh = await encryptVaultJson(JSON.stringify([]), passphrase.trim(), cipherAlgo, genRec);
         localStorage.setItem(storageKey, JSON.stringify(fresh));
-        setBlob(fresh); setEntries([]); setUnlocked(true);
+        setBlob(fresh); setEntries([]); setUnlocked(true); setMasterCertData({ pass: passphrase.trim(), rec: genRec, algo: cipherAlgo, date: new Date().toISOString().slice(0, 10) });
         setInfoMsg(isHe ? "הכספת הוקמה! שמור את קוד השחזור האישי שלך המוצג מטה." : "Vault initialized! Save your Personal Recovery Code shown below.");
       } else {
         const plain = await decryptVaultJson(blob, passphrase.trim());
@@ -262,7 +279,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const copyForGoogleSheets = () => { navigator.clipboard?.writeText(buildGoogleSheetsTable("\t")); setCopiedId("gsheets"); setTimeout(() => setCopiedId(""), 2500); setInfoMsg(isHe ? "הטבלה הועתקה! פתח Google Sheets ולחץ Ctrl+V." : "Table copied! Press Ctrl+V in Google Sheets."); };
   const downloadUtf8BomCsv = () => { const url = URL.createObjectURL(new Blob(["\uFEFF" + buildGoogleSheetsTable(",")], { type: "text/csv;charset=utf-8;" })); const a = document.createElement("a"); a.href = url; a.download = `tanami360-vault-${exportLang}.csv`; a.click(); };
   const lockVaultNow = () => { setUnlocked(false); setEntries([]); setPassphrase(""); setRevealedIds({}); setEditingId(null); setExternalTask(null); setInfoMsg(isHe ? "הכספת ננעלה והזיכרון נוקה." : "Vault locked & memory cleared."); };
-  const copyStr = (val: string, id: string) => { navigator.clipboard?.writeText(val); setCopiedId(id); setTimeout(() => setCopiedId(""), 2200); };
+  const copyStr = (val: string, id: string) => { navigator.clipboard?.writeText((val || "").trim()); setCopiedId(id); setTimeout(() => setCopiedId(""), 2200); };
   const exportEncryptedBackup = () => { if (!blob) return; const url = URL.createObjectURL(new Blob([JSON.stringify(blob, null, 2)], { type: "application/json" })); const a = document.createElement("a"); a.href = url; a.download = "tanami360-zk-vault-backup.json"; a.click(); };
   const shareVaultText = isHe ? `כלי אבטחה חינמי ושימושי: כספת Zero-Knowledge מוצפנת (AES-256) לשמירת סיסמאות, מפתחות וביטויי 12/24 מילים של קריפטו עם הקשר מלא + ייצוא ל-Google Sheets:\n${subDomain}/vault` : `Free Zero-Knowledge AES-256 Vault with full context, personal cipher clues & Google Sheets export:\n${subDomain}/vault`;
   const catLabels: Record<VaultCategory, string> = isHe ? { crypto_seed: "ארנק קריפטו (12/24 מילים)", api_secrets: "מפתחות API וסודות", passwords: "סיסמאות וחשבונות", project_memory: "זיכרון והקשר פרויקט" } : { crypto_seed: "Crypto Seed (12/24)", api_secrets: "API & Dev Secrets", passwords: "Passwords & Logins", project_memory: "Project Memory" };
@@ -330,6 +347,24 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
       {govNotice && <div style={{ padding: 10, borderRadius: 10, background: "rgba(56,189,248,0.14)", color: "#38bdf8", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>{govNotice}</div>}
       {errorMsg && <div style={{ padding: 10, borderRadius: 10, background: "rgba(248,113,113,0.15)", color: "#f87171", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>{errorMsg}</div>}
       {infoMsg && <div style={{ padding: 10, borderRadius: 10, background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>{infoMsg}</div>}
+            {masterCertData && (
+        <div style={{ padding: 16, borderRadius: 14, background: "linear-gradient(135deg, rgba(251,191,36,0.16), rgba(16,185,129,0.12))", border: "1.5px solid rgba(251,191,36,0.55)", marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <strong style={{ fontSize: 14, color: "#fbbf24" }}>{isHe ? "🔐 תעודת מפתח המאסטר שלך מוכנה — שמור אותה כעת מחוץ לכספת!" : "🔐 Your Master Key Certificate is Ready — Save It Outside the Vault Now!"}</strong>
+            <span className="badge-pill" style={{ background: "rgba(251,191,36,0.2)", color: "#fef3c7", fontSize: 10.5 }}>{isHe ? "חובה לגבות לפני סגירה" : "Backup Required"}</span>
+          </div>
+          <p style={{ fontSize: 12, color: "#e2e8f0", lineHeight: 1.55 }}>{isHe ? "מכיוון שהכספת פועלת בשיטת Zero-Knowledge, סיסמת המאסטר אינה נשמרת בשרתים שלנו. בחר כעת דרך בטוחה לשמור את סיסמת המאסטר ואת קוד השחזור מחוץ לכספת:" : "Because this is a Zero-Knowledge vault, your master key is never stored on our servers. Save your Master Passphrase & Recovery Key outside the vault now:"}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8, padding: 10, borderRadius: 10, background: "#05070a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 12 }}>
+            <div><span style={{ color: "#94a3b8" }}>{isHe ? "סיסמת מאסטר:" : "Master Passphrase:"}</span> <code style={{ color: "#34d399", fontWeight: 800 }}>{masterCertData.pass}</code></div>
+            <div><span style={{ color: "#94a3b8" }}>{isHe ? "קוד שחזור (24 תווים):" : "Recovery Key:"}</span> <code style={{ color: "#fbbf24", fontWeight: 800 }}>{masterCertData.rec}</code></div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button type="button" onClick={copyMasterCertToSheets} className="btn-primary" style={{ height: 34, padding: "0 14px", fontSize: 12, width: "auto" }}><FileSpreadsheet size={13} /> {copiedId === "cert-sheets" ? (isHe ? "הועתק לגוגל שיטס ✓" : "Copied for Sheets ✓") : (isHe ? "העתק תעודת מפתח ל-Google Sheets" : "Copy Certificate for Google Sheets")}</button>
+            <button type="button" onClick={printMasterCertificate} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#38bdf8" }}><Printer size={13} /> {isHe ? "הדפס תעודת חירום / שמור PDF" : "Print / Save PDF Certificate"}</button>
+            <button type="button" onClick={() => setMasterCertData(null)} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#34d399", borderColor: "rgba(52,211,153,0.45)" }}>{isHe ? "שמרתי במקום בטוח — המשך לכספת ✓" : "I Saved It Safely — Continue ✓"}</button>
+          </div>
+        </div>
+      )}
       {recoveryKey && unlocked && <div style={{ padding: 10, borderRadius: 10, background: "rgba(251,191,36,0.14)", border: "1px solid rgba(251,191,36,0.4)", color: "#fef3c7", fontSize: 12, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}><span><strong>{isHe ? "קוד השחזור האישי שלך (שמור במקום בטוח):" : "Your Personal Recovery Key:"}</strong> <code>{recoveryKey}</code></span><button type="button" onClick={() => copyStr(recoveryKey, "rec-key")} className="btn-ghost" style={{ height: 26, padding: "0 8px", fontSize: 11 }}>{copiedId === "rec-key" ? "Copied!" : "Copy Key"}</button></div>}
                   {showSmartGuide && (
         <div style={{ padding: 16, borderRadius: 14, background: "linear-gradient(135deg, rgba(14,165,233,0.12), rgba(15,23,42,0.96))", border: "1px solid rgba(56,189,248,0.45)", marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -427,7 +462,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
               <div style={{ fontSize: 12, fontWeight: 800, color: "#fbbf24" }}>{isHe ? "1. בקשת אימות זהות מול מנהל המערכת (מונע התחזות ופריצה):" : "1. Request Identity Verification from Admin:"}</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
                 <input value={reqEmail} onChange={(e) => setReqEmail(e.target.value)} placeholder={isHe ? "האימייל שלך לאימות..." : "Your email..."} className="input-dark" style={{ height: 34, fontSize: 12 }} />
-                <select value={reqType} onChange={(e) => setReqType(e.target.value as "recover_with_key" | "full_wipe_reset")} className="input-dark" style={{ height: 34, fontSize: 12 }}><option value="recover_with_key">{isHe ? "שחזור עם קוד אישי (שומר פריטים)" : "Recover with Key (Keep Items)"}</option><option value="full_wipe_reset">{isHe ? "איפוס מלא מאפס (מוחק הכל)" : "Full Wipe Reset (Delete All)"}</option></select>
+                <select value={reqType} onChange={(e) => setReqType(e.target.value as "recover_with_key" | "full_wipe_reset")} className="input-dark" style={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 190 }}><option value="recover_with_key">{isHe ? "שחזור עם קוד אישי" : "Recover with Key"}</option><option value="full_wipe_reset">{isHe ? "איפוס מלא מאפס" : "Full Wipe Reset"}</option></select>
                 <input value={reqNote} onChange={(e) => setReqNote(e.target.value)} placeholder={isHe ? "פרט זיהוי לאימות מול האדמין (טלפון/הערה)..." : "Identity verification note..."} className="input-dark" style={{ height: 34, fontSize: 12 }} />
                 <div style={{ display: "flex", gap: 6 }}><button type="button" onClick={submitResetRequestToAdmin} className="btn-ghost" style={{ height: 34, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}>{isHe ? "שלח בקשה לאדמין" : "Request Approval"}</button><button type="button" onClick={checkAdminApprovalStatus} className="btn-ghost" style={{ height: 34, padding: "0 10px", fontSize: 11, color: "#34d399" }}>{isHe ? "בדוק אישור" : "Check Status"}</button></div>
               </div>
