@@ -113,7 +113,17 @@ export default function EcosystemCommandCenter() {
   };
   const rejectVaultTicket = (id: string) => updateVaultTickets(vaultTickets.map((t) => (t.id === id ? { ...t, status: "rejected" } : t)));
   const issueBlindRecoveryCode = async () => { const code = "REC-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); setRecoveryUnlockCode(code); await supabase.from("site_settings").upsert({ key: "vault_recovery_auth", value: { code, issuedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "קוד אישור שחזור הונפק ✓" : "Blind Recovery Code Issued ✓"); setTimeout(() => setSyncState(""), 2500); };
-  const saveVaultGov = async (enabledVal: boolean, noticeVal: string) => { setVaultEnabled(enabledVal); setVaultNotice(noticeVal); await supabase.from("site_settings").upsert({ key: "vault_governance", value: { enabled: enabledVal, notice: noticeVal, requireAdminForReset: requireAdminReset }, updated_at: new Date().toISOString() }, { onConflict: "key" }); setSyncState(isHe ? "הגדרות כספת סונכרנו ✓" : "Vault Settings Synced ✓"); setTimeout(() => setSyncState(""), 2500); };
+    const persistVaultGovToCloud = async (enabledVal: boolean, noticeVal: string, reqAdminVal: boolean) => {
+    const payload = { enabled: enabledVal, notice: noticeVal, requireAdminForReset: reqAdminVal };
+    const { data: exists } = await supabase.from("site_settings").select("key").eq("key", "vault_governance").maybeSingle();
+    const res = exists
+      ? await supabase.from("site_settings").update({ value: payload, updated_at: new Date().toISOString() }).eq("key", "vault_governance")
+      : await supabase.from("site_settings").insert({ key: "vault_governance", value: payload, updated_at: new Date().toISOString() });
+    if (res.error) { setSyncState(isHe ? `שגיאת סנכרון: ${res.error.message}` : `Sync Error: ${res.error.message}`); }
+    else { setSyncState(reqAdminVal ? (isHe ? "נשמר בענן: חובת אישור אדמין פעילה ✓" : "Saved: Admin Reset Lock ON ✓") : (isHe ? "נשמר בענן: איפוס פתוח למשתמש ✓" : "Saved: Admin Reset Lock OFF ✓")); }
+    setTimeout(() => setSyncState(""), 3000);
+  };
+  const saveVaultGov = async (enabledVal: boolean, noticeVal: string) => { setVaultEnabled(enabledVal); setVaultNotice(noticeVal); await persistVaultGovToCloud(enabledVal, noticeVal, requireAdminReset); };
   const addCustomNode = () => {
     if (!newNodeName.trim() || !newNodeUrl.trim()) return;
     const pub = newNodeUrl.trim().startsWith("http") ? newNodeUrl.trim() : `https://${newNodeUrl.trim()}`;
@@ -192,7 +202,7 @@ export default function EcosystemCommandCenter() {
           <strong style={{ fontSize: 13.5, color: "#fbbf24" }}>{isHe ? "מרכז שליטה ואימות לכספת Zero-Knowledge (ללא חשיפה לתוכן המשתמשים):" : "Zero-Knowledge Vault Governance & Identity Verification (100% Blind):"}</strong>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <button type="button" onClick={() => saveVaultGov(!vaultEnabled, vaultNotice)} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: vaultEnabled ? "#34d399" : "#f87171" }}>{vaultEnabled ? (isHe ? "כספת: פעילה" : "Vault: ACTIVE") : (isHe ? "כספת: מושבתת" : "Vault: PAUSED")}</button>
-            <button type="button" onClick={async () => { const nextReq = !requireAdminReset; setRequireAdminReset(nextReq); await supabase.from("site_settings").upsert({ key: "vault_governance", value: { enabled: vaultEnabled, notice: vaultNotice, requireAdminForReset: nextReq }, updated_at: new Date().toISOString() }, { onConflict: "key" }); setSyncState(nextReq ? (isHe ? "אכיפת אישור אדמין הופעלה ✓" : "Admin Reset Lock Enabled ✓") : (isHe ? "אכיפת אישור אדמין הוסרה ✓" : "Admin Reset Lock Disabled ✓")); setTimeout(() => setSyncState(""), 2500); }} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: requireAdminReset ? "#38bdf8" : "#94a3b8" }}>{requireAdminReset ? (isHe ? "אכיפת אישור אדמין לאיפוס: פעילה" : "Admin Reset Lock: ON") : (isHe ? "אכיפת אישור אדמין: כבויה" : "Admin Reset Lock: OFF")}</button>
+            <button type="button" onClick={async () => { const nextReq = !requireAdminReset; setRequireAdminReset(nextReq); await persistVaultGovToCloud(vaultEnabled, vaultNotice, nextReq); }} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: requireAdminReset ? "#38bdf8" : "#94a3b8" }}>{requireAdminReset ? (isHe ? "אכיפת אישור אדמין לאיפוס: פעילה" : "Admin Reset Lock: ON") : (isHe ? "אכיפת אישור אדמין: כבויה" : "Admin Reset Lock: OFF")}</button>
             <a href="/vault" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}>{isHe ? "פתח כספת ↗" : "Open Vault ↗"}</a>
           </div>
         </div>

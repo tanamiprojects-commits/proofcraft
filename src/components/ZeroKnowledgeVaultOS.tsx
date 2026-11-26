@@ -15,7 +15,14 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const { isHe: globalHe, toggleLang } = useStudioLang();
   const [localLang, setLocalLang] = useState<"he" | "en" | null>(null);
   const isHe = localLang ? localLang === "he" : globalHe;
-  const storageKey = `pc_zk_vault_v2_${userId || "universal"}`;
+    const [vaultProfiles, setVaultProfiles] = useState<{ id: string; name: string }[]>([
+    { id: "main", name: "כספת ראשית / Main Vault" },
+    { id: "crypto", name: "כספת קריפטו קרה / Crypto Vault" },
+    { id: "dev", name: "כספת פיתוח ושרתים / Dev & API" }
+  ]);
+  const [activeVaultId, setActiveVaultId] = useState("main");
+  const [newVaultName, setNewVaultName] = useState("");
+  const storageKey = `pc_zk_vault_v2_${userId || "universal"}_${activeVaultId}`;
   const mainDomain = "https://" + "tanami360.com";
   const subDomain = "https://" + "studio" + ".tanami360.com";
 
@@ -91,8 +98,11 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
       if (incomingText) setSecretValue(incomingText);
       const onBip = (e: Event) => { e.preventDefault(); setInstallPromptEvt(e as unknown as { prompt: () => Promise<void> }); };
       window.addEventListener("beforeinstallprompt", onBip);
-      const raw = localStorage.getItem(storageKey);
+            const savedProfiles = localStorage.getItem(`pc_zk_profiles_${userId || "universal"}`);
+      if (savedProfiles) setVaultProfiles(JSON.parse(savedProfiles));
+      const raw = localStorage.getItem(storageKey) || (activeVaultId === "main" ? localStorage.getItem(`pc_zk_vault_v2_${userId || "universal"}`) : null);
       if (raw) { const parsed = JSON.parse(raw); setBlob(parsed); if (parsed.algo) setCipherAlgo(parsed.algo); }
+      else { setBlob(null); setEntries([]); setUnlocked(false); }
     } catch {}
     (async () => {
       try {
@@ -145,6 +155,18 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
     if (!w) return;
     w.document.write(`<html dir="${isHe ? "rtl" : "ltr"}"><body style="font-family:sans-serif;padding:28px;line-height:1.7"><h2>${isHe ? "תעודת מפתח מאסטר וקוד שחזור — כספת ProofCraft" : "Master Key & Recovery Certificate — ProofCraft Vault"}</h2><p><strong>${isHe ? "כתובת הכספת:" : "Vault URL:"}</strong> ${subDomain}/vault</p><p><strong>${isHe ? "סיסמת המאסטר:" : "Master Passphrase:"}</strong> <code style="font-size:15px;background:#f1f5f9;padding:4px 8px">${masterCertData.pass}</code></p><p><strong>${isHe ? "קוד שחזור אישי (24 תווים):" : "Personal Recovery Code:"}</strong> <code style="font-size:15px;background:#f1f5f9;padding:4px 8px">${masterCertData.rec}</code></p><p><strong>${isHe ? "תאריך הקמה:" : "Created:"}</strong> ${masterCertData.date}</p><hr/><p style="color:#b91c1c;font-size:13px">${isHe ? "אזהרת אבטחה: שמור דף זה בכספת פיזית או בגיליון מאובטח. מחק קבצים זמניים לאחר ההדפסה." : "Security Notice: Store this printout safely and delete temporary files."}</p></body></html>`);
     w.document.close(); w.print();
+  };
+    const selectVaultProfile = (vId: string) => {
+    setActiveVaultId(vId); setUnlocked(false); setEntries([]); setPassphrase(""); setRecoveryKey(""); setMasterCertData(null); setErrorMsg(""); setInfoMsg("");
+  };
+  const createNewVaultProfile = () => {
+    if (!newVaultName.trim()) return;
+    const id = "v-" + Date.now().toString(36);
+    const next = [...vaultProfiles, { id, name: newVaultName.trim() }];
+    setVaultProfiles(next);
+    localStorage.setItem(`pc_zk_profiles_${userId || "universal"}`, JSON.stringify(next));
+    setNewVaultName(""); selectVaultProfile(id);
+    setInfoMsg(isHe ? "נוצרה כספת חדשה נפרדת! הגדר לה כעת סיסמת מאסטר אישית." : "New isolated vault created! Set its master passphrase now.");
   };
   const switchVaultLanguage = () => { const next = isHe ? "en" : "he"; setLocalLang(next); setExportLang(next); try { localStorage.setItem("pc_vault_lang_pref", next); } catch {} if (toggleLang) toggleLang(); };
 
@@ -414,7 +436,19 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
         <span>{isHe ? "מחשב: גרור לסרגל הסימניות לשמירה מכל אתר | טלפון: השתמש בתפריט שתף (Share) מכל אפליקציה אל הכספת:" : "Desktop: Drag to bookmarks bar | Mobile: Use system Share from any app to Vault:"}</span>
         <a href="javascript:(function(){var t=encodeURIComponent(document.title);var u=encodeURIComponent(location.href);window.open('https://studio://');})();" onClick={(e) => e.preventDefault()} className="badge-pill" style={{ background: "#0f172a", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.5)", cursor: "grab", textDecoration: "none", fontWeight: 800 }}>🔐 {isHe ? "שמור בכספת ProofCraft" : "Clip to ProofCraft Vault"}</a>
       </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 12px", borderRadius: 12, background: "rgba(15,23,42,0.85)", border: "1px solid rgba(56,189,248,0.28)", marginBottom: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 12px", borderRadius: 12, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.3)", marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <strong style={{ fontSize: 11.5, color: "#fbbf24" }}>{isHe ? "הכספות שלך (מופרדות):" : "Your Isolated Vaults:"}</strong>
+          {vaultProfiles.map((vp) => (
+            <button key={vp.id} type="button" onClick={() => selectVaultProfile(vp.id)} className={activeVaultId === vp.id ? "btn-primary" : "btn-ghost"} style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>{vp.name}</button>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          <input value={newVaultName} onChange={(e) => setNewVaultName(e.target.value)} placeholder={isHe ? "שם לכספת נוספת..." : "New vault name..."} className="input-dark" style={{ height: 28, fontSize: 11, width: 145 }} />
+          <button type="button" onClick={createNewVaultProfile} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#34d399" }}>+ {isHe ? "צור כספת" : "New Vault"}</button>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 12px", borderRadius: 12, background: "rgba(15,23,42,0.85)", border: "1px solid rgba(56,189,248,0.28)", marginBottom: 12 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontSize: 11.5, fontWeight: 800, color: "#94a3b8" }}>{isHe ? "מצב עבודה חכם:" : "Workspace Persona:"}</span>
           <button type="button" onClick={() => setVaultPersona("personal")} className={vaultPersona === "personal" ? "btn-primary" : "btn-ghost"} style={{ height: 30, padding: "0 12px", fontSize: 11.5, width: "auto" }}>{isHe ? "👤 שימוש אישי ואתרים (יום-יום)" : "👤 Personal & Everyday Logins"}</button>
