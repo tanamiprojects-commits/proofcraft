@@ -3,10 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Home, BookOpen, Layers, Wrench, Users, Briefcase, Globe, Shield, Smartphone,
-  Accessibility, MessageCircle, AlertTriangle, Megaphone, LogOut, CheckCircle2, Menu, RotateCcw
-} from "lucide-react";
+import { ShieldCheck, Home, BookOpen, Layers, Wrench, Users, Briefcase, Globe, Shield, Smartphone,
+  Accessibility, MessageCircle, AlertTriangle, Megaphone, LogOut, CheckCircle2, Menu, RotateCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
 import { detectNaturalVisitorLang, setStoredStudioLang } from "@/lib/i18n-engine";
@@ -154,6 +152,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/workspace", label: isHe ? "סטודיו AI" : "Studio", icon: Layers, group: "bld" },
     { href: "/feed", label: isHe ? "קהילה ודילים" : "Feed", icon: Users, group: "all" },
     { href: "/toolkit", label: isHe ? "ארגז כלים" : "Toolkit", icon: Wrench, group: "all" },
+    { href: "/vault", label: isHe ? "כספת מוצפנת" : "Vault", icon: ShieldCheck, group: "all" },
     { href: "/method", label: isHe ? "השיטה" : "Method", icon: BookOpen, group: "bld" },
     { href: "/portfolio/live", label: isHe ? "תיק עבודות" : "Portfolio", icon: Briefcase, group: "bld" },
     { href: "/creators", label: isHe ? "\u05D9\u05D5\u05E6\u05E8\u05D9\u05DD" : "Creators", icon: Users, group: "all" },

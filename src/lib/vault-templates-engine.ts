@@ -35,3 +35,13 @@ export function generateStrongPassword(length = 20): string {
   for (let i = 0; i < length; i++) out += chars[arr[i] % chars.length];
   return out;
 }
+export function generateCustomPassword(length = 20, useNumbers = true, useSymbols = true): string {
+  let chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  if (useNumbers) chars += "23456789";
+  if (useSymbols) chars += "!@#$%^&*_-+=";
+  const arr = new Uint32Array(length);
+  crypto.getRandomValues(arr);
+  let out = "";
+  for (let i = 0; i < length; i++) out += chars[arr[i] % chars.length];
+  return out;
+}
