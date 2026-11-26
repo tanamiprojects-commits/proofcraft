@@ -148,5 +148,18 @@ export const PROMPT_VAULT_CATALOG: VaultPromptItem[] = [
     powershellReadyPrompt: "Act as Principal Systems Architect & Lead DevOps Engineer. Generate a complete, exhaustive Master Handover Blueprint for our live platform so we can continue maintenance, security audits, or feature upgrades in a brand-new AI chat session with 100% context continuity.",
     securityNote: "Verify zero .env.local secrets are included.", securityNoteHe: "ודא שאף מפתח סודי מ-.env.local לא נכלל במסמך.",
     sampleOutput: "Complete 7-Section Master Platform Blueprint ready for Message #1."
+  },
+  {
+    id: "vp-12", stageNumber: 12, category: "12. Ecosystem Sync & Organic SEO Architect", categoryHe: "12. סנכרון נכסים, שיווק אורגני ולוח בקרה מרכזי",
+    title: "Full-Stack Ecosystem Sync, Programmatic SEO & Central Admin Governance", titleHe: "ארכיטקט סנכרון נכסים, שיווק אורגני מובנה ולוח בקרה מרכזי",
+    goal: "Connect all digital assets into one synchronized bilingual system with built-in organic discovery, context-aware recommendations, and zero-code Admin control.",
+    goalHe: "חיבור כל הנכסים הדיגיטליים והכלים למערכת אחת מסונכרנת ודו-לשונית (עברית RTL + אנגלית LTR) עם גילוי אורגני מובנה במנועי חיפוש ושליטה מלאה מלוח הבקרה באדמין ללא עריכת קוד.",
+    howToUse: "Paste into any AI chat when connecting new tools, adding pages to sitemap/JSON-LD, or syncing with /admin.",
+    howToUseHe: "הדבק בצ'אט חכם בכל פעם שתרצה לחבר כלי או נכס חדש למערכת, להבטיח הופעה במנועי חיפוש (SEO/JSON-LD), או לסנכרן שליטה מלאה ללוח הבקרה באדמין.",
+    expectedResult: "Synchronized bilingual architecture with automatic SEO indexing, context-triggered organic links, and runtime Admin governance.",
+    expectedResultHe: "ארכיטקטורה מסונכרנת בשתי שפות הכוללת אינדוקס אוטומטי במנועי חיפוש, המלצות אורגניות חכמות לפי פעולת המשתמש, ושליטה מלאה מהאדמין.",
+    powershellReadyPrompt: "Act as Principal Full-Stack Systems Architect & Technical SEO Lead. Synchronize all my digital assets into one unified bilingual platform (Hebrew RTL default + English LTR) with Supabase RLS security and zero UX clutter. Follow these 4 mandatory rules: 1) Programmatic SEO & Organic Discovery: Update sitemap.ts, Metadata, and JSON-LD (SoftwareApplication/HowTo) so search engines index every asset automatically, and embed non-intrusive context-triggered organic sharing with dynamic OpenGraph cards. 2) Zero-Code Admin Governance: Connect settings and asset rules to /admin via site_settings API so everything is controllable at runtime without code edits. 3) Multi-Mode UX: Support both standalone tool usage and full ecosystem flow seamlessly. 4) Engineering Protocol: Backup files to _backups first, provide short PowerShell scripts (<25 lines) using UTF-8 without BOM and Here-Strings, and verify npm run build ($LASTEXITCODE -eq 0) before locking.",
+    securityNote: "Never expose service role keys or secrets in client components or public prompts.", securityNoteHe: "לעולם אל תחשוף מפתחות שרת (Service Role) בקומפוננטות לקוח או בפרומפטים ציבוריים.",
+    sampleOutput: "Synced bilingual route + JSON-LD SEO schema + /admin runtime control card + verified npm run build."
   }
 ];

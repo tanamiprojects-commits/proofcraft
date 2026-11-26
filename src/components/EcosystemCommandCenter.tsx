@@ -1,4 +1,5 @@
 "use client";
+import ContextStudioAdminCard from './ContextStudioAdminCard';
 import React, { useEffect, useState } from "react";
 import { Activity, ExternalLink, Globe, Layers, RefreshCw, ShieldCheck, Sliders, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -225,6 +226,7 @@ export default function EcosystemCommandCenter() {
           </div>
         )}
       </div>
+          <div style={{ marginTop: 14 }}><ContextStudioAdminCard isHe={isHe} /></div>
     </section>
   );
 }

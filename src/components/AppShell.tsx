@@ -159,6 +159,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/toolkit", label: isHe ? "ארגז כלים" : "Toolkit", icon: Wrench, group: "all" },
     { href: "/vault", label: isHe ? "כספת מוצפנת" : "Vault", icon: ShieldCheck, group: "all" },
     { href: "/method", label: isHe ? "השיטה" : "Method", icon: BookOpen, group: "bld" },
+    { href: "/context-studio", label: isHe ? "סטודיו הקשר" : "Context Studio", icon: Layers, group: "all" },
     { href: "/portfolio/live", label: isHe ? "תיק עבודות" : "Portfolio", icon: Briefcase, group: "bld" },
     { href: "/creators", label: isHe ? "\u05D9\u05D5\u05E6\u05E8\u05D9\u05DD" : "Creators", icon: Users, group: "all" },
   ];
