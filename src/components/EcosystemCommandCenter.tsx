@@ -102,7 +102,7 @@ export default function EcosystemCommandCenter() {
   const removeVipGrant = (id: string) => saveVipGrants(vipGrants.filter((g) => g.id !== id));
     const updateVaultTickets = async (next: VaultResetTicket[]) => {
     setVaultTickets(next);
-    await supabase.from("site_settings").upsert({ key: "vault_reset_tickets", value: next, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    await fetch("/api/vault-governance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "vault_reset_tickets", value: next }) });
     setSyncState(isHe ? "תור אימות הכספת סונכרן ✓" : "Vault Verification Queue Synced ✓");
     setTimeout(() => setSyncState(""), 2500);
   };
@@ -113,15 +113,13 @@ export default function EcosystemCommandCenter() {
   };
   const rejectVaultTicket = (id: string) => updateVaultTickets(vaultTickets.map((t) => (t.id === id ? { ...t, status: "rejected" } : t)));
   const issueBlindRecoveryCode = async () => { const code = "REC-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); setRecoveryUnlockCode(code); await supabase.from("site_settings").upsert({ key: "vault_recovery_auth", value: { code, issuedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "קוד אישור שחזור הונפק ✓" : "Blind Recovery Code Issued ✓"); setTimeout(() => setSyncState(""), 2500); };
-    const persistVaultGovToCloud = async (enabledVal: boolean, noticeVal: string, reqAdminVal: boolean) => {
+      const persistVaultGovToCloud = async (enabledVal: boolean, noticeVal: string, reqAdminVal: boolean) => {
     setRequireAdminReset(reqAdminVal);
     const payload = { enabled: enabledVal, notice: noticeVal, requireAdminForReset: reqAdminVal };
-    const { data: exists } = await supabase.from("site_settings").select("key").eq("key", "vault_governance").maybeSingle();
-    const res = exists
-      ? await supabase.from("site_settings").update({ value: payload, updated_at: new Date().toISOString() }).eq("key", "vault_governance")
-      : await supabase.from("site_settings").insert({ key: "vault_governance", value: payload, updated_at: new Date().toISOString() });
-    if (res.error) { setSyncState(isHe ? `שגיאת סנכרון: ${res.error.message}` : `Sync Error: ${res.error.message}`); }
-    else { setSyncState(reqAdminVal ? (isHe ? "נשמר בענן: חובת אישור אדמין פעילה ✓" : "Saved: Admin Reset Lock ON ✓") : (isHe ? "נשמר בענן: איפוס פתוח למשתמש ✓" : "Saved: Admin Reset Lock OFF ✓")); }
+    const r = await fetch("/api/vault-governance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "vault_governance", value: payload }) });
+    const j = await r.json();
+    if (!r.ok || j.error) { setSyncState(isHe ? `שגיאה: ${j.error || "שמירה נכשלה"}` : `Error: ${j.error}`); }
+    else { setSyncState(reqAdminVal ? (isHe ? "נשמר בשרת: אכיפת אישור אדמין פעילה ✓" : "Saved: Admin Lock ON ✓") : (isHe ? "נשמר בשרת: איפוס פתוח למשתמש ✓" : "Saved: Admin Lock OFF ✓")); }
     setTimeout(() => setSyncState(""), 3000);
   };
   const saveVaultGov = async (enabledVal: boolean, noticeVal: string) => { setVaultEnabled(enabledVal); setVaultNotice(noticeVal); await persistVaultGovToCloud(enabledVal, noticeVal, requireAdminReset); };

@@ -111,7 +111,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
     } catch {}
     (async () => {
       try {
-        const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").maybeSingle();
+        const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); const data = { value: j.governance };
         if (data?.value) { setGovDisabled(data.value.enabled === false); setGovNotice(data.value.notice || ""); setRequireAdminReset(data.value.requireAdminForReset === true); }
       } catch {}
     })();
@@ -219,10 +219,10 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
   const executeSafeWipe = async () => {
     if (wipeConfirmText.trim() !== "RESET VAULT") { setErrorMsg(isHe ? "הקלד RESET VAULT במדויק לאישור." : "Type exact RESET VAULT."); return; }
     let mustAdmin = requireAdminReset;
-    try { const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").maybeSingle(); if (data?.value) mustAdmin = data.value.requireAdminForReset === true; } catch {}
+    try { const r = await fetch("/api/vault-governance", { cache: "no-store" }); const j = await r.json(); const data = { value: j.governance }; if (data?.value) mustAdmin = data.value.requireAdminForReset === true; } catch {}
     if (mustAdmin) {
       if (!recAdminCode.trim()) { setErrorMsg(isHe ? "נדרש קוד אישור אדמין (VLT-...) לאיפוס." : "Admin approval code required."); return; }
-      const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").maybeSingle();
+      const rt = await fetch("/api/vault-governance", { cache: "no-store" }); const jt = await rt.json(); const data = { value: jt.tickets };
       const list: VaultResetTicket[] = Array.isArray(data?.value) ? data.value : [];
       if (!list.find((t) => t.approvalCode === recAdminCode.trim() && t.status === "approved")) { setErrorMsg(isHe ? "קוד האדמין אינו מאושר." : "Unapproved admin code."); return; }
     }
@@ -332,8 +332,8 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
                 {requireAdminReset && (
                   <>
                     <input value={reqEmail} onChange={(e) => setReqEmail(e.target.value)} placeholder={isHe ? "האימייל שלך לאישור אדמין..." : "Your email for admin approval..."} className="input-dark" style={{ height: 32, fontSize: 11.5, width: 175 }} />
-                    <button type="button" onClick={async () => { if (!reqEmail.trim()) { setErrorMsg(isHe ? "הזן אימייל לבקשת אישור." : "Enter email."); return; } const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").maybeSingle(); const prev = Array.isArray(data?.value) ? data.value : []; const tk = { id: `tk-${Date.now()}`, userEmail: reqEmail.trim().toLowerCase(), requestType: "full_wipe_reset", verificationNote: "Vault Wipe Verification", status: "pending", approvalCode: "", createdAt: new Date().toISOString() }; await supabase.from("site_settings").upsert({ key: "vault_reset_tickets", value: [tk, ...prev], updated_at: new Date().toISOString() }, { onConflict: "key" }); setInfoMsg(isHe ? "הבקשה נשלחה לאדמין! לאחר אישורו לחץ בדוק אישור." : "Sent to Admin!"); }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{isHe ? "בקש אישור אדמין" : "Request Admin"}</button>
-                    <button type="button" onClick={async () => { const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").maybeSingle(); const list = Array.isArray(data?.value) ? data.value : []; const ok = list.find((t: { userEmail: string; status: string; approvalCode: string }) => t.userEmail === reqEmail.trim().toLowerCase() && t.status === "approved"); if (ok) { setRecAdminCode(ok.approvalCode); setInfoMsg(isHe ? `אושר! קוד ${ok.approvalCode} הוזן אוטומטית.` : `Approved! ${ok.approvalCode}`); } else { setErrorMsg(isHe ? "ממתין לאישור אדמין..." : "Still pending..."); } }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#34d399" }}>{isHe ? "בדוק אישור" : "Check Approval"}</button>
+                    <button type="button" onClick={async () => { if (!reqEmail.trim()) { setErrorMsg(isHe ? "הזן אימייל לבקשת אישור." : "Enter email."); return; } const rt = await fetch("/api/vault-governance", { cache: "no-store" }); const jt = await rt.json(); const data = { value: jt.tickets }; const prev = Array.isArray(data?.value) ? data.value : []; const tk = { id: `tk-${Date.now()}`, userEmail: reqEmail.trim().toLowerCase(), requestType: "full_wipe_reset", verificationNote: "Vault Wipe Verification", status: "pending", approvalCode: "", createdAt: new Date().toISOString() }; await fetch("/api/vault-governance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "vault_reset_tickets", value: [tk, ...prev] }) }); setInfoMsg(isHe ? "הבקשה נשלחה לאדמין! לאחר אישורו לחץ בדוק אישור." : "Sent to Admin!"); }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{isHe ? "בקש אישור אדמין" : "Request Admin"}</button>
+                    <button type="button" onClick={async () => { const rt = await fetch("/api/vault-governance", { cache: "no-store" }); const jt = await rt.json(); const data = { value: jt.tickets }; const list = Array.isArray(data?.value) ? data.value : []; const ok = list.find((t: { userEmail: string; status: string; approvalCode: string }) => t.userEmail === reqEmail.trim().toLowerCase() && t.status === "approved"); if (ok) { setRecAdminCode(ok.approvalCode); setInfoMsg(isHe ? `אושר! קוד ${ok.approvalCode} הוזן אוטומטית.` : `Approved! ${ok.approvalCode}`); } else { setErrorMsg(isHe ? "ממתין לאישור אדמין..." : "Still pending..."); } }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#34d399" }}>{isHe ? "בדוק אישור" : "Check Approval"}</button>
                     <input value={recAdminCode} onChange={(e) => setRecAdminCode(e.target.value)} placeholder="VLT-XXXXXX" className="input-dark" style={{ height: 32, fontSize: 11.5, width: 120 }} />
                   </>
                 )}
