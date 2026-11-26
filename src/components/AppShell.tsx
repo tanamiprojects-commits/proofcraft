@@ -232,7 +232,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="desktop-subnav" aria-label="Main Navigation" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(18,20,26,0.75)" }}>
-          <div style={{ maxWidth: 1120, margin: "0 auto", width: "100%", padding: "0 16px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto" }}>
+          <div style={{ maxWidth: 1120, margin: "0 auto", width: "100%", padding: "0 16px", display: "flex", alignItems: "center", gap: 6, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {visibleNav.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
