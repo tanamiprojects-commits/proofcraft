@@ -27,6 +27,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [searchQ, setSearchQ] = useState("");
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const [activeFieldHelp, setActiveFieldHelp] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -216,8 +217,8 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center" }}>
-          <img src="/brand/vault/vault-hero.png" alt="AES-256 Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "62%", maxHeight: 130, objectFit: "cover", borderRadius: 12, border: "1px solid rgba(56,189,248,0.35)" }} />
-          <img src="/brand/vault/vault-context.png" alt="Context Pin Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "35%", maxHeight: 130, objectFit: "cover", borderRadius: 12, border: "1px solid rgba(168,85,247,0.35)" }} />
+          <img src="/vault/vault-hero.png" alt="AES-256 Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "62%", maxHeight: 155, objectFit: "contain", background: "rgba(5,7,10,0.6)", padding: 6, borderRadius: 12, border: "1px solid rgba(56,189,248,0.35)" }} />
+          <img src="/vault/vault-context.png" alt="Context Pin Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "35%", maxHeight: 155, objectFit: "contain", background: "rgba(5,7,10,0.6)", padding: 6, borderRadius: 12, border: "1px solid rgba(168,85,247,0.35)" }} />
         </div>
       </div>
 
@@ -305,29 +306,30 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
           )}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(215px, 1fr))", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.28)" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "בחר את סוג הנכס (ארנק קריפטו, מפתח API, סיסמה או זיכרון פרויקט)" : "Select item category"}><Info size={12} color="#38bdf8" /> {isHe ? "סוג הפריט (קטגוריה)" : "Category"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "בחר את סוג הנכס (ארנק קריפטו, מפתח API, סיסמה או זיכרון פרויקט)" : "Select item category")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "בחר את סוג הנכס (ארנק קריפטו, מפתח API, סיסמה או זיכרון פרויקט)" : "Select item category"}><Info size={12} color="#38bdf8" /> {isHe ? "סוג הפריט (קטגוריה)" : "Category"}</label>
               <select value={category} onChange={(e) => setCategory(e.target.value as VaultCategory)} className="input-dark" style={{ height: 38, fontSize: 12.5, padding: "0 10px" }}>{(Object.keys(catLabels) as VaultCategory[]).map((k) => (<option key={k} value={k}>{catLabels[k]}</option>))}</select>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "שם מזהה ברור לפריט (למשל: ארנק Ledger ראשי או מפתח Supabase)" : "Clear title for this item"}><Info size={12} color="#38bdf8" /> {isHe ? "שם הפריט לזיהוי" : "Item Title"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "שם מזהה ברור לפריט (למשל: ארנק Ledger ראשי או מפתח Supabase)" : "Clear title for this item")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "שם מזהה ברור לפריט (למשל: ארנק Ledger ראשי או מפתח Supabase)" : "Clear title for this item"}><Info size={12} color="#38bdf8" /> {isHe ? "שם הפריט לזיהוי" : "Item Title"}</label>
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={isHe ? "למשל: ארנק MetaMask / כניסה לבנק" : "e.g. MetaMask / Bank Login"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "לאיזה אתר, רשת בלוקצ'יין או פרויקט הפריט הזה שייך" : "Which project, website or network this belongs to"}><Info size={12} color="#38bdf8" /> {isHe ? "לאיזה נכס / פרויקט שייך?" : "Target Asset / Network"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "לאיזה אתר, רשת בלוקצ'יין או פרויקט הפריט הזה שייך" : "Which project, website or network this belongs to")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "לאיזה אתר, רשת בלוקצ'יין או פרויקט הפריט הזה שייך" : "Which project, website or network this belongs to"}><Info size={12} color="#38bdf8" /> {isHe ? "לאיזה נכס / פרויקט שייך?" : "Target Asset / Network"}</label>
               <input value={targetAsset} onChange={(e) => setTargetAsset(e.target.value)} placeholder={isHe ? "למשל: רשת Ethereum / פרויקט Tanami360" : "e.g. Ethereum / Tanami360"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "תיעוד איך ומאיפה קיבלת את המפתח/סיסמה (למשל: הופק באפליקציה, נשלח במייל אימות)" : "Where and how you obtained this secret"}><Info size={12} color="#38bdf8" /> {isHe ? "מקור: מאיפה ואיך התקבל?" : "Origin: How Obtained?"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "תיעוד איך ומאיפה קיבלת את המפתח/סיסמה (למשל: הופק באפליקציה, נשלח במייל אימות)" : "Where and how you obtained this secret")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "תיעוד איך ומאיפה קיבלת את המפתח/סיסמה (למשל: הופק באפליקציה, נשלח במייל אימות)" : "Where and how you obtained this secret"}><Info size={12} color="#38bdf8" /> {isHe ? "מקור: מאיפה ואיך התקבל?" : "Origin: How Obtained?"}</label>
               <input value={originSource} onChange={(e) => setOriginSource(e.target.value)} placeholder={isHe ? "למשל: הופק בדשבורד Vercel / אפליקציית ארנק" : "e.g. Generated in Vercel / Wallet App"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "קישור ישיר לאתר היעד שבו משתמשים בפריט (מפעיל מעקב חזרה אוטומטי)" : "Direct target URL for 1-click launch & return tracking"}><Info size={12} color="#38bdf8" /> {isHe ? "קישור פעולה ישיר (אופציונלי)" : "Direct Action URL"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "קישור ישיר לאתר היעד שבו משתמשים בפריט (מפעיל מעקב חזרה אוטומטי)" : "Direct target URL for 1-click launch & return tracking")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "קישור ישיר לאתר היעד שבו משתמשים בפריט (מפעיל מעקב חזרה אוטומטי)" : "Direct target URL for 1-click launch & return tracking"}><Info size={12} color="#38bdf8" /> {isHe ? "קישור פעולה ישיר (אופציונלי)" : "Direct Action URL"}</label>
               <input value={actionUrl} onChange={(e) => setActionUrl(e.target.value)} placeholder="https://..." className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "הסיסמה, 12/24 מילים של ארנק קריפטו, או רמז הצפנה אישי שרק אתה מבין" : "Password, 12/24 seed words, or personal cipher clue"}><Info size={12} color="#34d399" /> {isHe ? "הסוד / סיסמה / רמז הצפנה" : "Secret / Password / Clue"}</label>
+              <label onClick={() => setActiveFieldHelp(isHe ? "הסיסמה, 12/24 מילים של ארנק קריפטו, או רמז הצפנה אישי שרק אתה מבין" : "Password, 12/24 seed words, or personal cipher clue")} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} title={isHe ? "הסיסמה, 12/24 מילים של ארנק קריפטו, או רמז הצפנה אישי שרק אתה מבין" : "Password, 12/24 seed words, or personal cipher clue"}><Info size={12} color="#34d399" /> {isHe ? "הסוד / סיסמה / רמז הצפנה" : "Secret / Password / Clue"}</label>
               <div style={{ display: "flex", gap: 5 }}><input type="text" value={secretValue} onChange={(e) => setSecretValue(e.target.value)} placeholder={category === "crypto_seed" ? (isHe ? "הדבק 12 או 24 מילים..." : "Paste 12/24 words...") : (isHe ? "הזן ערך או לחץ לחולל ->" : "Enter value or generate ->")} className="input-dark" style={{ flex: 1, height: 38, fontSize: 12.5 }} /><button type="button" onClick={() => { setSecretValue(generateCustomPassword(genPwLen, genUseNum, genUseSym)); setInfoMsg(isHe ? "חוללה סיסמה חזקה!" : "Strong password generated!"); }} className="btn-ghost" style={{ height: 38, padding: "0 10px", fontSize: 11, color: "#34d399" }} title="Generate Strong Password"><RefreshCw size={13} /></button></div>
             </div>
+            {activeFieldHelp && <div style={{ gridColumn: "1 / -1", padding: "8px 12px", borderRadius: 10, background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.35)", fontSize: 12, color: "#e0f2fe" }}>ℹ️ {activeFieldHelp}</div>}
             <div style={{ display: "flex", alignItems: "flex-end" }}>
               <button type="button" onClick={handleSaveEntry} className="btn-primary" style={{ height: 38, fontSize: 12.5, width: "100%" }}><Plus size={14} /> {editingId ? (isHe ? "עדכן והצפן בכספת" : "Update & Encrypt") : (isHe ? "הצפן ושמור בכספת" : "Encrypt & Save")}</button>
             </div>
