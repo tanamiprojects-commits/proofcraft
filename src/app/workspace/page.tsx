@@ -1,4 +1,5 @@
 "use client";
+import ZeroKnowledgeVaultOS from "@/components/ZeroKnowledgeVaultOS";
 import OrganicNetworkBuilderOS from "@/components/OrganicNetworkBuilderOS";
 
 import React, { useEffect, useState } from "react";
@@ -34,7 +35,7 @@ export default function WorkspacePage() {
   const [trackProjects, setTrackProjects] = useState<Record<string, TrackProjectEntry>>({});
   const [purchasedLevel, setPurchasedLevel] = useState<number>(1);
   const [totalPaidIls, setTotalPaidIls] = useState<number>(0);
-  const [wsMode, setWsMode] = useState<"build" | "organic">("build");
+  const [wsMode, setWsMode] = useState<"build" | "organic" | "vault">("build");
   const [selectedTrack, setSelectedTrack] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<string>("");
@@ -83,7 +84,7 @@ export default function WorkspacePage() {
       <PublicIdentityBar userId={userId} isHe={isHe} />
       <CreatorRankBadge userId={userId} />
       <ExecutiveReportCard userId={userId} />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)", marginBottom: 16 }}><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" onClick={() => setWsMode("build")} className={wsMode === "build" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("1. Engineering Studio & Portfolio", "1. סטודיו בנייה ותיק עבודות")}</button><button type="button" onClick={() => setWsMode("organic")} className={wsMode === "organic" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("2. Organic Network & Co-Op Ring", "2. רשת שיווק אורגנית וקידום הדדי")}</button></div><span style={{ fontSize: 11.5, color: "#94a3b8" }}>{t("Switch between building your product and growing organic traffic.", "עבור בין בניית המוצר להקמת רשת השיווק האורגנית שלך.")}</span></div>{wsMode === "organic" && <OrganicNetworkBuilderOS userId={userId} />}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)", marginBottom: 16 }}><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" onClick={() => setWsMode("build")} className={wsMode === "build" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("1. Engineering Studio & Portfolio", "1. סטודיו בנייה ותיק עבודות")}</button><button type="button" onClick={() => setWsMode("organic")} className={wsMode === "organic" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("2. Organic Network & Co-Op Ring", "2. רשת שיווק אורגנית וקידום הדדי")}</button><button type="button" onClick={() => setWsMode("vault")} className={wsMode === "vault" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("3. Encrypted Context & Crypto Vault", "3. כספת סודות, קריפטו והקשר")}</button></div><span style={{ fontSize: 11.5, color: "#94a3b8" }}>{t("Switch between building your product and growing organic traffic.", "עבור בין בניית המוצר להקמת רשת השיווק האורגנית שלך.")}</span></div>{wsMode === "organic" && <OrganicNetworkBuilderOS userId={userId} />}{wsMode === "vault" && <ZeroKnowledgeVaultOS userId={userId} />}
       <SmartCampaignLauncher userId={userId} context="workspace" />
       <PublicBrandingEditor userId={userId} />
       <div className="card-hero" style={{ padding: 20, marginBottom: 18 }}>

@@ -196,6 +196,7 @@ export default function HomePage() {
           <div style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", marginBottom: 3 }}>{t("Curated AI, Cloud & Ad Stack", "ארגז כלי AI, ענן ושיווק מאומתים")}</div>
           <p style={{ fontSize: 12, color: "#94a3b8" }}>{t("Vetted AI editors, Supabase cloud hosts, and visual ad generators.", "כלי AI, ענן ויצירת קריאייטיב שנבדקו ואומתו לעבודה מקצועית.")}</p>
         </Link>
+        <Link href="/vault" className="card-surface" style={{ padding: 16, textDecoration: "none", display: "block", border: "1px solid rgba(251,191,36,0.3)" }}><strong style={{ color: "#fbbf24", fontSize: 14 }}>Zero-Knowledge Context & Crypto Vault</strong><p style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{isHe ? "כספת מוצפנת חינמית (AES-256) לשמירת סיסמאות, מפתחות פרויקטים ו-12/24 מילים של קריפטו עם הקשר מלא." : "Free client-side AES-256 vault for passwords, project keys & 12/24-word crypto seeds with full context."}</p></Link>
         <Link href="/method" className="card-surface" style={{ padding: 16, display: "block" }}>
           <BookOpen size={18} color="#38bdf8" style={{ marginBottom: 6 }} />
           <div style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", marginBottom: 3 }}>{t("8-Stage Prompt Engineering Vault", "שיטת 8 השלבים וכספת הפרומפטים")}</div>
