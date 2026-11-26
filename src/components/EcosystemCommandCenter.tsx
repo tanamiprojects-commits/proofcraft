@@ -114,6 +114,7 @@ export default function EcosystemCommandCenter() {
   const rejectVaultTicket = (id: string) => updateVaultTickets(vaultTickets.map((t) => (t.id === id ? { ...t, status: "rejected" } : t)));
   const issueBlindRecoveryCode = async () => { const code = "REC-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); setRecoveryUnlockCode(code); await supabase.from("site_settings").upsert({ key: "vault_recovery_auth", value: { code, issuedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "קוד אישור שחזור הונפק ✓" : "Blind Recovery Code Issued ✓"); setTimeout(() => setSyncState(""), 2500); };
     const persistVaultGovToCloud = async (enabledVal: boolean, noticeVal: string, reqAdminVal: boolean) => {
+    setRequireAdminReset(reqAdminVal);
     const payload = { enabled: enabledVal, notice: noticeVal, requireAdminForReset: reqAdminVal };
     const { data: exists } = await supabase.from("site_settings").select("key").eq("key", "vault_governance").maybeSingle();
     const res = exists

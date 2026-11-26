@@ -72,6 +72,8 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
   const [exportLang, setExportLang] = useState<"he" | "en" | "both">("he");
   const [masterCertData, setMasterCertData] = useState<{ pass: string; rec: string; date: string } | null>(null);
     const [showSmartGuide, setShowSmartGuide] = useState(false);
+  const [reqEmail, setReqEmail] = useState("");
+  const [installPromptEvt, setInstallPromptEvt] = useState<{ prompt: () => Promise<void> } | null>(null);
   const [showEntryForge, setShowEntryForge] = useState(false);
   const [genPwLen, setGenPwLen] = useState(20);
   const [genUseNum, setGenUseNum] = useState(true);
@@ -103,6 +105,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
       const savedLang = localStorage.getItem("pc_vault_lang_pref");
       if (savedLang === "he" || savedLang === "en") setLocalLang(savedLang);
       else if (typeof navigator !== "undefined") setLocalLang((navigator.language || "").toLowerCase().startsWith("he") ? "he" : "en");
+      const onBip = (e: Event) => { e.preventDefault(); setInstallPromptEvt(e as unknown as { prompt: () => Promise<void> }); }; window.addEventListener("beforeinstallprompt", onBip);
       const raw = localStorage.getItem(storageKey);
       if (raw) { const parsed = JSON.parse(raw); setBlob(parsed); if (parsed.algo) setCipherAlgo(parsed.algo); }
     } catch {}
@@ -114,6 +117,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
     })();
   }, [storageKey]);
 
+  const installVaultAsApp = async () => { if (installPromptEvt) { await installPromptEvt.prompt(); setInstallPromptEvt(null); return; } setInfoMsg(isHe ? "להתקנה כאפליקציה: באנדרואיד/מחשב לחץ בתפריט הדפדפן התקן אפליקציה; באייפון לחץ שתף ואז הוסף למסך הבית." : "To install as App: tap browser menu -> Install App (or Share -> Add to Home Screen on iOS)."); };
   const switchVaultLanguage = () => { const next = isHe ? "en" : "he"; setLocalLang(next); setExportLang(next); try { localStorage.setItem("pc_vault_lang_pref", next); } catch {} if (toggleLang) toggleLang(); };
   const copyStr = (val: string, id: string) => { navigator.clipboard?.writeText((val || "").trim()); setCopiedId(id); setTimeout(() => setCopiedId(""), 2200); };
 
@@ -237,6 +241,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
           <span className="badge-pill" style={{ background: "rgba(251,191,36,0.16)", color: "#fbbf24", fontSize: 11.5 }}><KeyRound size={13} /> {isHe ? "כספת Zero-Knowledge מוצפנת" : "ZERO-KNOWLEDGE VAULT"}</span>
           <button type="button" onClick={() => setShowSmartGuide(!showSmartGuide)} className="btn-ghost" style={{ height: 32, padding: "0 11px", fontSize: 11.5, color: "#34d399", borderColor: "rgba(52,211,153,0.4)" }}>{showSmartGuide ? (isHe ? "סגור מדריך ✕" : "Close Guide ✕") : (isHe ? "📘 מדריך למשתמש" : "📘 User Guide")}</button>
           <button type="button" onClick={() => { if (typeof window !== "undefined") window.open(`${subDomain}/vault`, "ProofCraftVaultMini", "width=440,height=720,menubar=no,toolbar=no"); }} className="btn-ghost" style={{ height: 32, padding: "0 11px", fontSize: 11.5, color: "#fbbf24" }}>{isHe ? "📌 חלון צף" : "📌 Floating App"}</button>
+          <button type="button" onClick={installVaultAsApp} className="btn-primary" style={{ height: 32, padding: "0 11px", fontSize: 11.5, width: "auto", background: "linear-gradient(135deg, #10b981, #059669)", color: "#05070a", fontWeight: 900 }}>{isHe ? "📲 התקן כאפליקציה" : "📲 Install App"}</button>
           <button type="button" onClick={switchVaultLanguage} className="btn-ghost" style={{ height: 32, padding: "0 12px", fontSize: 12, color: "#38bdf8" }}><Globe size={13} /> {isHe ? "English" : "עברית"}</button>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -320,10 +325,19 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
                 <input type="password" value={recNewPass} onChange={(e) => setRecNewPass(e.target.value)} placeholder={isHe ? "סיסמת מאסטר חדשה" : "New Master Passphrase"} className="input-dark" style={{ height: 36, fontSize: 12 }} />
                 <button type="button" onClick={handleRecoverVault} className="btn-primary" style={{ height: 36, fontSize: 12, width: "auto" }}><ShieldCheck size={13} /> {isHe ? "שחזר כספת" : "Recover Vault"}</button>
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
-                <input value={recAdminCode} onChange={(e) => setRecAdminCode(e.target.value)} placeholder={isHe ? "קוד אישור אדמין (אם נדרש)" : "Admin Code (if required)"} className="input-dark" style={{ height: 32, fontSize: 11.5, width: 170 }} />
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+                <span style={{ fontSize: 11.5, color: requireAdminReset ? "#fbbf24" : "#34d399", fontWeight: 700 }}>{requireAdminReset ? (isHe ? "מדיניות אדמין: נדרש קוד אישור (VLT-...) לאיפוס" : "Policy: Admin Approval Code Required") : (isHe ? "מדיניות אדמין: איפוס פתוח למשתמש ללא קוד אדמין" : "Policy: Direct Reset Allowed")}</span>
+                <button type="button" onClick={() => { setWipeConfirmText("RESET VAULT"); copyStr("RESET VAULT", "rv-cp"); setInfoMsg(isHe ? "מילת האישור RESET VAULT הוזנה אוטומטית לשדה!" : "RESET VAULT filled automatically!"); }} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}>{copiedId === "rv-cp" ? (isHe ? "הוזן לשדה ✓" : "Filled ✓") : (isHe ? "הזן אוטומטית: RESET VAULT" : "Auto-Fill: RESET VAULT")}</button>
                 <input value={wipeConfirmText} onChange={(e) => setWipeConfirmText(e.target.value)} placeholder="RESET VAULT" className="input-dark" style={{ height: 32, fontSize: 11.5, width: 130 }} />
-                <button type="button" onClick={executeSafeWipe} className="btn-ghost" style={{ height: 32, padding: "0 12px", fontSize: 11.5, color: "#f87171" }}>{isHe ? "השמד כספת ישנה והתחל מאפס" : "Wipe & Start Fresh"}</button>
+                {requireAdminReset && (
+                  <>
+                    <input value={reqEmail} onChange={(e) => setReqEmail(e.target.value)} placeholder={isHe ? "האימייל שלך לאישור אדמין..." : "Your email for admin approval..."} className="input-dark" style={{ height: 32, fontSize: 11.5, width: 175 }} />
+                    <button type="button" onClick={async () => { if (!reqEmail.trim()) { setErrorMsg(isHe ? "הזן אימייל לבקשת אישור." : "Enter email."); return; } const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").maybeSingle(); const prev = Array.isArray(data?.value) ? data.value : []; const tk = { id: `tk-${Date.now()}`, userEmail: reqEmail.trim().toLowerCase(), requestType: "full_wipe_reset", verificationNote: "Vault Wipe Verification", status: "pending", approvalCode: "", createdAt: new Date().toISOString() }; await supabase.from("site_settings").upsert({ key: "vault_reset_tickets", value: [tk, ...prev], updated_at: new Date().toISOString() }, { onConflict: "key" }); setInfoMsg(isHe ? "הבקשה נשלחה לאדמין! לאחר אישורו לחץ בדוק אישור." : "Sent to Admin!"); }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{isHe ? "בקש אישור אדמין" : "Request Admin"}</button>
+                    <button type="button" onClick={async () => { const { data } = await supabase.from("site_settings").select("value").eq("key", "vault_reset_tickets").maybeSingle(); const list = Array.isArray(data?.value) ? data.value : []; const ok = list.find((t: { userEmail: string; status: string; approvalCode: string }) => t.userEmail === reqEmail.trim().toLowerCase() && t.status === "approved"); if (ok) { setRecAdminCode(ok.approvalCode); setInfoMsg(isHe ? `אושר! קוד ${ok.approvalCode} הוזן אוטומטית.` : `Approved! ${ok.approvalCode}`); } else { setErrorMsg(isHe ? "ממתין לאישור אדמין..." : "Still pending..."); } }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11, color: "#34d399" }}>{isHe ? "בדוק אישור" : "Check Approval"}</button>
+                    <input value={recAdminCode} onChange={(e) => setRecAdminCode(e.target.value)} placeholder="VLT-XXXXXX" className="input-dark" style={{ height: 32, fontSize: 11.5, width: 120 }} />
+                  </>
+                )}
+                <button type="button" onClick={executeSafeWipe} className="btn-ghost" style={{ height: 32, padding: "0 12px", fontSize: 11.5, color: "#f87171", borderColor: "rgba(248,113,113,0.4)" }}>{isHe ? "השמד כספת ישנה והתחל מאפס" : "Wipe & Start Fresh"}</button>
               </div>
             </div>
           )}
