@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Activity, ExternalLink, Globe, Layers, RefreshCw, ShieldCheck, Sliders, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useStudioLang } from "@/lib/i18n-engine";
+import { VipGrantRecord } from "@/lib/vip-access-engine";
 
 interface NodeStatus {
   id: string; name: string; roleHe: string; roleEn: string;
@@ -30,6 +31,11 @@ export default function EcosystemCommandCenter() {
   const [vaultEnabled, setVaultEnabled] = useState(true);
   const [vaultNotice, setVaultNotice] = useState("");
   const [recoveryUnlockCode, setRecoveryUnlockCode] = useState("");
+  const [vipGrants, setVipGrants] = useState<VipGrantRecord[]>([]);
+  const [vipEmail, setVipEmail] = useState("");
+  const [vipLevel, setVipLevel] = useState<2 | 3 | 4>(4);
+  const [vipLabel, setVipLabel] = useState("");
+  const [vipCopied, setVipCopied] = useState("");
   const persistNodes = async (next: NodeStatus[]) => {
     setNodes(next);
     localStorage.setItem("pc_admin_custom_nodes_v1", JSON.stringify(next));
@@ -69,11 +75,27 @@ export default function EcosystemCommandCenter() {
         }
       } catch {}
       setNodes(initial);
+      try { const { data: vg } = await supabase.from("site_settings").select("value").eq("key", "vip_access_grants").single(); if (Array.isArray(vg?.value)) setVipGrants(vg.value); } catch {}
       try { const { data: vSet } = await supabase.from("site_settings").select("value").eq("key", "vault_governance").single(); if (vSet?.value) { setVaultEnabled(vSet.value.enabled !== false); setVaultNotice(vSet.value.notice || ""); } } catch {}
       probeList(initial);
     })();
   }, []);
 
+    const saveVipGrants = async (next: VipGrantRecord[]) => {
+    setVipGrants(next);
+    await supabase.from("site_settings").upsert({ key: "vip_access_grants", value: next, updated_at: new Date().toISOString() });
+    setSyncState(isHe ? "הרשאות VIP סונכרנו לענן ✓" : "VIP Grants Synced ✓");
+    setTimeout(() => setSyncState(""), 2500);
+  };
+  const addVipGrant = () => {
+    if (!vipEmail.trim() && !vipLabel.trim()) return;
+    const code = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const rec: VipGrantRecord = { id: `vip-${Date.now()}`, email: vipEmail.trim().toLowerCase(), inviteCode: code, grantedLevel: vipLevel, label: vipLabel.trim() || (isHe ? "שגריר / VIP מאושר" : "Approved VIP"), active: true, createdAt: new Date().toISOString() };
+    saveVipGrants([rec, ...vipGrants]);
+    setVipEmail(""); setVipLabel("");
+  };
+  const toggleVipActive = (id: string) => saveVipGrants(vipGrants.map((g) => (g.id === id ? { ...g, active: !g.active } : g)));
+  const removeVipGrant = (id: string) => saveVipGrants(vipGrants.filter((g) => g.id !== id));
   const issueBlindRecoveryCode = async () => { const code = "REC-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); setRecoveryUnlockCode(code); await supabase.from("site_settings").upsert({ key: "vault_recovery_auth", value: { code, issuedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "קוד אישור שחזור הונפק ✓" : "Blind Recovery Code Issued ✓"); setTimeout(() => setSyncState(""), 2500); };
   const saveVaultGov = async (enabledVal: boolean, noticeVal: string) => { setVaultEnabled(enabledVal); setVaultNotice(noticeVal); await supabase.from("site_settings").upsert({ key: "vault_governance", value: { enabled: enabledVal, notice: noticeVal }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "הגדרות כספת סונכרנו ✓" : "Vault Settings Synced ✓"); setTimeout(() => setSyncState(""), 2500); };
   const addCustomNode = () => {
@@ -151,6 +173,32 @@ export default function EcosystemCommandCenter() {
       </div>
 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: 10, borderRadius: 12, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.28)", marginTop: 12, alignItems: "center" }}><span style={{ fontSize: 11.5, fontWeight: 800, color: "#fbbf24" }}>{isHe ? "שליטה בכספת Zero-Knowledge (/vault):" : "Zero-Knowledge Vault Control (/vault):"}</span><button type="button" onClick={() => saveVaultGov(!vaultEnabled, vaultNotice)} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: vaultEnabled ? "#34d399" : "#f87171" }}>{vaultEnabled ? (isHe ? "סטטוס: פעילה לציבור" : "Status: ACTIVE") : (isHe ? "סטטוס: מושבתת (תחזוקה)" : "Status: MAINTENANCE")}</button><input value={vaultNotice} onChange={(e) => setVaultNotice(e.target.value)} placeholder={isHe ? "הודעת מערכת בראש הכספת (אופציונלי)..." : "Optional top banner notice in Vault..."} className="input-dark" style={{ flex: 1, minWidth: 200, height: 28, fontSize: 11 }} /><button type="button" onClick={() => saveVaultGov(vaultEnabled, vaultNotice)} className="btn-primary" style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>{isHe ? "שמור" : "Save"}</button><button type="button" onClick={issueBlindRecoveryCode} className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#fbbf24" }}>{recoveryUnlockCode ? (isHe ? `קוד שחזור פעיל: ${recoveryUnlockCode}` : `Active Code: ${recoveryUnlockCode}`) : (isHe ? "הנפק קוד אישור שחזור למשתמש (ללא חשיפת תוכן)" : "Issue Blind Recovery Auth Code")}</button>
         <a href="/vault" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}>{isHe ? "פתח כספת ↗" : "Open Vault ↗"}</a></div>
+      <div style={{ padding: 14, borderRadius: 14, background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.3)", marginTop: 14 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 900, color: "#34d399", marginBottom: 8 }}>{isHe ? "ניהול גישת VIP ושגרירים בחינם (פתיחת כל הכלים והמסלולים בתשלום ללא עלות):" : "VIP & Ambassador Free-Access Manager (Unlock Paid Tiers Free):"}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8, marginBottom: 10 }}>
+          <input value={vipEmail} onChange={(e) => setVipEmail(e.target.value)} placeholder={isHe ? "אימייל משתמש (אופציונלי אם שולחים קישור)" : "User Email (optional for invite link)"} className="input-dark" style={{ height: 34, fontSize: 12 }} />
+          <select value={vipLevel} onChange={(e) => setVipLevel(Number(e.target.value) as 2 | 3 | 4)} className="input-dark" style={{ height: 34, fontSize: 12 }}><option value={4}>{isHe ? "הכל פתוח מלא (v4.0 VIP + כל הכלים)" : "Full Unlimited (v4.0 VIP)"}</option><option value={3}>{isHe ? "מסלול Pro מתקדם (v3.0)" : "Pro Tier (v3.0)"}</option><option value={2}>{isHe ? "מסלול SaaS ענן (v2.0)" : "Cloud SaaS (v2.0)"}</option></select>
+          <input value={vipLabel} onChange={(e) => setVipLabel(e.target.value)} placeholder={isHe ? "שם / סיבה (חבר, משפיען, שותף עסקי)" : "Name / Note (Friend, Promoter, Partner)"} className="input-dark" style={{ height: 34, fontSize: 12 }} />
+          <button type="button" onClick={addVipGrant} className="btn-primary" style={{ height: 34, fontSize: 12, width: "auto" }}>{isHe ? "+ הענק גישת VIP בחינם" : "+ Grant Free VIP Pass"}</button>
+        </div>
+        {vipGrants.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {vipGrants.map((g) => {
+              const inviteUrl = `${subSite}/?vip=${g.inviteCode}`;
+              return (
+                <div key={g.id} style={{ padding: "8px 12px", borderRadius: 10, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 11.5 }}>
+                  <div><strong style={{ color: "#f8fafc" }}>{g.label}</strong> {g.email && <span style={{ color: "#38bdf8" }}>({g.email})</span>} · <span style={{ color: "#fbbf24" }}>v{g.grantedLevel}.0 FREE</span> · <code style={{ color: "#94a3b8" }}>{g.inviteCode}</code></div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => { navigator.clipboard?.writeText(inviteUrl); setVipCopied(g.id); setTimeout(() => setVipCopied(""), 2000); }} className="btn-ghost" style={{ height: 26, padding: "0 8px", fontSize: 10.5, color: "#34d399" }}>{vipCopied === g.id ? (isHe ? "קישור הועתק!" : "Copied!") : (isHe ? "העתק קישור גישה ישיר" : "Copy Magic VIP Link")}</button>
+                    <button type="button" onClick={() => toggleVipActive(g.id)} className="btn-ghost" style={{ height: 26, padding: "0 8px", fontSize: 10.5, color: g.active ? "#34d399" : "#f87171" }}>{g.active ? (isHe ? "פעיל" : "ACTIVE") : (isHe ? "מושהה" : "PAUSED")}</button>
+                    <button type="button" onClick={() => removeVipGrant(g.id)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

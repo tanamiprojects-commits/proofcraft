@@ -1,9 +1,11 @@
 "use client";
+import { resolveVipGrantForUser, VipGrantRecord } from "@/lib/vip-access-engine";
+
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShieldCheck, Home, BookOpen, Layers, Wrench, Users, Briefcase, Globe, Shield, Smartphone,
+import { Crown, ShieldCheck, Home, BookOpen, Layers, Wrench, Users, Briefcase, Globe, Shield, Smartphone,
   Accessibility, MessageCircle, AlertTriangle, Megaphone, LogOut, CheckCircle2, Menu, RotateCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { FINTECH_LEGAL_DOCS, LegalDocumentItem } from "@/lib/legal-docs-data";
@@ -21,6 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<"en" | "he">("en");
+  const [vipBadge, setVipBadge] = useState<VipGrantRecord | null>(null);
   const [focusMode, setFocusMode] = useState<FocusMode>("full_os");
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -238,6 +241,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
+      {vipBadge && <div style={{ background: "linear-gradient(90deg, rgba(251,191,36,0.18), rgba(52,211,153,0.16))", borderBottom: "1px solid rgba(251,191,36,0.35)", padding: "6px 16px", textAlign: "center", fontSize: 12, fontWeight: 800, color: "#fef3c7" }}><Crown size={13} style={{ display: "inline", marginInlineEnd: 6, color: "#fbbf24" }} />{isHe ? `גישת VIP / שגריר פעילה (v${vipBadge.grantedLevel}.0 מלא בחינם) · ${vipBadge.label}` : `VIP Ambassador Pass Active (Full v${vipBadge.grantedLevel}.0 Free Access) · ${vipBadge.label}`}</div>}
       <main className="obsidian-container" style={{ flex: 1, width: "100%" }}><UniversalSyncBridge isHe={isHe} isAdmin={isAdmin} />{children}</main>
 
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px 20px 96px", background: "#07080b", fontSize: 12, color: "#94a3b8" }}>

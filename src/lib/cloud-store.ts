@@ -1,3 +1,4 @@
+import { resolveVipGrantForUser } from "./vip-access-engine";
 import { supabase, ADMIN_EMAIL } from "./supabase";
 import { BuilderProfile, DEFAULT_PROFILE, VERIFICATION_STEPS, loadBuilderProfile, saveBuilderProfile } from "./proofcraft-store";
 import { DEV_TOOLS } from "./dev-toolkit-data";
@@ -180,14 +181,16 @@ export async function getActiveUserProfile(): Promise<{
   const { data: authData } = await supabase.auth.getUser();
   const user = authData?.user;
 
+  const vipGrant = await resolveVipGrantForUser(user?.email || null);
   if (!user) {
     return {
       userId: null, email: null, isAdmin: false, profile: loadBuilderProfile(),
       completedTools: [], unlockedItems: [], currentTrackLevel: 1,
-      purchasedTrackLevel: 0, totalPaidIls: 0, trackProjects: {},
+      purchasedTrackLevel: vipGrant ? vipGrant.grantedLevel : 0, totalPaidIls: 0, trackProjects: {},
     };
   }
 
+  
   const { data: row } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
   if (!row) {
@@ -196,7 +199,7 @@ export async function getActiveUserProfile(): Promise<{
       isAdmin: (user.email || "").toLowerCase() === ADMIN_EMAIL,
       profile: { ...DEFAULT_PROFILE, fullName: user.user_metadata?.full_name || "" },
       completedTools: [], unlockedItems: [], currentTrackLevel: 1,
-      purchasedTrackLevel: 0, totalPaidIls: 0, trackProjects: {},
+      purchasedTrackLevel: vipGrant ? vipGrant.grantedLevel : 0, totalPaidIls: 0, trackProjects: {},
     };
   }
 

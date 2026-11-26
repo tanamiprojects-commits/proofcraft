@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Accessibility, ArrowUpRight, CheckCircle2, Copy, Download, Edit3, Eye, EyeOff, ExternalLink, FileSpreadsheet, Globe, KeyRound, Lock, Plus, Printer, RefreshCw, RotateCcw, Search, Share2, ShieldCheck, Sliders, Trash2, Unlock } from "lucide-react";
+import { Accessibility, ArrowUpRight, CheckCircle2, Copy, Download, Edit3, Eye, ChevronDown, ChevronUp, EyeOff, ExternalLink, Info, FileSpreadsheet, Globe, KeyRound, Lock, Plus, Printer, RefreshCw, RotateCcw, Search, Share2, ShieldCheck, Sliders, Trash2, Unlock } from "lucide-react";
 import { useStudioLang } from "@/lib/i18n-engine";
 import { supabase } from "@/lib/supabase";
 import { CipherAlgo, decryptVaultJson, EncryptedVaultBlob, encryptVaultJson, recoverVaultWithCode } from "@/lib/zero-knowledge-crypto";
@@ -26,6 +26,7 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
   const [filterCat, setFilterCat] = useState<"all" | VaultCategory>("all");
   const [searchQ, setSearchQ] = useState("");
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -302,14 +303,34 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{PERSONAL_CIPHER_CLUES.map((cl, i) => (<button key={i} type="button" onClick={() => setSecretValue(isHe ? cl.he : cl.en)} className="btn-ghost" style={{ height: "auto", padding: "4px 9px", fontSize: 10.5, textAlign: isHe ? "right" : "left" }}>{isHe ? cl.he : cl.en}</button>))}</div>
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8, padding: 12, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)" }}>
-            <select value={category} onChange={(e) => setCategory(e.target.value as VaultCategory)} className="input-dark" style={{ height: 36, fontSize: 12 }}>{(Object.keys(catLabels) as VaultCategory[]).map((k) => (<option key={k} value={k}>{catLabels[k]}</option>))}</select>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={isHe ? "שם הפריט" : "Item Title"} className="input-dark" style={{ height: 36, fontSize: 12 }} />
-            <input value={targetAsset} onChange={(e) => setTargetAsset(e.target.value)} placeholder={isHe ? "לאיזה נכס שייך?" : "Target Asset"} className="input-dark" style={{ height: 36, fontSize: 12 }} />
-            <input value={originSource} onChange={(e) => setOriginSource(e.target.value)} placeholder={isHe ? "מאיפה התקבל?" : "Origin Source"} className="input-dark" style={{ height: 36, fontSize: 12 }} />
-            <input value={actionUrl} onChange={(e) => setActionUrl(e.target.value)} placeholder={isHe ? "קישור פעולה (https://...)" : "Action URL"} className="input-dark" style={{ height: 36, fontSize: 12 }} />
-            <div style={{ display: "flex", gap: 4 }}><input type="text" value={secretValue} onChange={(e) => setSecretValue(e.target.value)} placeholder={category === "crypto_seed" ? (isHe ? "12/24 מילים..." : "12/24 words...") : (isHe ? "סיסמה / סוד / רמז..." : "Secret / Password...")} className="input-dark" style={{ flex: 1, height: 36, fontSize: 12 }} /><button type="button" onClick={() => { setSecretValue(generateStrongPassword(20)); setInfoMsg(isHe ? "חוללה סיסמה חזקה (20 תווים)!" : "20-char password generated!"); }} className="btn-ghost" style={{ height: 36, padding: "0 8px", fontSize: 11, color: "#34d399" }} title="Generate Password"><RefreshCw size={13} /></button></div>
-            <button type="button" onClick={handleSaveEntry} className="btn-primary" style={{ height: 36, fontSize: 12, width: "auto" }}><Plus size={13} /> {editingId ? (isHe ? "עדכן והצפן" : "Update & Encrypt") : (isHe ? "הצפן ושמור" : "Encrypt & Save")}</button>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(215px, 1fr))", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.28)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "בחר את סוג הנכס (ארנק קריפטו, מפתח API, סיסמה או זיכרון פרויקט)" : "Select item category"}><Info size={12} color="#38bdf8" /> {isHe ? "סוג הפריט (קטגוריה)" : "Category"}</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value as VaultCategory)} className="input-dark" style={{ height: 38, fontSize: 12.5, padding: "0 10px" }}>{(Object.keys(catLabels) as VaultCategory[]).map((k) => (<option key={k} value={k}>{catLabels[k]}</option>))}</select>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "שם מזהה ברור לפריט (למשל: ארנק Ledger ראשי או מפתח Supabase)" : "Clear title for this item"}><Info size={12} color="#38bdf8" /> {isHe ? "שם הפריט לזיהוי" : "Item Title"}</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={isHe ? "למשל: ארנק MetaMask / כניסה לבנק" : "e.g. MetaMask / Bank Login"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "לאיזה אתר, רשת בלוקצ'יין או פרויקט הפריט הזה שייך" : "Which project, website or network this belongs to"}><Info size={12} color="#38bdf8" /> {isHe ? "לאיזה נכס / פרויקט שייך?" : "Target Asset / Network"}</label>
+              <input value={targetAsset} onChange={(e) => setTargetAsset(e.target.value)} placeholder={isHe ? "למשל: רשת Ethereum / פרויקט Tanami360" : "e.g. Ethereum / Tanami360"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "תיעוד איך ומאיפה קיבלת את המפתח/סיסמה (למשל: הופק באפליקציה, נשלח במייל אימות)" : "Where and how you obtained this secret"}><Info size={12} color="#38bdf8" /> {isHe ? "מקור: מאיפה ואיך התקבל?" : "Origin: How Obtained?"}</label>
+              <input value={originSource} onChange={(e) => setOriginSource(e.target.value)} placeholder={isHe ? "למשל: הופק בדשבורד Vercel / אפליקציית ארנק" : "e.g. Generated in Vercel / Wallet App"} className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "קישור ישיר לאתר היעד שבו משתמשים בפריט (מפעיל מעקב חזרה אוטומטי)" : "Direct target URL for 1-click launch & return tracking"}><Info size={12} color="#38bdf8" /> {isHe ? "קישור פעולה ישיר (אופציונלי)" : "Direct Action URL"}</label>
+              <input value={actionUrl} onChange={(e) => setActionUrl(e.target.value)} placeholder="https://..." className="input-dark" style={{ height: 38, fontSize: 12.5 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", display: "flex", alignItems: "center", gap: 4 }} title={isHe ? "הסיסמה, 12/24 מילים של ארנק קריפטו, או רמז הצפנה אישי שרק אתה מבין" : "Password, 12/24 seed words, or personal cipher clue"}><Info size={12} color="#34d399" /> {isHe ? "הסוד / סיסמה / רמז הצפנה" : "Secret / Password / Clue"}</label>
+              <div style={{ display: "flex", gap: 5 }}><input type="text" value={secretValue} onChange={(e) => setSecretValue(e.target.value)} placeholder={category === "crypto_seed" ? (isHe ? "הדבק 12 או 24 מילים..." : "Paste 12/24 words...") : (isHe ? "הזן ערך או לחץ לחולל ->" : "Enter value or generate ->")} className="input-dark" style={{ flex: 1, height: 38, fontSize: 12.5 }} /><button type="button" onClick={() => { setSecretValue(generateCustomPassword(genPwLen, genUseNum, genUseSym)); setInfoMsg(isHe ? "חוללה סיסמה חזקה!" : "Strong password generated!"); }} className="btn-ghost" style={{ height: 38, padding: "0 10px", fontSize: 11, color: "#34d399" }} title="Generate Strong Password"><RefreshCw size={13} /></button></div>
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end" }}>
+              <button type="button" onClick={handleSaveEntry} className="btn-primary" style={{ height: 38, fontSize: 12.5, width: "100%" }}><Plus size={14} /> {editingId ? (isHe ? "עדכן והצפן בכספת" : "Update & Encrypt") : (isHe ? "הצפן ושמור בכספת" : "Encrypt & Save")}</button>
+            </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: 10, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(52,211,153,0.25)" }}>
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -326,24 +347,42 @@ export default function ZeroKnowledgeVaultOS({ userId, standalone = false }: { u
             <button type="button" onClick={() => setFilterCat("all")} className={filterCat === "all" ? "btn-primary" : "btn-ghost"} style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>{isHe ? `הכל (${entries.length})` : `All (${entries.length})`}</button>
             {(Object.keys(catLabels) as VaultCategory[]).map((k) => (<button key={k} type="button" onClick={() => setFilterCat(k)} className={filterCat === k ? "btn-primary" : "btn-ghost"} style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>{catLabels[k]}</button>))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(265px, 1fr))", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {visibleEntries.map((item) => {
               const isShown = Boolean(revealedIds[item.id]);
+              const isExpanded = Boolean(expandedIds[item.id]);
               return (
-                <div key={item.id} style={{ padding: 14, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 8 }}>
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}><span className="badge-pill" style={{ fontSize: 10, background: "rgba(56,189,248,0.14)", color: "#38bdf8" }}>{catLabels[item.category]}</span><div style={{ display: "flex", gap: 6 }}><button type="button" onClick={() => startEditEntry(item)} style={{ background: "none", border: "none", color: "#38bdf8", cursor: "pointer" }} title="Edit"><Edit3 size={13} /></button><button type="button" onClick={() => persistEncrypted(entries.filter((x) => x.id !== item.id))} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }} title="Delete"><Trash2 size={13} /></button></div></div>
-                    <div style={{ fontSize: 14.5, fontWeight: 900, color: "#f8fafc", marginTop: 6 }}>{item.title}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}><div><strong style={{ color: "#cbd5e1" }}>{isHe ? "שייך ל:" : "Asset:"}</strong> {item.targetAsset}</div><div><strong style={{ color: "#cbd5e1" }}>{isHe ? "מקור:" : "Origin:"}</strong> {item.originSource}</div></div>
-                    {isShown ? renderSecretDisplay(item) : <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, background: "#05070a", fontFamily: "monospace", fontSize: 12, color: "#64748b" }}>••••••••••••••••••••••••</div>}
+                <div key={item.id} style={{ borderRadius: 12, background: "#0a0b0e", border: `1px solid ${isExpanded ? "rgba(56,189,248,0.45)" : "rgba(255,255,255,0.10)"}`, overflow: "hidden" }}>
+                  <div onClick={() => setExpandedIds({ ...expandedIds, [item.id]: !isExpanded })} style={{ padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, cursor: "pointer", background: isExpanded ? "rgba(56,189,248,0.06)" : "transparent" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span className="badge-pill" style={{ fontSize: 10.5, background: "rgba(56,189,248,0.14)", color: "#38bdf8" }}>{catLabels[item.category]}</span>
+                      <strong style={{ fontSize: 14.5, color: "#f8fafc" }}>{item.title}</strong>
+                      <span style={{ fontSize: 11.5, color: "#94a3b8" }}>· {item.targetAsset}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); copyStr(item.secretValue, item.id); }} className="btn-ghost" style={{ height: 28, padding: "0 9px", fontSize: 11, color: "#34d399" }}>{copiedId === item.id ? <CheckCircle2 size={11} /> : <Copy size={11} />} {copiedId === item.id ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק מהיר" : "Quick Copy")}</button>
+                      {isExpanded ? <ChevronUp size={16} color="#38bdf8" /> : <ChevronDown size={16} color="#94a3b8" />}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
-                    <button type="button" onClick={() => setRevealedIds({ ...revealedIds, [item.id]: !isShown })} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11 }}>{isShown ? <EyeOff size={11} /> : <Eye size={11} />} {isShown ? (isHe ? "הסתר" : "Hide") : (isHe ? "חשוף" : "Reveal")}</button>
-                    <button type="button" onClick={() => copyStr(item.secretValue, item.id)} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11, color: "#34d399" }}>{copiedId === item.id ? <CheckCircle2 size={11} /> : <Copy size={11} />} {copiedId === item.id ? (isHe ? "הועתק!" : "Copied!") : (isHe ? "העתק" : "Copy")}</button>
-                    <button type="button" onClick={() => copyStr(`${item.title} | ${item.targetAsset} | ${item.originSource} -> ${item.secretValue}`, `ctx-${item.id}`)} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11 }}>{copiedId === `ctx-${item.id}` ? (isHe ? "הקשר הועתק!" : "Context Copied!") : (isHe ? "העתק הקשר מלא" : "Copy Full Context")}</button>
-                    <button type="button" onClick={() => rotateItemPassword(item.id)} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11, color: "#fbbf24" }}><RefreshCw size={11} /> {isHe ? "החלף סיסמה" : "Rotate PW"}</button>
-                    {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noopener noreferrer" onClick={() => setExternalTask({ itemId: item.id, title: item.title, targetAsset: item.targetAsset, url: item.actionUrl })} className="btn-ghost" style={{ height: 28, padding: "0 8px", fontSize: 11, color: "#38bdf8" }}><ExternalLink size={11} /> {isHe ? "פתח יעד + מעקב" : "Open & Track"}</a>}
-                  </div>
+                  {isExpanded && (
+                    <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: 12, color: "#cbd5e1" }}>
+                        <div><strong style={{ color: "#94a3b8" }}>{isHe ? "שייך לנכס / רשת:" : "Target Asset:"}</strong> {item.targetAsset}</div>
+                        <div><strong style={{ color: "#94a3b8" }}>{isHe ? "מקור (מאיפה התקבל):" : "Origin Source:"}</strong> {item.originSource}</div>
+                        <div><strong style={{ color: "#94a3b8" }}>{isHe ? "נוצר בתאריך:" : "Created:"}</strong> {item.createdAt.slice(0, 10)}</div>
+                      </div>
+                      {isShown ? renderSecretDisplay(item) : <div style={{ padding: "8px 12px", borderRadius: 8, background: "#05070a", fontFamily: "monospace", fontSize: 12.5, color: "#64748b" }}>••••••••••••••••••••••••••••••••</div>}
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 4 }}>
+                        <button type="button" onClick={() => setRevealedIds({ ...revealedIds, [item.id]: !isShown })} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5 }}>{isShown ? <EyeOff size={12} /> : <Eye size={12} />} {isShown ? (isHe ? "הסתר ערך" : "Hide") : (isHe ? "חשוף ערך" : "Reveal")}</button>
+                        <button type="button" onClick={() => copyStr(item.secretValue, item.id)} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#34d399" }}><Copy size={12} /> {isHe ? "העתק סוד" : "Copy Secret"}</button>
+                        <button type="button" onClick={() => copyStr(`${item.title} | ${item.targetAsset} | ${item.originSource} -> ${item.secretValue}`, `ctx-${item.id}`)} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5 }}>{copiedId === `ctx-${item.id}` ? (isHe ? "הקשר הועתק!" : "Context Copied!") : (isHe ? "העתק הקשר מלא" : "Copy Full Context")}</button>
+                        <button type="button" onClick={() => rotateItemPassword(item.id)} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#fbbf24" }}><RefreshCw size={12} /> {isHe ? "החלף לסיסמה חדשה" : "Rotate Password"}</button>
+                        <button type="button" onClick={() => startEditEntry(item)} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#38bdf8" }}><Edit3 size={12} /> {isHe ? "ערוך פריט" : "Edit"}</button>
+                        {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noopener noreferrer" onClick={() => setExternalTask({ itemId: item.id, title: item.title, targetAsset: item.targetAsset, url: item.actionUrl })} className="btn-primary" style={{ height: 30, padding: "0 12px", fontSize: 11.5, width: "auto" }}><ExternalLink size={12} /> {isHe ? "פתח יעד + מעקב חזרה" : "Open & Track"}</a>}
+                        <button type="button" onClick={() => persistEncrypted(entries.filter((x) => x.id !== item.id))} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#f87171" }}><Trash2 size={12} /> {isHe ? "מחק" : "Delete"}</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
