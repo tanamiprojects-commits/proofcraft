@@ -1,5 +1,6 @@
 "use client";
 import { resolveVipGrantForUser, VipGrantRecord } from "@/lib/vip-access-engine";
+import ZeroKnowledgeVaultOS from "./ZeroKnowledgeVaultOS";
 
 
 import React, { useEffect, useState } from "react";
@@ -23,6 +24,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<"en" | "he">("en");
+  const [quickVaultOpen, setQuickVaultOpen] = useState(false);
   const [vipBadge, setVipBadge] = useState<VipGrantRecord | null>(null);
   const [focusMode, setFocusMode] = useState<FocusMode>("full_os");
   const [userId, setUserId] = useState<string | null>(null);
