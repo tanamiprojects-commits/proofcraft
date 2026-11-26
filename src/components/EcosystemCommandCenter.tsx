@@ -33,6 +33,7 @@ export default function EcosystemCommandCenter() {
   const [vaultNotice, setVaultNotice] = useState("");
   const [recoveryUnlockCode, setRecoveryUnlockCode] = useState("");
   const [requireAdminReset, setRequireAdminReset] = useState(true);
+  const [vaultGovFeedback, setVaultGovFeedback] = useState("");
   const [vaultTickets, setVaultTickets] = useState<VaultResetTicket[]>([]);
   const [vipGrants, setVipGrants] = useState<VipGrantRecord[]>([]);
   const [vipEmail, setVipEmail] = useState("");
@@ -114,12 +115,12 @@ export default function EcosystemCommandCenter() {
   const rejectVaultTicket = (id: string) => updateVaultTickets(vaultTickets.map((t) => (t.id === id ? { ...t, status: "rejected" } : t)));
   const issueBlindRecoveryCode = async () => { const code = "REC-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); setRecoveryUnlockCode(code); await supabase.from("site_settings").upsert({ key: "vault_recovery_auth", value: { code, issuedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }); setSyncState(isHe ? "קוד אישור שחזור הונפק ✓" : "Blind Recovery Code Issued ✓"); setTimeout(() => setSyncState(""), 2500); };
       const persistVaultGovToCloud = async (enabledVal: boolean, noticeVal: string, reqAdminVal: boolean) => {
-    setRequireAdminReset(reqAdminVal);
+    setRequireAdminReset(reqAdminVal); setVaultGovFeedback(isHe ? "מסנכרן מדיניות אבטחה מול השרת..." : "Syncing security policy...");
     const payload = { enabled: enabledVal, notice: noticeVal, requireAdminForReset: reqAdminVal };
     const r = await fetch("/api/vault-governance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "vault_governance", value: payload }) });
     const j = await r.json();
     if (!r.ok || j.error) { setSyncState(isHe ? `שגיאה: ${j.error || "שמירה נכשלה"}` : `Error: ${j.error}`); }
-    else { setSyncState(reqAdminVal ? (isHe ? "נשמר בשרת: אכיפת אישור אדמין פעילה ✓" : "Saved: Admin Lock ON ✓") : (isHe ? "נשמר בשרת: איפוס פתוח למשתמש ✓" : "Saved: Admin Lock OFF ✓")); }
+    else { const msg = reqAdminVal ? (isHe ? "נקלט בהצלחה ✓: מחיקת כספת חסומה כעת ומחייבת אישור אדמין (קוד VLT-...)" : "Saved ✓: Vault Wipe LOCKED — Requires Admin Code") : (isHe ? "נקלט בהצלחה ✓: מחיקת כספת פתוחה למשתמשים ללא קוד אדמין" : "Saved ✓: Direct User Wipe ALLOWED"); setSyncState(msg); setVaultGovFeedback(msg); }
     setTimeout(() => setSyncState(""), 3000);
   };
   const saveVaultGov = async (enabledVal: boolean, noticeVal: string) => { setVaultEnabled(enabledVal); setVaultNotice(noticeVal); await persistVaultGovToCloud(enabledVal, noticeVal, requireAdminReset); };
@@ -205,6 +206,7 @@ export default function EcosystemCommandCenter() {
             <a href="/vault" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ height: 28, padding: "0 10px", fontSize: 11, color: "#38bdf8" }}>{isHe ? "פתח כספת ↗" : "Open Vault ↗"}</a>
           </div>
         </div>
+        <div style={{ padding: "8px 12px", borderRadius: 10, marginBottom: 10, fontSize: 12, fontWeight: 800, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, background: requireAdminReset ? "rgba(16,185,129,0.14)" : "rgba(248,113,113,0.14)", border: `1px solid ${requireAdminReset ? "rgba(16,185,129,0.45)" : "rgba(248,113,113,0.45)"}`, color: requireAdminReset ? "#34d399" : "#fca5a5" }}><span>{requireAdminReset ? (isHe ? "🔒 מצב פעיל: מחיקת כספת מחייבת אישור אדמין (קוד VLT-...)" : "🔒 Active Policy: Admin Approval Required for Wipe") : (isHe ? "🔓 מצב פעיל: מחיקת כספת מותרת למשתמש ללא אישור אדמין" : "🔓 Active Policy: Direct Wipe Allowed Without Admin")}</span>{vaultGovFeedback && <span style={{ color: "#fbbf24", fontSize: 11.5 }}>{vaultGovFeedback}</span>}</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
           <input value={vaultNotice} onChange={(e) => setVaultNotice(e.target.value)} placeholder={isHe ? "הודעת אבטחה עליונה בכספת (אופציונלי)..." : "Top security banner notice in Vault..."} className="input-dark" style={{ flex: 1, minWidth: 220, height: 32, fontSize: 11.5 }} />
           <button type="button" onClick={() => saveVaultGov(vaultEnabled, vaultNotice)} className="btn-primary" style={{ height: 32, padding: "0 12px", fontSize: 11.5, width: "auto" }}>{isHe ? "שמור מדיניות" : "Save Policy"}</button>
