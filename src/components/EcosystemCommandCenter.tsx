@@ -21,6 +21,8 @@ export default function EcosystemCommandCenter() {
   const defaultNodes: NodeStatus[] = [
     { id: "proofcraft", name: "ProofCraft Fintech OS", roleHe: "חדר בקרה ראשי · בנייה, שותפים ורשת אורגנית", roleEn: "Master OS · Builder, Affiliate & Organic Ring", publicUrl: subSite, adminUrl: "/admin", online: null, ms: null, mode: "active" },
     { id: "tanami360", name: "Tanami360 & SmartForm AI", roleHe: "פלטפורמת מסמכים, קטלוג שירותים וזכויות", roleEn: "Civic Documents, Catalog & Rights", publicUrl: mainSite, adminUrl: `${mainSite}/admin`, online: null, ms: null, mode: "active" },
+    { id: "context-studio", name: "Smart Context Packet Studio", roleHe: "כלי עזר צף לצ׳אט חכם · תבניות קוד, טרמינל והקשר", roleEn: "Floating AI Packet Studio · Terminal, Code & Handoffs", publicUrl: `${subSite}/context-studio`, adminUrl: "/admin", online: null, ms: null, mode: "active" },
+    { id: "zk-vault", name: "Zero-Knowledge Encrypted Vault", roleHe: "כספת מוצפנת בדפדפן · AES-GCM, תתי-כספות ו-.env", roleEn: "Browser Encrypted Vault · AES-GCM, Sub-Vaults & .env", publicUrl: `${subSite}/vault`, adminUrl: "/admin", online: null, ms: null, mode: "active" },
     { id: "studio-biz", name: "Tanami360 Studio (Herzliya)", roleHe: "כרטיס ביקור עסקי, פרויקטים ולידים לסטודיו", roleEn: "Executive Studio, Projects & Client Leads", publicUrl: `${mainSite}/studio`, adminUrl: `${mainSite}/admin`, online: null, ms: null, mode: "active" },
   ];
 

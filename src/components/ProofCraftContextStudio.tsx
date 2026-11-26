@@ -1,14 +1,13 @@
 "use client";
-
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import {
   CATEGORY_META, ContextStudioConfig, DEFAULT_STUDIO_CONFIG, PacketCategory,
   SupportedLang, buildContextPackets, detectLanguageFromText, matchSmartRecommendations,
-} from '@/lib/context-packet-engine';
+} from "@/lib/context-packet-engine";
 import {
   Check, ClipboardPaste, Copy, Download, ExternalLink, FileCode2,
   Languages, PictureInPicture2, ShieldAlert, Sparkles, Terminal, Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface Props {
   embeddedInMethod?: boolean;
@@ -16,34 +15,33 @@ interface Props {
   externalLang?: SupportedLang;
 }
 
-export default function ProofCraftContextStudio({ embeddedInMethod = false, defaultStageLabel = '', externalLang }: Props) {
+export default function ProofCraftContextStudio({ embeddedInMethod = false, defaultStageLabel = "", externalLang }: Props) {
   const [config, setConfig] = useState<ContextStudioConfig>(DEFAULT_STUDIO_CONFIG);
-  const [rawInput, setRawInput] = useState('');
-  const [category, setCategory] = useState<PacketCategory>('terminal_output');
-  const [langMode, setLangMode] = useState<'auto' | SupportedLang>('auto');
-  const [projectTitle, setProjectTitle] = useState('ProofCraft & Tanami360');
-  const [stageLabel, setStageLabel] = useState(defaultStageLabel);
+  const [rawInput, setRawInput] = useState("");
+  const [category, setCategory] = useState<PacketCategory>("terminal_output");
+  const [langMode, setLangMode] = useState<"auto" | SupportedLang>("auto");
+  const [projectTitle, setProjectTitle] = useState("ProofCraft & Tanami360");
+  const [stageLabel] = useState(defaultStageLabel);
   const [maskSecrets, setMaskSecrets] = useState(true);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [activePart, setActivePart] = useState(0);
-  const [pipNotice, setPipNotice] = useState('');
+  const [pipNotice, setPipNotice] = useState("");
 
   useEffect(() => {
-    fetch('/api/context-studio-config')
+    fetch("/api/context-studio-config")
       .then((r) => r.json())
       .then((d) => { if (d?.ok && d?.config) setConfig(d.config); })
       .catch(() => {});
   }, []);
 
   const effectiveLang: SupportedLang = useMemo(() => {
-    if (langMode !== 'auto') return langMode;
+    if (langMode !== "auto") return langMode;
     if (externalLang && !rawInput.trim()) return externalLang;
-    if (!config.autoDetectLanguage) return 'he';
-    return detectLanguageFromText(rawInput, 'he');
+    if (!config.autoDetectLanguage) return "he";
+    return detectLanguageFromText(rawInput, "he");
   }, [langMode, rawInput, config.autoDetectLanguage, externalLang]);
 
-  const isHe = effectiveLang === 'he';
-
+  const isHe = effectiveLang === "he";
   const result = useMemo(() => buildContextPackets({
     rawInput, category, lang: effectiveLang, projectTitle, stageLabel,
     chunkLimit: config.defaultChunkLimit || 12000, maskSecrets,
@@ -54,187 +52,148 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     return matchSmartRecommendations(rawInput, config.recommendations).slice(0, 1);
   }, [rawInput, config]);
   const handlePasteClipboard = async () => {
-    try {
-      const txt = await navigator.clipboard.readText();
-      if (txt) { setRawInput(txt); setActivePart(0); }
-    } catch {}
+    try { const txt = await navigator.clipboard.readText(); if (txt) { setRawInput(txt); setActivePart(0); } } catch {}
   };
-
   const handleCopyPacket = async (idx: number) => {
-    const pkt = result.packets[idx];
-    if (!pkt) return;
-    await navigator.clipboard.writeText(pkt.content);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2500);
+    const pkt = result.packets[idx]; if (!pkt) return;
+    await navigator.clipboard.writeText(pkt.content); setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2500);
   };
-
   const handleDownloadPacket = (idx: number) => {
-    const pkt = result.packets[idx];
-    if (!pkt) return;
-    const blob = new Blob([pkt.content], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = pkt.filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    const pkt = result.packets[idx]; if (!pkt) return;
+    const blob = new Blob([pkt.content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = url; a.download = pkt.filename; a.click(); URL.revokeObjectURL(url);
   };
-
   const openFloatingWindow = async () => {
     try {
       const w = window as unknown as { documentPictureInPicture?: { requestWindow: (o: { width: number; height: number }) => Promise<Window> } };
       if (w.documentPictureInPicture) {
-        const pipWin = await w.documentPictureInPicture.requestWindow({ width: 520, height: 680 });
-        pipWin.location.href = '/context-studio?floating=1';
-        setPipNotice(isHe ? 'נפתח חלון צף מעל כל המסכים' : 'Floating window opened on top');
+        const pipWin = await w.documentPictureInPicture.requestWindow({ width: 540, height: 680 });
+        pipWin.location.href = "/context-studio?floating=1";
+        setPipNotice(isHe ? "נפתח חלון צף מעל כל המסכים ✓" : "Floating window opened on top ✓");
       } else {
-        window.open('/context-studio?floating=1', 'ProofCraftContextPIP', 'width=540,height=720,top=80,left=80');
-        setPipNotice(isHe ? 'נפתח חלון עבודה מהיר' : 'Quick workspace popup opened');
+        window.open("/context-studio?floating=1", "ProofCraftContextPIP", "width=560,height=720,top=80,left=80");
+        setPipNotice(isHe ? "נפתח חלון עבודה מהיר ✓" : "Quick popup opened ✓");
       }
-      setTimeout(() => setPipNotice(''), 3500);
-    } catch {
-      window.open('/context-studio?floating=1', '_blank');
-    }
+      setTimeout(() => setPipNotice(""), 3500);
+    } catch { window.open("/context-studio?floating=1", "_blank"); }
   };
 
   if (!config.enabled) return null;
-  const currentPacket = result.packets[Math.min(activePart, result.packets.length - 1)] || result.packets[0];
+  const currentPacket = result.packets[Math.min(activePart, result.packets.length - 1)] || result.packets;
   return (
-    <section dir={isHe ? 'rtl' : 'ltr'} className="w-full rounded-2xl border border-slate-800 bg-slate-950/95 text-slate-100 shadow-2xl overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/90 px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <Terminal className="h-5 w-5" />
+    <section dir={isHe ? "rtl" : "ltr"} className="card-surface" style={{ padding: 20, border: "1px solid rgba(56,189,248,0.28)", background: "#0a0b0e", color: "#f8fafc" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, paddingBottom: 14, marginBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(56,189,248,0.14)", border: "1px solid rgba(56,189,248,0.35)", display: "flex", alignItems: "center", justifyContent: "center", color: "#38bdf8" }}>
+            <Terminal size={18} />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              {isHe ? 'סטודיו חבילות הקשר חכם לצ׳אט (Context Packet Studio)' : 'Smart AI Context Packet Studio'}
-              <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300 border border-emerald-500/30">
-                {isHe ? 'מוכן לכל AI' : 'Universal AI Ready'}
-              </span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              {isHe ? 'הדבק כל פלט ארוך וקבל תבנית מקוטלגת ומוכנה להדבקה או הורדת קובץ' : 'Paste any long output and generate a structured, AI-ready packet or file'}
-            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 900, margin: 0 }}>{isHe ? "סטודיו חבילות הקשר חכם לצ׳אט (Context Packet Studio)" : "Smart AI Context Packet Studio"}</h2>
+              <span className="badge-pill" style={{ background: "rgba(52,211,153,0.15)", color: "#34d399", fontSize: 10.5 }}>{isHe ? "מוכן לכל AI" : "Universal AI"}</span>
+            </div>
+            <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>{isHe ? "הדבק כל פלט ארוך וקבל תבנית מקוטלגת מוכנה להדבקה או הורדת קובץ" : "Paste any long output and generate an AI-ready structured packet or file"}</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center rounded-xl border border-slate-700 bg-slate-950 p-1 text-xs">
-            <Languages className="mx-1.5 h-3.5 w-3.5 text-slate-400" />
-            {(['auto', 'he', 'en'] as const).map((m) => (
-              <button key={m} type="button" onClick={() => setLangMode(m)}
-                className={`rounded-lg px-2.5 py-1 font-medium transition ${langMode === m ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                {m === 'auto' ? (isHe ? 'זיהוי אוטומטי' : 'Auto') : m.toUpperCase()}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: 3, borderRadius: 10, background: "#11131a", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <Languages size={13} style={{ color: "#94a3b8", marginInline: 4 }} />
+            {(["auto", "he", "en"] as const).map((m) => (
+              <button key={m} type="button" onClick={() => setLangMode(m)} className={langMode === m ? "btn-primary" : "btn-ghost"} style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>
+                {m === "auto" ? (isHe ? "אוטומטי" : "Auto") : m.toUpperCase()}
               </button>
             ))}
           </div>
-          <button type="button" onClick={openFloatingWindow}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-xs font-semibold text-white shadow transition">
-            <PictureInPicture2 className="h-4 w-4" />
-            {isHe ? 'חלון צף מעל כל מסך' : 'Float On Top'}
+          {!embeddedInMethod && <a href="/method" className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 11.5 }}>{isHe ? "חזרה לדף השיטה" : "Back to Method"}</a>}
+          <button type="button" onClick={openFloatingWindow} className="btn-primary" style={{ height: 34, padding: "0 14px", fontSize: 11.5, width: "auto", background: "linear-gradient(135deg,#0284c7,#4f46e5)" }}>
+            <PictureInPicture2 size={14} /> {isHe ? "חלון צף מעל כל מסך" : "Float On Top"}
           </button>
         </div>
       </div>
-      {pipNotice && <div className="bg-indigo-600/20 border-b border-indigo-500/30 px-5 py-2 text-xs text-indigo-200">{pipNotice}</div>}      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
-        <div className="lg:col-span-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {pipNotice && <div style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(56,189,248,0.14)", border: "1px solid rgba(56,189,248,0.35)", color: "#38bdf8", fontSize: 12, fontWeight: 700, marginBottom: 12 }}>{pipNotice}</div>}      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">{isHe ? 'סוג התבנית וכותרת הקובץ' : 'Template & File Header'}</label>
-              <select value={category} onChange={(e) => { setCategory(e.target.value as PacketCategory); setActivePart(0); }}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white focus:border-emerald-500 outline-none">
+              <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{isHe ? "סוג התבנית וכותרת הקובץ" : "Template & File Header"}</label>
+              <select value={category} onChange={(e) => { setCategory(e.target.value as PacketCategory); setActivePart(0); }} className="input-dark" style={{ height: 36, fontSize: 12 }}>
                 {(Object.keys(CATEGORY_META) as PacketCategory[]).map((key) => (
                   <option key={key} value={key}>{isHe ? CATEGORY_META[key].labelHe : CATEGORY_META[key].labelEn}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">{isHe ? 'שם הפרויקט / הקשר' : 'Project / Context Name'}</label>
-              <input type="text" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white focus:border-emerald-500 outline-none" />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{isHe ? "שם הפרויקט / הקשר" : "Project / Context Name"}</label>
+              <input type="text" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} className="input-dark" style={{ height: 36, fontSize: 12 }} />
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={handlePasteClipboard}
-                className="flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-medium text-emerald-300 transition">
-                <ClipboardPaste className="h-3.5 w-3.5" />
-                {isHe ? 'הדבק מהלוח' : 'Paste Clipboard'}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button type="button" onClick={handlePasteClipboard} className="btn-ghost" style={{ height: 32, padding: "0 12px", fontSize: 11.5, color: "#38bdf8" }}>
+                <ClipboardPaste size={13} /> {isHe ? "הדבק מהלוח" : "Paste Clipboard"}
               </button>
               {rawInput && (
-                <button type="button" onClick={() => { setRawInput(''); setActivePart(0); }}
-                  className="flex items-center gap-1 rounded-xl bg-slate-900 hover:bg-rose-950/60 border border-slate-800 px-2.5 py-1.5 text-xs text-slate-400 hover:text-rose-300 transition">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {isHe ? 'נקה' : 'Clear'}
+                <button type="button" onClick={() => { setRawInput(""); setActivePart(0); }} className="btn-ghost" style={{ height: 32, padding: "0 10px", fontSize: 11.5, color: "#f87171" }}>
+                  <Trash2 size={13} /> {isHe ? "נקה" : "Clear"}
                 </button>
               )}
             </div>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input type="checkbox" checked={maskSecrets} onChange={(e) => setMaskSecrets(e.target.checked)} className="rounded border-slate-600 accent-emerald-500" />
-              <span>{isHe ? 'הסתר מפתחות API אוטומטית' : 'Auto-mask API secrets'}</span>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#cbd5e1", cursor: "pointer" }}>
+              <input type="checkbox" checked={maskSecrets} onChange={(e) => setMaskSecrets(e.target.checked)} />
+              <span>{isHe ? "הסתר מפתחות API אוטומטית" : "Auto-mask API secrets"}</span>
             </label>
           </div>
-          <textarea rows={11} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }}
-            placeholder={isHe ? 'הדבק כאן כל פלט ארוך מ-PowerShell, שגיאת בנייה, קוד מקור או מסמך הקשר...' : 'Paste any long PowerShell output, build error, source code, or context...'}
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/90 p-3.5 font-mono text-xs leading-relaxed text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 outline-none" />
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-300">
-            <span>{isHe ? `תווים: ${result.totalChars.toLocaleString()} | טוקנים: ~${result.estimatedTokens.toLocaleString()}` : `Chars: ${result.totalChars.toLocaleString()} | Tokens: ~${result.estimatedTokens.toLocaleString()}`}</span>
-            <span className="font-semibold text-emerald-400">
-              {result.packets.length > 1 ? (isHe ? `פוצל ל-${result.packets.length} חלקים` : `Split into ${result.packets.length} parts`) : (isHe ? 'חלק 1 שלם' : '1 Complete Packet')}
-            </span>
+          <textarea rows={10} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }} className="input-dark"
+            placeholder={isHe ? "הדבק כאן כל פלט ארוך מ-PowerShell, שגיאת בנייה, קוד מקור או מסמך הקשר..." : "Paste any long PowerShell output, build error, source code, or context..."}
+            style={{ fontFamily: "monospace", fontSize: 12, lineHeight: 1.55 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, padding: "8px 12px", borderRadius: 10, background: "#11131a", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11.5 }}>
+            <span style={{ color: "#94a3b8" }}>{isHe ? `תווים: ${result.totalChars.toLocaleString()} | אומדן טוקנים: ~${result.estimatedTokens.toLocaleString()}` : `Chars: ${result.totalChars.toLocaleString()} | Est. Tokens: ~${result.estimatedTokens.toLocaleString()}`}</span>
+            <strong style={{ color: "#34d399" }}>{result.packets.length > 1 ? (isHe ? `פוצל ל-${result.packets.length} חלקים` : `Split into ${result.packets.length} parts`) : (isHe ? "חלק 1 שלם" : "1 Complete Packet")}</strong>
           </div>
           {result.maskedSecretsCount > 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs text-amber-200">
-              <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
-              <span>{isHe ? `הוסתרו ${result.maskedSecretsCount} מפתחות רגישים מהפלט.` : `Masked ${result.maskedSecretsCount} sensitive secret(s).`}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fde68a", fontSize: 11.5 }}>
+              <ShieldAlert size={14} /> <span>{isHe ? `הוסתרו ${result.maskedSecretsCount} מפתחות רגישים מהפלט.` : `Masked ${result.maskedSecretsCount} sensitive secret(s).`}</span>
             </div>
           )}
-        </div>        <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-                <FileCode2 className="h-4 w-4 text-emerald-400" />
-                <span>{currentPacket?.filename}</span>
-              </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: "#38bdf8" }}>
+                <FileCode2 size={14} /> <span dir="ltr">{currentPacket?.filename}</span>
+              </span>
               {result.packets.length > 1 && (
-                <div className="flex flex-wrap gap-1">
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                   {result.packets.map((p, i) => (
-                    <button key={p.partIndex} type="button" onClick={() => setActivePart(i)}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${activePart === i ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>
+                    <button key={p.partIndex} type="button" onClick={() => setActivePart(i)} className={activePart === i ? "btn-primary" : "btn-ghost"} style={{ height: 26, padding: "0 8px", fontSize: 11, width: "auto" }}>
                       {isHe ? `חלק ${p.partIndex}/${p.totalParts}` : `Part ${p.partIndex}/${p.totalParts}`}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <pre dir={isHe ? 'rtl' : 'ltr'} className="h-72 overflow-auto rounded-xl border border-slate-800 bg-black/70 p-3.5 text-xs leading-relaxed text-emerald-100 whitespace-pre-wrap">
+            <pre dir={isHe ? "rtl" : "ltr"} style={{ height: 250, overflow: "auto", padding: 12, borderRadius: 10, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", color: "#e2e8f0", fontSize: 11.5, lineHeight: 1.55, whiteSpace: "pre-wrap", margin: 0 }}>
               {currentPacket?.content}
             </pre>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button type="button" onClick={() => handleCopyPacket(activePart)}
-                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg transition">
-                {copiedIdx === activePart ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copiedIdx === activePart ? (isHe ? 'הועתק! הדבק בצ׳אט' : 'Copied! Paste in Chat') : (isHe ? 'העתק חבילה לצ׳אט' : 'Copy AI Packet')}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+              <button type="button" onClick={() => handleCopyPacket(activePart)} className="btn-primary" style={{ height: 38, fontSize: 12 }}>
+                {copiedIdx === activePart ? <Check size={14} /> : <Copy size={14} />}
+                {copiedIdx === activePart ? (isHe ? "הועתק! הדבק בצ׳אט" : "Copied! Paste in Chat") : (isHe ? "העתק חבילה לצ׳אט" : "Copy AI Packet")}
               </button>
-              <button type="button" onClick={() => handleDownloadPacket(activePart)}
-                className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-xs font-bold text-white transition">
-                <Download className="h-4 w-4 text-indigo-400" />
-                {isHe ? `הורד קובץ (${currentPacket?.filename})` : `Download (${currentPacket?.filename})`}
+              <button type="button" onClick={() => handleDownloadPacket(activePart)} className="btn-ghost" style={{ height: 38, fontSize: 12, color: "#38bdf8", borderColor: "rgba(56,189,248,0.35)" }}>
+                <Download size={14} /> {isHe ? `הורד (${currentPacket?.filename})` : `Download (${currentPacket?.filename})`}
               </button>
             </div>
           </div>
           {smartRecs.map((rec) => (
-            <div key={rec.id} className="rounded-xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/60 to-slate-900 p-3.5 flex items-center justify-between gap-3">
-              <div className="space-y-1">
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/20 px-2 py-0.5 text-[11px] font-semibold text-indigo-300">
-                  <Sparkles className="h-3 w-3" /> {isHe ? rec.badgeHe : rec.badgeEn}
-                </span>
-                <p className="text-xs font-bold text-white">{isHe ? rec.titleHe : rec.titleEn}</p>
-                <p className="text-[11px] text-slate-300">{isHe ? rec.descHe : rec.descEn}</p>
+            <div key={rec.id} style={{ padding: 12, borderRadius: 12, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div>
+                <span className="badge-pill" style={{ background: "rgba(56,189,248,0.16)", color: "#38bdf8", fontSize: 10, marginBottom: 4 }}><Sparkles size={11} /> {isHe ? rec.badgeHe : rec.badgeEn}</span>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#f8fafc" }}>{isHe ? rec.titleHe : rec.titleEn}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>{isHe ? rec.descHe : rec.descEn}</div>
               </div>
-              <a href={rec.href} target={rec.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer"
-                className="shrink-0 flex items-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-3 py-2 text-xs font-semibold text-white transition">
-                <span>{isHe ? 'פתח' : 'Open'}</span>
-                <ExternalLink className="h-3.5 w-3.5" />
+              <a href={rec.href} target={rec.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="btn-primary" style={{ height: 32, padding: "0 12px", fontSize: 11.5, width: "auto", flexShrink: 0 }}>
+                <span>{isHe ? "פתח" : "Open"}</span> <ExternalLink size={12} />
               </a>
             </div>
           ))}
