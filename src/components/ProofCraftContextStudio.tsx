@@ -113,10 +113,10 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
       </div>
       {pipNotice && <div style={{ padding: "8px 12px", borderRadius: 10, background: "rgba(56,189,248,0.14)", border: "1px solid rgba(56,189,248,0.35)", color: "#38bdf8", fontSize: 12, fontWeight: 700, marginBottom: 12 }}>{pipNotice}</div>}      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{isHe ? "סוג התבנית וכותרת הקובץ" : "Template & File Header"}</label>
-              <select value={category} onChange={(e) => { setCategory(e.target.value as PacketCategory); setActivePart(0); }} className="input-dark" style={{ height: 38, fontSize: 12, width: "100%", paddingInline: 12 }}>
+              <select value={category} onChange={(e) => { setCategory(e.target.value as PacketCategory); setActivePart(0); }} className="input-dark" style={{ height: "auto", minHeight: 42, fontSize: 12.5, lineHeight: 1.45, width: "100%", padding: "9px 12px", fontFamily: "system-ui, -apple-system, Segoe UI, Arial, sans-serif" }}>
                 {(Object.keys(CATEGORY_META) as PacketCategory[]).map((key) => (
                   <option key={key} value={key}>{isHe ? CATEGORY_META[key].labelHe : CATEGORY_META[key].labelEn}</option>
                 ))}
@@ -124,7 +124,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
             </div>
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{isHe ? "שם הפרויקט / הקשר" : "Project / Context Name"}</label>
-              <input type="text" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} className="input-dark" style={{ height: 38, fontSize: 12, width: "100%", paddingInline: 12 }} />
+              <input type="text" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} className="input-dark" style={{ height: "auto", minHeight: 42, fontSize: 12.5, lineHeight: 1.45, width: "100%", padding: "9px 12px", fontFamily: "system-ui, -apple-system, Segoe UI, Arial, sans-serif" }} />
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -157,7 +157,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: "#38bdf8" }}>
                 <FileCode2 size={14} /> <span dir="ltr">{currentPacket?.filename}</span>
@@ -175,7 +175,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
             <pre dir={isHe ? "rtl" : "ltr"} style={{ height: 250, overflow: "auto", padding: 12, borderRadius: 10, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", color: "#e2e8f0", fontSize: 11.5, lineHeight: 1.55, whiteSpace: "pre-wrap", margin: 0 }}>
               {currentPacket?.content}
             </pre>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <button type="button" onClick={() => handleCopyPacket(activePart)} className="btn-primary" style={{ height: 38, fontSize: 12 }}>
                 {copiedIdx === activePart ? <Check size={14} /> : <Copy size={14} />}
                 {copiedIdx === activePart ? (isHe ? "הועתק! הדבק בצ׳אט" : "Copied! Paste in Chat") : (isHe ? "העתק חבילה לצ׳אט" : "Copy AI Packet")}
