@@ -1,4 +1,8 @@
 "use client";
+import { SurgicalFilterMode, analyzeAndFilterContext, validateAndInspectMediaFile } from "@/lib/context-smart-analyzer";
+import ContextIntelligencePanel from "@/components/ContextIntelligencePanel";
+import { Share2 } from "lucide-react";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_META, ContextStudioConfig, DEFAULT_STUDIO_CONFIG, PacketCategory,
@@ -28,6 +32,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
   const [pipNotice, setPipNotice] = useState("");
   const [guideOpen, setGuideOpen] = useState(false);
   const [handoffActive, setHandoffActive] = useState(false);
+  const [filterMode, setFilterMode] = useState<SurgicalFilterMode>("full_with_summary");
   const outputRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -46,10 +51,12 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
 
   const isHe = effectiveLang === "he";
   const lineCount = useMemo(() => (rawInput ? rawInput.split("\n").length : 0), [rawInput]);
+  const analysis = useMemo(() => analyzeAndFilterContext(rawInput, filterMode), [rawInput, filterMode]);
+  const enrichedInput = useMemo(() => rawInput.trim() ? `${isHe ? analysis.executiveBriefHe : analysis.executiveBriefEn}\n\n${analysis.filteredText}\n\n---\nPackaged with Tanami360 Smart Context Method (https://tanami360.com)` : "", [rawInput, isHe, analysis]);
   const result = useMemo(() => buildContextPackets({
-    rawInput, category, lang: effectiveLang, projectTitle, stageLabel,
-    chunkLimit: Math.max(config.defaultChunkLimit || 1000000, 1000000), maskSecrets,
-  }), [rawInput, category, effectiveLang, projectTitle, stageLabel, config.defaultChunkLimit, maskSecrets]);
+    rawInput: enrichedInput, category, lang: effectiveLang, projectTitle, stageLabel,
+    chunkLimit: Math.max(config.defaultChunkLimit || 1500000, 1500000), maskSecrets,
+  }), [enrichedInput, category, effectiveLang, projectTitle, stageLabel, config.defaultChunkLimit, maskSecrets]);
 
   const smartRecs = useMemo(() => {
     if (!config.enableSmartEcosystemLinks || !rawInput.trim()) return [];
@@ -66,7 +73,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     } catch {}
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
     if (!file) return;
     const reader = new FileReader();
@@ -126,9 +133,9 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <h2 style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>{isHe ? "סטודיו חבילות הקשר חכם לצ׳אט (Context Packet Studio)" : "Smart AI Context Packet Studio"}</h2>
-              <span className="badge-pill" style={{ background: "rgba(52,211,153,0.15)", color: "#34d399", fontSize: 11 }}>{isHe ? "עד 10,000+ שורות בחבילה" : "10,000+ Lines Ready"}</span>
+              <span className="badge-pill" style={{ background: "rgba(52,211,153,0.15)", color: "#34d399", fontSize: 11 }}>{isHe ? "עד 15,000+ שורות בחבילה" : "15,000+ Lines Ready"}</span>
             </div>
-            <p style={{ fontSize: 13, color: "#94a3b8", margin: "4px 0 0" }}>{isHe ? "הפוך כל קוד, פלט טרמינל או מסמך לחבילה מובנית שגורמת לצ׳אט החכם להבין אותך ב-100% בלי לאבד הקשר" : "Structure up to 10,000+ lines of code, logs, or docs so any AI chat understands full context without hallucinations"}</p>
+            <p style={{ fontSize: 13, color: "#94a3b8", margin: "4px 0 0" }}>{isHe ? "הפוך כל קוד, פלט טרמינל או מסמך לחבילה מובנית שגורמת לצ׳אט החכם להבין אותך ב-100% בלי לאבד הקשר" : "Structure up to 15,000+ lines of code, logs, or docs so any AI chat understands full context without hallucinations"}</p>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -166,10 +173,11 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
           </div>
         </div>
       )}
+      <ContextIntelligencePanel rawInput={rawInput} projectTitle={projectTitle} analysis={analysis} filterMode={filterMode} isHe={isHe} onChangeFilter={(m: SurgicalFilterMode) => { setFilterMode(m); setActivePart(0); }} onLoadSnapshot={(txt: string, ttl: string) => { setRawInput(txt); setProjectTitle(ttl); setActivePart(0); }} onNotify={(m: string) => { setPipNotice(m); setTimeout(() => setPipNotice(""), 3000); }} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
       <style>{`.fintech-scroll-hidden{scrollbar-width:none;-ms-overflow-style:none;resize:none}.fintech-scroll-hidden::-webkit-scrollbar{display:none;width:0;height:0}`}</style>
         <div style={{ padding: 18, borderRadius: 16, background: "#11131a", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 900, color: "#38bdf8" }}>{isHe ? "שלב 1 ו-2 · בחירת תבנית והזנת תוכן (עד 10,000+ שורות)" : "STEPS 1 & 2 · TEMPLATE & INPUT (UP TO 10,000+ LINES)"}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 900, color: "#38bdf8" }}>{isHe ? "שלב 1 ו-2 · בחירת תבנית והזנת תוכן (עד 15,000+ שורות)" : "STEPS 1 & 2 · TEMPLATE & INPUT (UP TO 15,000+ LINES)"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
               <label style={{ display: "block", fontSize: 11.5, fontWeight: 800, color: "#94a3b8", marginBottom: 4 }}>{isHe ? "סוג התבנית וההנחיה" : "Packet Template"}</label>
@@ -191,8 +199,8 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button type="button" onClick={handlePasteClipboard} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#38bdf8" }}><ClipboardPaste size={13} /> {isHe ? "הדבק מהלוח" : "Paste"}</button>
               <label className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#34d399", borderColor: "rgba(52,211,153,0.4)", cursor: "pointer" }}>
-                <input type="file" accept=".txt,.log,.md,.json,.ts,.tsx,.js,.csv" style={{ display: "none" }} onChange={handleFileUpload} />
-                <FolderUp size={13} /> {isHe ? "ייבא קובץ מלא (10,000+ שורות)" : "Import File (10,000+ lines)"}
+                <input type="file" accept=".txt,.log,.md,.json,.ts,.tsx,.js,.csv,.png,.jpg,.jpeg,.webp,.mp4,.webm" style={{ display: "none" }} onChange={handleFileUpload} />
+                <FolderUp size={13} /> {isHe ? "ייבא קובץ מלא (15,000+ שורות)" : "Import File (15,000+ lines)"}
               </label>
               <button type="button" onClick={() => { setRawInput(""); setActivePart(0); setHandoffActive(false); }} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#fca5a5", borderColor: "rgba(248,113,113,0.4)", background: "rgba(248,113,113,0.08)" }}><Trash2 size={13} /> {isHe ? "איפוס תבנית" : "Reset Template"}</button>
             </div>
@@ -201,7 +209,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
               <span>{isHe ? "הסתר מפתחות API" : "Mask API secrets"}</span>
             </label>
           </div>
-          <textarea rows={13} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 10,000 שורות..." : "Paste up to 10,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
+          <textarea rows={13} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 14px", borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
             <span style={{ color: "#94a3b8" }}>{isHe ? `שורות: ${lineCount.toLocaleString()} | תווים: ${result.totalChars.toLocaleString()} | טוקנים: ~${result.estimatedTokens.toLocaleString()}` : `Lines: ${lineCount.toLocaleString()} | Chars: ${result.totalChars.toLocaleString()} | Tokens: ~${result.estimatedTokens.toLocaleString()}`}</span>
             <strong style={{ color: "#34d399" }}>{result.packets.length > 1 ? (isHe ? `פוצל ל-${result.packets.length} חלקים` : `Split into ${result.packets.length} parts`) : (isHe ? "חבילה 1 שלמה ✓" : "1 Complete Packet ✓")}</strong>
@@ -223,7 +231,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
                 ))}
               </div>
             )}
-            <pre className="fintech-scroll-hidden" dir={isHe ? "rtl" : "ltr"} style={{ height: 290, overflow: "auto", padding: 14, borderRadius: 12, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", color: "#e2e8f0", fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>{currentPacket?.content}</pre>
+            <pre className="fintech-scroll-hidden" dir={isHe ? "rtl" : "ltr"} style={{ height: 290, overflow: "auto", padding: 14, borderRadius: 12, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", color: "#e2e8f0", fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>{currentPacket && currentPacket.content.length > 18000 ? `${currentPacket.content.slice(0, 11000)}\n\n... [תצוגה מקדימה מהירה — הקובץ המלא כולל את כל ${analysis.filteredLineCount.toLocaleString()} השורות המסוננות יירד בשלמותו בלחיצה על Download (.md)] ...\n\n${currentPacket.content.slice(-3500)}` : currentPacket?.content}</pre>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button type="button" onClick={() => handleCopyPacket(activePart)} className="btn-primary" style={{ height: 42, fontSize: 13 }}>
                 {copiedIdx === activePart ? <Check size={15} /> : <Copy size={15} />}
@@ -252,7 +260,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
             ))}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <a href="/affiliate" className="btn-ghost" style={{ flex: 1, height: 34, fontSize: 11.5 }}><Compass size={13} /> {isHe ? "מרכז שותפים (מסלול 1)" : "Affiliate Hub"}</a>
-              <a href="/vault" className="btn-ghost" style={{ flex: 1, height: 34, fontSize: 11.5 }}><ShieldCheck size={13} /> {isHe ? "כספת סודות מוצפנת" : "Encrypted Vault"}</a>
+              <a href="/vault" className="btn-ghost" style={{ flex: 1, height: 34, fontSize: 11.5 }}><ShieldCheck size={13} /> {isHe ? "כספת סודות" : "Vault"}</a><button type="button" onClick={() => { navigator.clipboard?.writeText("https://tanami360.com"); setPipNotice(isHe ? "קישור שיתוף עצמאי לשיטה הועתק ✓" : "Standalone share link copied ✓"); setTimeout(() => setPipNotice(""), 3000); }} className="btn-ghost" style={{ flex: 1, height: 34, fontSize: 11.5, color: "#34d399" }}><Share2 size={13} /> {isHe ? "שתף את השיטה" : "Share Method"}</button>
             </div>
           </div>
         </div>
