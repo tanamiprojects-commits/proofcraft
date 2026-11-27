@@ -70,8 +70,8 @@ export default function ExecutiveReportCard({ userId }: Props) {
 
   const copySummary = async () => {
     const text = isHe
-      ? `דוח ביצועים מאומת — ProofCraft Fintech OS (${serialId})\nיוצר: ${name || "יוצר מאומת"}\nשלבים מאומתים: ${steps} | קישורים פעילים: ${links} | קליקים שנמדדו: ${clicks}\nאימות חי: ${portfolioUrl}`
-      : `Verified Executive Performance Report — ProofCraft Fintech OS (${serialId})\nCreator: ${name || "Verified Builder"}\nVerified Steps: ${steps} | Active Links: ${links} | Tracked Clicks: ${clicks}\nLive Proof: ${portfolioUrl}`;
+      ? `דוח ביצועים מאומת — ProofCraft Studio OS (${serialId})\nיוצר: ${name || "יוצר מאומת"}\nשלבים מאומתים: ${steps} | קישורים פעילים: ${links} | קליקים שנמדדו: ${clicks}\nאימות חי: ${portfolioUrl}`
+      : `Verified Executive Performance Report — ProofCraft Studio OS (${serialId})\nCreator: ${name || "Verified Builder"}\nVerified Steps: ${steps} | Active Links: ${links} | Tracked Clicks: ${clicks}\nLive Proof: ${portfolioUrl}`;
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       await navigator.clipboard.writeText(text);
       setCopied(true);

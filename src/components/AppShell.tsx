@@ -204,7 +204,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="9" fill="url(#pcObsidian)" /><path d="M10 16.5L14 20.5L22.5 11.5" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" /><defs><linearGradient id="pcObsidian" x1="0" y1="0" x2="32" y2="32"><stop stopColor="#0284c7" /><stop offset="1" stopColor="#6366f1" /></linearGradient></defs></svg>
             <div style={{ display: "flex", alignItems: "baseline", gap: 5, whiteSpace: "nowrap" }}>
               <span style={{ fontWeight: 900, fontSize: 16 }}>ProofCraft</span>
-              <span style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>{focusMode === "affiliate_only" ? "Affiliate OS" : "Fintech OS"}</span>
+              <span style={{ fontSize: 11, color: "#38bdf8", fontWeight: 700 }}>{focusMode === "affiliate_only" ? "Affiliate OS" : "Studio OS"}</span>
             </div>
           </Link>
 
@@ -251,7 +251,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px 20px 96px", background: "#07080b", fontSize: 12, color: "#94a3b8" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-          <div>© 2026 ProofCraft Fintech OS · {isHe ? "פלטפורמת AI, פורטפוליו מאומת והכנסה משותפים" : "Verified AI Engineering & Direct Affiliate Income OS"}</div>
+          <div>© 2026 ProofCraft Studio OS · {isHe ? "פלטפורמת AI, פורטפוליו מאומת והכנסה משותפים" : "Verified AI Engineering & Direct Affiliate Income OS"}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}>
             {legalDocs.map((doc) => (
               <button key={doc.id} type="button" onClick={() => setLegalDoc(doc)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12 }}>{doc.title}</button>

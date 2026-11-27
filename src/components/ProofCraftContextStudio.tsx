@@ -71,6 +71,16 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     return matchSmartRecommendations(rawInput, config.recommendations).slice(0, 1);
   }, [rawInput, config]);
 
+    const triggerTextHud = (txt: string) => {
+    const lines = txt.split(/\r?\n/).length;
+    if (!txt.trim()) { setHudStatus("idle"); setHudPct(0); return; }
+    if (lines >= 2 || txt.length >= 60) {
+      setScanFileName("");
+      setHudTitle(isHe ? `סריקת טקסט וניתוח הקשר (${lines.toLocaleString()} שורות)` : `Text & Context Analysis (${lines.toLocaleString()} lines)`);
+      setHudPct(100);
+      setHudStatus("done");
+    }
+  };
   const handlePasteClipboard = async () => {
     try {
       const txt = await navigator.clipboard.readText();
@@ -273,7 +283,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
               </div>
             )}
           </div>
-          <textarea rows={13} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
+          <textarea rows={13} value={rawInput} onChange={(e) => { const v = e.target.value; setRawInput(v); setActivePart(0); triggerTextHud(v); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 14px", borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
             <span style={{ color: "#94a3b8" }}>{isHe ? `שורות: ${lineCount.toLocaleString()} | תווים: ${result.totalChars.toLocaleString()} | טוקנים: ~${result.estimatedTokens.toLocaleString()}` : `Lines: ${lineCount.toLocaleString()} | Chars: ${result.totalChars.toLocaleString()} | Tokens: ~${result.estimatedTokens.toLocaleString()}`}</span>
             <strong style={{ color: "#34d399" }}>{result.packets.length > 1 ? (isHe ? `פוצל ל-${result.packets.length} חלקים` : `Split into ${result.packets.length} parts`) : (isHe ? "חבילה 1 שלמה ✓" : "1 Complete Packet ✓")}</strong>
