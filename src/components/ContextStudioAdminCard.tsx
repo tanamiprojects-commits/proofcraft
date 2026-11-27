@@ -72,8 +72,8 @@ export default function ContextStudioAdminCard({ isHe = true }: { isHe?: boolean
         <div style={{ padding: "8px 12px", borderRadius: 10, background: "#11131a", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontSize: 11.5, fontWeight: 800, color: "#cbd5e1", display: "inline-flex", alignItems: "center", gap: 4 }}><Sliders size={13} /> {isHe ? "סף פיצול תווים:" : "Split Limit:"}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <input type="number" min={4000} max={1000000} step={1000} value={config.defaultChunkLimit}
-              onChange={(e) => setConfig({ ...config, defaultChunkLimit: Number(e.target.value) || 500000 })}
+            <input type="number" min={4000} max={2000000} step={1000} value={config.defaultChunkLimit}
+              onChange={(e) => setConfig({ ...config, defaultChunkLimit: Number(e.target.value) || 1000000 })}
               className="input-dark" style={{ width: 78, height: 28, fontSize: 11.5, padding: "0 8px" }} />
             <button type="button" disabled={saving} onClick={() => saveConfig(config)} className="btn-primary" style={{ height: 28, padding: "0 10px", fontSize: 11, width: "auto" }}>
               <Save size={12} /> {isHe ? "שמור" : "Save"}
