@@ -21,6 +21,10 @@ import AffiliateAnalyticsPanel from "@/components/affiliate/AffiliateAnalyticsPa
 import KarmaLedgerPanel from "@/components/affiliate/KarmaLedgerPanel";
 import LinkHealthWatchdog from "@/components/affiliate/LinkHealthWatchdog";
 import AffiliateBeginnerAcademy from "@/components/affiliate/AffiliateBeginnerAcademy";
+import LinkLifecycleWorkbench from "@/components/affiliate/LinkLifecycleWorkbench";
+import AffiliateUniversityOS from "@/components/affiliate/AffiliateUniversityOS";
+import AffiliateDigitalBankOS from "@/components/affiliate/AffiliateDigitalBankOS";
+import BusinessExitAndTrafficOS from "@/components/affiliate/BusinessExitAndTrafficOS";
 
 const NETWORK_THEME: Record<string, { accent: string; glow: string; badgeHe: string; badgeEn: string }> = {
   aliexpress: { accent: "#fb923c", glow: "rgba(251, 146, 60, 0.22)", badgeHe: "אישור מיידי · מומלץ למתחילים", badgeEn: "Instant Approval · Beginner Friendly" },
@@ -61,6 +65,8 @@ export default function AffiliateIncomeHubPage() {
   const [newPrice, setNewPrice] = useState("");
   const [newSummary, setNewSummary] = useState("");
   const [folderFilter, setFolderFilter] = useState("ALL");
+  const [stage3View, setStage3View] = useState<"links" | "workbench" | "bank" | "health">("links");
+  const [uniOpen, setUniOpen] = useState<boolean>(false);
   const [active360Link, setActive360Link] = useState<AffLink | null>(null);
 
   const [bridgeProduct, setBridgeProduct] = useState("");
@@ -214,6 +220,8 @@ export default function AffiliateIncomeHubPage() {
         </div>
       </div>
       <AffiliateBeginnerAcademy isHe={isHe} activeStage={activeStage} onJumpStage={goToStage} />
+      <div style={{ marginBottom: 16 }}><button type="button" onClick={() => setUniOpen(!uniOpen)} className="btn-ghost" style={{ width: "100%", height: 44, fontSize: 13.5, fontWeight: 900, borderColor: "rgba(56,189,248,0.45)", color: "#38bdf8", background: "rgba(56,189,248,0.08)" }}>{uniOpen ? t("Close Affiliate University (5 Full Modules)", "סגור את אוניברסיטת השותפים המלאה (5 מודולים)") : t("Open Affiliate University: Money Flow, Profit Simulator, Zero-Follower Playbook & 30-Day Plan", "פתח את אוניברסיטת השותפים המלאה: איך הכסף עובר, מחשבון רווחים, שיווק בלי עוקבים ותוכנית 30 יום")}</button></div>
+      {uniOpen && <div style={{ marginBottom: 20 }}><AffiliateUniversityOS isHe={isHe} onJumpStage={(st) => { setUniOpen(false); goToStage(st); }} /></div>}
       {activeStage === 1 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="card-surface" style={{ padding: 16, border: "1px solid rgba(56,189,248,0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
@@ -351,8 +359,20 @@ export default function AffiliateIncomeHubPage() {
               <button type="submit" className="btn-primary" style={{ height: 42, fontSize: 13 }}><Sparkles size={14} /> {t("Create Link & Go to Stage 4", "צור קישור והמשך להפצה (תחנה 4)")}</button>
             </form>
           </div>
-          <LinkHealthWatchdog links={links} isHe={isHe} onUpdated={() => reloadHub(userId)} onNotify={notify} />
-          <AffiliateAnalyticsPanel links={links} clicks={clicks} networks={networks} isHe={isHe} onInspectLink={(lnk) => setActive360Link(lnk)} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
+            <button type="button" onClick={() => setStage3View("links")} className={stage3View === "links" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t(`My Links (${links.length})`, `הקישורים שלי (${links.length})`)}</button>
+            <button type="button" onClick={() => setStage3View("workbench")} className={stage3View === "workbench" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Channel Tracker & Organic", "מעקב ערוצים ושיווק אורגני")}</button>
+            <button type="button" onClick={() => setStage3View("bank")} className={stage3View === "bank" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Digital Bank & Organic Hub", "הבנק הדיגיטלי ושיווק אורגני")}</button>
+            <button type="button" onClick={() => setStage3View("health")} className={stage3View === "health" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Analytics & 24/7 Health", "סטטיסטיקה ובדיקת תקינות")}</button>
+          </div>
+          {stage3View === "workbench" && <LinkLifecycleWorkbench links={links} originUrl={originUrl} isHe={isHe} onInspectLink={(lnk) => setActive360Link(lnk)} onNotify={notify} />}
+          {stage3View === "bank" && <AffiliateDigitalBankOS userId={userId} links={links} clicks={clicks} networks={networks} accounts={accounts} originUrl={originUrl} isHe={isHe} onReload={() => reloadHub(userId)} onInspectLink={(lnk) => setActive360Link(lnk)} onNotify={notify} />}
+          {stage3View === "health" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <LinkHealthWatchdog links={links} isHe={isHe} onUpdated={() => reloadHub(userId)} onNotify={notify} />
+              <AffiliateAnalyticsPanel links={links} clicks={clicks} networks={networks} isHe={isHe} onInspectLink={(lnk) => setActive360Link(lnk)} />
+            </div>
+          )}
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {folders.map((f) => <button key={f} type="button" onClick={() => setFolderFilter(f)} className={folderFilter === f ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11.5 }}>{f}</button>)}
           </div>
@@ -387,6 +407,7 @@ export default function AffiliateIncomeHubPage() {
             <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 14 }}>{t("Use the Smart Campaign Launcher below or pick any link from your portfolio to copy ready-made posts.", "השתמש באשף ההפצה למטה או בחר קישור מתיק הנכסים שלך כדי להעתיק פוסטים מוכנים לוואטסאפ, פייסבוק ורילס.")}</p>
             <SmartCampaignLauncher userId={userId} context="affiliate" />
           </div>
+          <BusinessExitAndTrafficOS userId={userId} links={links} accounts={accounts} originUrl={originUrl} isHe={isHe} onNotify={notify} />
           <ReferralRewardCard referralCode={referralCode} isHe={isHe} />
           <KarmaLedgerPanel karma={karma} boostCredits={boostCredits} isHe={isHe} />
           <div className="card-surface" style={{ padding: 18 }}>
