@@ -42,7 +42,7 @@ export const DEFAULT_ECOSYSTEM_RECOMMENDATIONS: SmartAssetRecommendation[] = [
 
 export const DEFAULT_STUDIO_CONFIG: ContextStudioConfig = {
   enabled: true,
-  defaultChunkLimit: 1000000,
+  defaultChunkLimit: 1500000,
   autoDetectLanguage: true,
   enableSmartEcosystemLinks: true,
   recommendations: DEFAULT_ECOSYSTEM_RECOMMENDATIONS,
@@ -130,7 +130,7 @@ export function buildContextPackets(params: {
   rawInput: string; category: PacketCategory; lang: SupportedLang;
   projectTitle?: string; stageLabel?: string; chunkLimit?: number; maskSecrets?: boolean;
 }) {
-  const { rawInput, category, lang, projectTitle = 'ProofCraft & Tanami360', stageLabel = '', chunkLimit = 1000000, maskSecrets = false } = params;
+  const { rawInput, category, lang, projectTitle = 'ProofCraft & Tanami360', stageLabel = '', chunkLimit = 1500000, maskSecrets = false } = params;
   const { cleaned, maskedSecretsCount } = maskSecrets
     ? sanitizeTerminalOutput(rawInput)
     : { cleaned: rawInput.replace(/\x1B\[[0-9;]*[mGKHF]/g, '').trim(), maskedSecretsCount: 0 };
