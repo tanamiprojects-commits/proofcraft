@@ -37,6 +37,8 @@ export default function AffiliateIncomeHubPage() {
   const { isHe, dir, t } = useStudioLang();
   const ArrowIcon = isHe ? ArrowLeft : ArrowRight;
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+  const uniRef = useRef<HTMLDivElement | null>(null);
+  const stage3PanelRef = useRef<HTMLDivElement | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [activeStage, setActiveStage] = useState<1 | 2 | 3 | 4>(1);
@@ -67,6 +69,7 @@ export default function AffiliateIncomeHubPage() {
   const [folderFilter, setFolderFilter] = useState("ALL");
   const [stage3View, setStage3View] = useState<"links" | "workbench" | "bank" | "health">("links");
   const [uniOpen, setUniOpen] = useState<boolean>(false);
+  const switchStage3 = (v: "links" | "workbench" | "bank" | "health") => { setStage3View(v); focusElement(stage3PanelRef.current); };
   const [active360Link, setActive360Link] = useState<AffLink | null>(null);
 
   const [bridgeProduct, setBridgeProduct] = useState("");
@@ -77,10 +80,11 @@ export default function AffiliateIncomeHubPage() {
 
   const notify = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3400); };
 
+  const focusElement = (el: HTMLElement | null) => { if (!el) return; setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 70); };
   const goToStage = (stage: 1 | 2 | 3 | 4) => {
     setActiveStage(stage);
     setTimeout(() => {
-      workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      focusElement(workspaceRef.current);
     }, 60);
   };
 
@@ -198,7 +202,7 @@ export default function AffiliateIncomeHubPage() {
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>{t("Your Step-by-Step Affiliate Income Command Center", "מרכז השליטה שלך לבניית הכנסה מקישורים שיתופיים — צעד אחר צעד")}</h1>
         <p style={{ fontSize: 13.5, color: "#94a3b8", lineHeight: 1.6, marginBottom: 16 }}>{t("Follow the 4 structured stations below: choose a network, verify your ID, create tracked links, and launch ready-made campaigns.", "עבוד לפי 4 התחנות המסודרות למטה: בחר רשת שותפים, אמת מזהה, צור קישורים חכמים והפץ קמפיינים מוכנים בלחיצה.")}</p>
-        <div ref={workspaceRef} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
+        <div ref={workspaceRef} style={{ scrollMarginTop: 84, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
           {[
             { id: 1 as const, icon: Compass, step: "01", label: t("1. Choose Network", "1. בחירת רשת והשוואה"), sub: t(`${networks.length} verified networks`, `${networks.length} רשתות מאומתות`) },
             { id: 2 as const, icon: ShieldCheck, step: "02", label: t("2. Guided Signup & ID", "2. הרשמה ואימות מזהה"), sub: t(`${accounts.length} active accounts`, `${accounts.length} חשבונות מאומתים`) },
@@ -220,8 +224,8 @@ export default function AffiliateIncomeHubPage() {
         </div>
       </div>
       <AffiliateBeginnerAcademy isHe={isHe} activeStage={activeStage} onJumpStage={goToStage} />
-      <div style={{ marginBottom: 16 }}><button type="button" onClick={() => setUniOpen(!uniOpen)} className="btn-ghost" style={{ width: "100%", height: 44, fontSize: 13.5, fontWeight: 900, borderColor: "rgba(56,189,248,0.45)", color: "#38bdf8", background: "rgba(56,189,248,0.08)" }}>{uniOpen ? t("Close Affiliate University (5 Full Modules)", "סגור את אוניברסיטת השותפים המלאה (5 מודולים)") : t("Open Affiliate University: Money Flow, Profit Simulator, Zero-Follower Playbook & 30-Day Plan", "פתח את אוניברסיטת השותפים המלאה: איך הכסף עובר, מחשבון רווחים, שיווק בלי עוקבים ותוכנית 30 יום")}</button></div>
-      {uniOpen && <div style={{ marginBottom: 20 }}><AffiliateUniversityOS isHe={isHe} onJumpStage={(st) => { setUniOpen(false); goToStage(st); }} /></div>}
+      <div style={{ marginBottom: 16 }}><button type="button" onClick={() => { const next = !uniOpen; setUniOpen(next); if (next) focusElement(uniRef.current); }} className="btn-ghost" style={{ width: "100%", height: 44, fontSize: 13.5, fontWeight: 900, borderColor: "rgba(56,189,248,0.45)", color: "#38bdf8", background: "rgba(56,189,248,0.08)" }}>{uniOpen ? t("Close Affiliate University (5 Full Modules)", "סגור את אוניברסיטת השותפים המלאה (5 מודולים)") : t("Open Affiliate University: Money Flow, Profit Simulator, Zero-Follower Playbook & 30-Day Plan", "פתח את אוניברסיטת השותפים המלאה: איך הכסף עובר, מחשבון רווחים, שיווק בלי עוקבים ותוכנית 30 יום")}</button></div>
+      {uniOpen && <div ref={uniRef} style={{ marginBottom: 20, scrollMarginTop: 84 }}><AffiliateUniversityOS isHe={isHe} onJumpStage={(st) => { setUniOpen(false); goToStage(st); }} /></div>}
       {activeStage === 1 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="card-surface" style={{ padding: 16, border: "1px solid rgba(56,189,248,0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
@@ -278,7 +282,7 @@ export default function AffiliateIncomeHubPage() {
             <div style={{ fontSize: 11.5, fontWeight: 800, color: "#38bdf8", marginBottom: 8 }}>{t("ACTIVE NETWORK:", "הרשת שנבחרה להקמה כעת:")}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {networks.map((n) => (
-                <button key={n.slug} type="button" onClick={() => setSelectedNetSlug(n.slug)} className={selectedNetSlug === n.slug ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12 }}>
+                <button key={n.slug} type="button" onClick={() => { setSelectedNetSlug(n.slug); focusElement(workspaceRef.current); }} className={selectedNetSlug === n.slug ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12 }}>
                   {accounts.some((a) => a.network_slug === n.slug && a.is_verified) ? "✓ " : ""}{isHe ? n.name_he : n.name_en}
                 </button>
               ))}
@@ -360,11 +364,12 @@ export default function AffiliateIncomeHubPage() {
             </form>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
-            <button type="button" onClick={() => setStage3View("links")} className={stage3View === "links" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t(`My Links (${links.length})`, `הקישורים שלי (${links.length})`)}</button>
-            <button type="button" onClick={() => setStage3View("workbench")} className={stage3View === "workbench" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Channel Tracker & Organic", "מעקב ערוצים ושיווק אורגני")}</button>
-            <button type="button" onClick={() => setStage3View("bank")} className={stage3View === "bank" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Digital Bank & Organic Hub", "הבנק הדיגיטלי ושיווק אורגני")}</button>
-            <button type="button" onClick={() => setStage3View("health")} className={stage3View === "health" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Analytics & 24/7 Health", "סטטיסטיקה ובדיקת תקינות")}</button>
+            <button type="button" onClick={() => switchStage3("links")} className={stage3View === "links" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t(`My Links (${links.length})`, `הקישורים שלי (${links.length})`)}</button>
+            <button type="button" onClick={() => switchStage3("workbench")} className={stage3View === "workbench" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Channel Tracker & Organic", "מעקב ערוצים ושיווק אורגני")}</button>
+            <button type="button" onClick={() => switchStage3("bank")} className={stage3View === "bank" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Digital Bank & Organic Hub", "הבנק הדיגיטלי ושיווק אורגני")}</button>
+            <button type="button" onClick={() => switchStage3("health")} className={stage3View === "health" ? "btn-primary" : "btn-ghost"} style={{ height: 42, fontSize: 13 }}>{t("Analytics & 24/7 Health", "סטטיסטיקה ובדיקת תקינות")}</button>
           </div>
+          <div ref={stage3PanelRef} style={{ scrollMarginTop: 84 }} />
           {stage3View === "workbench" && <LinkLifecycleWorkbench links={links} originUrl={originUrl} isHe={isHe} onInspectLink={(lnk) => setActive360Link(lnk)} onNotify={notify} />}
           {stage3View === "bank" && <AffiliateDigitalBankOS userId={userId} links={links} clicks={clicks} networks={networks} accounts={accounts} originUrl={originUrl} isHe={isHe} onReload={() => reloadHub(userId)} onInspectLink={(lnk) => setActive360Link(lnk)} onNotify={notify} />}
           {stage3View === "health" && (
