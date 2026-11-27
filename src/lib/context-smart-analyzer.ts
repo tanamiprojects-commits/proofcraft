@@ -1,7 +1,20 @@
+async function runBrowserOcr(source: HTMLCanvasElement, isHe: boolean): Promise<string> {
+  try {
+    const Tesseract = await import("tesseract.js");
+    const lang = isHe ? "heb+eng" : "eng";
+    const res = await Promise.race([
+      Tesseract.recognize(source, lang),
+      new Promise<null>((r) => setTimeout(() => r(null), 25000)),
+    ]);
+    return res && "data" in res ? (res.data.text || "").trim() : "";
+  } catch {
+    return "";
+  }
+}
 export type SurgicalFilterMode = "full_with_summary" | "errors_only" | "assets_only" | "clean_compact";
 
 export interface ExtractedAsset {
-  kind: "secret" | "email" | "url" | "file";
+  kind: "secret" | "email" | "url" | "file" | "contact";
   labelHe: string;
   labelEn: string;
   value: string;
@@ -65,11 +78,20 @@ export async function validateAndInspectMediaFile(file: File, isHe: boolean): Pr
               if (hexSet.size < 5) hexSet.add(hex);
             }
           }
+          const ocrCanvas = document.createElement("canvas");
+          const scale = Math.min(1, 1600 / Math.max(img.width, img.height, 1));
+          ocrCanvas.width = Math.max(1, Math.round(img.width * scale));
+          ocrCanvas.height = Math.max(1, Math.round(img.height * scale));
+          const oCtx = ocrCanvas.getContext("2d");
+          if (oCtx) oCtx.drawImage(img, 0, 0, ocrCanvas.width, ocrCanvas.height);
           const ratio = img.width > img.height ? "Landscape (16:9)" : img.height > img.width ? "Vertical (9:16 Reels/Story)" : "Square (1:1)";
-          URL.revokeObjectURL(objUrl);
-          resolve({
-            ok: true,
-            summaryText: `[IMAGE SPECIFICATION]\nFile: ${file.name}\nResolution: ${img.width}x${img.height}px (${ratio})\nSize: ${(file.size / 1024).toFixed(1)} KB\nDominant Palette (HEX): ${Array.from(hexSet).join(", ")}\nEXIF Privacy Note: Strip metadata before public upload.`,
+          runBrowserOcr(ocrCanvas, isHe).then((ocrText) => {
+            URL.revokeObjectURL(objUrl);
+            const extractedSection = ocrText ? `\n\n[EXTRACTED TEXT FROM IMAGE (OCR)]\n${ocrText}` : `\n\n[EXTRACTED TEXT FROM IMAGE (OCR)]\n(No readable text detected)`;
+            resolve({
+              ok: true,
+              summaryText: `[IMAGE SPECIFICATION]\nFile: ${file.name}\nResolution: ${img.width}x${img.height}px (${ratio})\nSize: ${(file.size / 1024).toFixed(1)} KB\nDominant Palette (HEX): ${Array.from(hexSet).join(", ")}${extractedSection}`,
+            });
           });
         };
         img.onerror = () => { URL.revokeObjectURL(objUrl); resolve({ ok: false, error: isHe ? "תמונה פגומה." : "Corrupted image." }); };
@@ -79,13 +101,23 @@ export async function validateAndInspectMediaFile(file: File, isHe: boolean): Pr
     return await new Promise((resolve) => {
       const vid = document.createElement("video");
       vid.preload = "metadata";
-      vid.onloadedmetadata = () => {
+      vid.onloadeddata = () => { try { vid.currentTime = Math.min(1, (vid.duration || 0) * 0.25); } catch {} };
+      vid.onseeked = () => {
         const ratio = vid.videoHeight > vid.videoWidth ? "Vertical 9:16 (TikTok / Reels Ready)" : "Horizontal 16:9 (YouTube / Web)";
         const dur = Math.round(vid.duration || 0);
-        URL.revokeObjectURL(objUrl);
-        resolve({
-          ok: true,
-          summaryText: `[VIDEO SPECIFICATION]\nFile: ${file.name}\nResolution: ${vid.videoWidth}x${vid.videoHeight}px (${ratio})\nDuration: ${dur}s | Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB\nDistribution Fit: ${vid.videoHeight > vid.videoWidth ? "Ideal for Track 1 Reels/TikTok Affiliate Funnels" : "Ideal for Tutorial & Landing Page Embed"}`,
+        const vCanvas = document.createElement("canvas");
+        const scale = Math.min(1, 1280 / Math.max(vid.videoWidth, vid.videoHeight, 1));
+        vCanvas.width = Math.max(1, Math.round(vid.videoWidth * scale));
+        vCanvas.height = Math.max(1, Math.round(vid.videoHeight * scale));
+        const vCtx = vCanvas.getContext("2d");
+        if (vCtx) vCtx.drawImage(vid, 0, 0, vCanvas.width, vCanvas.height);
+        runBrowserOcr(vCanvas, isHe).then((ocrText) => {
+          URL.revokeObjectURL(objUrl);
+          const extractedSection = ocrText ? `\n\n[EXTRACTED ON-SCREEN TEXT FROM VIDEO (OCR)]\n${ocrText}` : `\n\n[EXTRACTED ON-SCREEN TEXT FROM VIDEO (OCR)]\n(No readable captions detected)`;
+          resolve({
+            ok: true,
+            summaryText: `[VIDEO SPECIFICATION]\nFile: ${file.name}\nResolution: ${vid.videoWidth}x${vid.videoHeight}px (${ratio})\nDuration: ${dur}s | Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB\nDistribution Fit: ${vid.videoHeight > vid.videoWidth ? "Ideal for Track 1 Reels/TikTok Affiliate Funnels" : "Ideal for Tutorial & Landing Page Embed"}${extractedSection}`,
+          });
         });
       };
       vid.onerror = () => { URL.revokeObjectURL(objUrl); resolve({ ok: false, error: isHe ? "סרטון לא תקין." : "Invalid video." }); };
@@ -106,6 +138,7 @@ export function analyzeAndFilterContext(raw: string, mode: SurgicalFilterMode): 
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
   const urlRegex = /https?:\/\/[^\s"'<>`)]+/g;
   const fileRegex = /(?:src|app|components|lib)[\\/][a-zA-Z0-9_.\-\\/]+\.(?:tsx?|jsx?|css|json|sql|md)/g;
+  const contactRegex = /(?:\b05\d[- ]?\d{7}\b|\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*(?:₪|\$|USD|ILS)\b)/g;
 
   const errorLines: string[] = [];
   const errorIndices = new Set<number>();
@@ -130,6 +163,7 @@ export function analyzeAndFilterContext(raw: string, mode: SurgicalFilterMode): 
     (t.match(emailRegex) || []).forEach((m) => pushAsset("email", "כתובת אימייל", "Email Address", m));
     (t.match(urlRegex) || []).forEach((m) => pushAsset("url", "קישור / URL", "URL / Endpoint", m));
     (t.match(fileRegex) || []).forEach((m) => pushAsset("file", "קובץ מערכת", "Source File", m.replace(/\\/g, "/")));
+    (t.match(contactRegex) || []).forEach((m) => pushAsset("contact", "טלפון / סכום", "Phone / Amount", m));
   });
 
   const isMedia = cleanAnsi.startsWith("[IMAGE SPECIFICATION]") || cleanAnsi.startsWith("[VIDEO SPECIFICATION]");
