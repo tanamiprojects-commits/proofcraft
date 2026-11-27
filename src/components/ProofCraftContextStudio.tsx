@@ -33,6 +33,9 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
   const [guideOpen, setGuideOpen] = useState(false);
   const [handoffActive, setHandoffActive] = useState(false);
   const [filterMode, setFilterMode] = useState<SurgicalFilterMode>("full_with_summary");
+  const [scanStep, setScanStep] = useState<number>(0);
+  const [scanFileName, setScanFileName] = useState<string>("");
+  const [dragOver, setDragOver] = useState<boolean>(false);
   const outputRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -73,7 +76,19 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     } catch {}
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const processIncomingFile = async (file: File) => {
+    setScanFileName(file.name); setScanStep(1);
+    await new Promise((r) => setTimeout(r, 220));
+    const check = await validateAndInspectMediaFile(file, isHe);
+    if (!check.ok) { setScanStep(0); setPipNotice(check.error || "Blocked"); setTimeout(() => setPipNotice(""), 4000); return; }
+    setScanStep(2); await new Promise((r) => setTimeout(r, 220)); setScanStep(3); await new Promise((r) => setTimeout(r, 220));
+    if (check.summaryText) { setRawInput(check.summaryText); setActivePart(0); setScanStep(4); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); return; }
+    const reader = new FileReader();
+    reader.onload = () => { setRawInput(String(reader.result || "")); setActivePart(0); setScanStep(4); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); };
+    reader.readAsText(file);
+  };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.item(0); if (f) await processIncomingFile(f); };
+  const _unusedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.item(0);
     if (!file) return;
     const reader = new FileReader();
@@ -208,6 +223,49 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
               <input type="checkbox" checked={maskSecrets} onChange={(e) => setMaskSecrets(e.target.checked)} />
               <span>{isHe ? "הסתר מפתחות API" : "Mask API secrets"}</span>
             </label>
+          </div>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={async (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.item(0); if (f) await processIncomingFile(f); }}
+            style={{
+              padding: 14, borderRadius: 12,
+              border: dragOver ? "1.5px dashed #34d399" : "1px dashed rgba(56,189,248,0.4)",
+              background: dragOver ? "rgba(52,211,153,0.12)" : "rgba(56,189,248,0.05)",
+              display: "flex", flexDirection: "column", gap: 10, transition: "all 0.2s ease"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 12, color: "#e2e8f0" }}>
+                <strong style={{ color: "#38bdf8" }}>{isHe ? "מנתח תמונות, סרטונים וקבצים חכם:" : "Visual Image, Video & File Analyzer:"}</strong>{" "}
+                <span style={{ color: "#94a3b8" }}>{isHe ? "גרור לכאן או בחר תמונה (PNG/JPG), סרטון (MP4) או קוד (עד 15,000 שורות)" : "Drag & drop or pick an image, video, or code file"}</span>
+              </div>
+              <label className="btn-primary" style={{ width: "auto", height: 32, padding: "0 12px", fontSize: 11.5, background: "#34d399", color: "#0a0b0e", cursor: "pointer" }}>
+                <input type="file" accept=".txt,.log,.md,.json,.ts,.tsx,.js,.csv,.png,.jpg,.jpeg,.webp,.mp4,.webm" style={{ display: "none" }} onChange={handleFileUpload} />
+                <FolderUp size={13} /> {isHe ? "בחר תמונה / סרטון / קובץ" : "Analyze Media / File"}
+              </label>
+            </div>
+            {scanStep > 0 && (
+              <div style={{ padding: 10, borderRadius: 10, background: "#05070a", border: "1px solid rgba(52,211,153,0.35)", display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#34d399" }}>
+                  {scanStep < 4
+                    ? (isHe ? `סורק ומאמת כעת: ${scanFileName}...` : `Scanning & Verifying: ${scanFileName}...`)
+                    : (isHe ? `✓ הניתוח הושלם בהצלחה: ${scanFileName} מוכן בצד שמאל!` : `✓ Analysis Complete: ${scanFileName} Ready!`)}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                  {[
+                    { s: 1, he: "1. אימות אבטחה", en: "1. Security Check" },
+                    { s: 2, he: "2. סריקת ממדים", en: "2. Dimensions" },
+                    { s: 3, he: "3. חילוץ נתונים", en: "3. Data Extract" },
+                    { s: 4, he: "4. חבילה מוכנה ✓", en: "4. Packet Ready ✓" },
+                  ].map((item) => (
+                    <div key={item.s} style={{ padding: "5px 6px", borderRadius: 6, textAlign: "center", fontSize: 10.5, fontWeight: 800, background: scanStep >= item.s ? "rgba(52,211,153,0.18)" : "#11131a", color: scanStep >= item.s ? "#34d399" : "#64748b", border: `1px solid ${scanStep >= item.s ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.06)"}` }}>
+                      {isHe ? item.he : item.en}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <textarea rows={13} value={rawInput} onChange={(e) => { setRawInput(e.target.value); setActivePart(0); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 14px", borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
