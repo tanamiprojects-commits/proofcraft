@@ -1,6 +1,7 @@
 "use client";
 import { SurgicalFilterMode, analyzeAndFilterContext, validateAndInspectMediaFile } from "@/lib/context-smart-analyzer";
 import ContextIntelligencePanel from "@/components/ContextIntelligencePanel";
+import LiveActionTelemetryHUD from "@/components/LiveActionTelemetryHUD";
 import { Share2 } from "lucide-react";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -34,6 +35,10 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
   const [handoffActive, setHandoffActive] = useState(false);
   const [filterMode, setFilterMode] = useState<SurgicalFilterMode>("full_with_summary");
   const [scanStep, setScanStep] = useState<number>(0);
+  const [hudStatus, setHudStatus] = useState<"idle" | "running" | "done">("idle");
+  const [hudPct, setHudPct] = useState<number>(0);
+  const [hudTitle, setHudTitle] = useState<string>("");
+  const intelRef = useRef<HTMLDivElement | null>(null);
   const [scanFileName, setScanFileName] = useState<string>("");
   const [dragOver, setDragOver] = useState<boolean>(false);
   const outputRef = useRef<HTMLDivElement | null>(null);
@@ -77,14 +82,14 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
   };
 
     const processIncomingFile = async (file: File) => {
-    setScanFileName(file.name); setScanStep(1);
+    setScanFileName(file.name); setScanStep(1); setHudStatus("running"); setHudPct(25); setHudTitle(isHe ? `מנתח ומפענח קובץ: ${file.name}` : `Analyzing & OCR Scanning: ${file.name}`);
     await new Promise((r) => setTimeout(r, 220));
     const check = await validateAndInspectMediaFile(file, isHe);
-    if (!check.ok) { setScanStep(0); setPipNotice(check.error || "Blocked"); setTimeout(() => setPipNotice(""), 4000); return; }
-    setScanStep(2); await new Promise((r) => setTimeout(r, 220)); setScanStep(3); await new Promise((r) => setTimeout(r, 220));
-    if (check.summaryText) { setRawInput(check.summaryText); setActivePart(0); setScanStep(4); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); return; }
+    if (!check.ok) { setScanStep(0); setHudStatus("idle"); setPipNotice(check.error || "Blocked"); setTimeout(() => setPipNotice(""), 4000); return; }
+    setScanStep(2); setHudPct(55); await new Promise((r) => setTimeout(r, 180)); setScanStep(3); setHudPct(85);
+    if (check.summaryText) { setRawInput(check.summaryText); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); return; }
     const reader = new FileReader();
-    reader.onload = () => { setRawInput(String(reader.result || "")); setActivePart(0); setScanStep(4); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); };
+    reader.onload = () => { setRawInput(String(reader.result || "")); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); };
     reader.readAsText(file);
   };
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.item(0); if (f) await processIncomingFile(f); };
@@ -188,7 +193,8 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
           </div>
         </div>
       )}
-      <ContextIntelligencePanel rawInput={rawInput} projectTitle={projectTitle} analysis={analysis} filterMode={filterMode} isHe={isHe} onChangeFilter={(m: SurgicalFilterMode) => { setFilterMode(m); setActivePart(0); }} onLoadSnapshot={(txt: string, ttl: string) => { setRawInput(txt); setProjectTitle(ttl); setActivePart(0); }} onNotify={(m: string) => { setPipNotice(m); setTimeout(() => setPipNotice(""), 3000); }} />
+      <LiveActionTelemetryHUD status={hudStatus} progressPct={hudPct} actionTitle={hudTitle} fileName={scanFileName} analysis={analysis} isHe={isHe} onCopyPacket={() => handleCopyPacket(activePart)} onDownloadPacket={() => handleDownloadPacket(activePart)} onFilterErrors={(m) => { setFilterMode(m); setActivePart(0); }} onInspectAssets={() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+      <div ref={intelRef} style={{ scrollMarginTop: 84 }} /><ContextIntelligencePanel rawInput={rawInput} projectTitle={projectTitle} analysis={analysis} filterMode={filterMode} isHe={isHe} onChangeFilter={(m: SurgicalFilterMode) => { setFilterMode(m); setActivePart(0); }} onLoadSnapshot={(txt: string, ttl: string) => { setRawInput(txt); setProjectTitle(ttl); setActivePart(0); }} onNotify={(m: string) => { setPipNotice(m); setTimeout(() => setPipNotice(""), 3000); }} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
       <style>{`.fintech-scroll-hidden{scrollbar-width:none;-ms-overflow-style:none;resize:none}.fintech-scroll-hidden::-webkit-scrollbar{display:none;width:0;height:0}`}</style>
         <div style={{ padding: 18, borderRadius: 16, background: "#11131a", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -217,7 +223,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
                 <input type="file" accept=".txt,.log,.md,.json,.ts,.tsx,.js,.csv,.png,.jpg,.jpeg,.webp,.mp4,.webm" style={{ display: "none" }} onChange={handleFileUpload} />
                 <FolderUp size={13} /> {isHe ? "ייבא קובץ מלא (15,000+ שורות)" : "Import File (15,000+ lines)"}
               </label>
-              <button type="button" onClick={() => { setRawInput(""); setActivePart(0); setHandoffActive(false); }} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#fca5a5", borderColor: "rgba(248,113,113,0.4)", background: "rgba(248,113,113,0.08)" }}><Trash2 size={13} /> {isHe ? "איפוס תבנית" : "Reset Template"}</button>
+              <button type="button" onClick={() => { setRawInput(""); setActivePart(0); setHandoffActive(false); setScanStep(0); setHudStatus("idle"); }} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#fca5a5", borderColor: "rgba(248,113,113,0.4)", background: "rgba(248,113,113,0.08)" }}><Trash2 size={13} /> {isHe ? "איפוס תבנית" : "Reset Template"}</button>
             </div>
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#cbd5e1", cursor: "pointer" }}>
               <input type="checkbox" checked={maskSecrets} onChange={(e) => setMaskSecrets(e.target.checked)} />
