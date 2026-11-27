@@ -71,7 +71,7 @@ export default function ContextIntelligencePanel({
       {tab === "summary" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ padding: 12, borderRadius: 12, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", fontSize: 12.5, color: "#e2e8f0", lineHeight: 1.6 }}>
-            <strong style={{ color: "#38bdf8", display: "block", marginBottom: 4 }}>{isHe ? `הקשר הפלט שזוהה: ${analysis.detectedKindHe}` : `Detected Context: ${analysis.detectedKindEn}`}</strong>
+            <strong style={{ color: "#38bdf8", display: "block", marginBottom: 6 }}>{isHe ? `הקשר הפלט שזוהה: ${analysis.detectedKindHe} — ` : `Detected Context: ${analysis.detectedKindEn}`}</strong>
             {isHe ? analysis.explanationHe : analysis.explanationEn}
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
