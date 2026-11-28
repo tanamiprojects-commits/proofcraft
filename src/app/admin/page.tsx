@@ -98,6 +98,21 @@ export default function AdminCommandCenterPage() {
   const [toast, setToast] = useState("");
   const showMsg = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3400); };
 
+  const callAdminServer = async (action: string, payload: Record<string, unknown>) => {
+    const { data: sessData } = await supabase.auth.getSession();
+    const token = sessData?.session?.access_token || "";
+    const res = await fetch("/api/admin-governance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action, payload }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showMsg(t(`Security Error: ${json.error || res.statusText}`, `שגיאת אבטחה: ${json.error || res.statusText}`));
+      return false;
+    }
+    return true;
+  };
   const logAdminAction = async (action_title: string, target_info: string) => {
     await supabase.from("admin_audit_logs").insert({ action_title, target_info });
     const { data } = await supabase.from("admin_audit_logs").select("*").order("created_at", { ascending: false }).limit(20);
@@ -134,24 +149,23 @@ export default function AdminCommandCenterPage() {
   }, []);
   const toggleVerifyUser = async (u: AdminUserRow) => {
     const next = !u.admin_verified;
-    await supabase.from("profiles").update({ admin_verified: next }).eq("id", u.id);
-    await supabase.from("feed_posts").update({ admin_verified: next }).eq("user_id", u.id);
-    await logAdminAction(next ? "Verified Builder Credential" : "Revoked Builder Verification", u.full_name || u.id);
+    const ok = await callAdminServer("toggle_verify_user", { userId: u.id, next, label: u.full_name || u.id });
+    if (!ok) return;
     showMsg(next ? t(`Verified ${u.full_name || "Builder"}!`, `היוצר ${u.full_name || "Builder"} אומת בהצלחה!`) : t("Verification badge removed.", "תג האימות הוסר."));
     loadAllAdminData();
   };
 
   const updateUserTrackLevel = async (u: AdminUserRow, newLevel: number) => {
-    await supabase.from("profiles").update({ purchased_track_level: newLevel, current_track_level: newLevel }).eq("id", u.id);
-    await logAdminAction(`Updated Tier to Track ${newLevel}`, u.full_name || u.id);
+    const ok = await callAdminServer("update_track_level", { userId: u.id, level: newLevel, label: u.full_name || u.id });
+    if (!ok) return;
     showMsg(t(`Updated ${u.full_name || "Builder"} to Track ${newLevel}.`, `דרגת המשתמש עודכנה למסלול ${newLevel}.`));
     loadAllAdminData();
   };
 
   const sendWarningToUser = async () => {
     if (!warnTarget || !warnText.trim()) return;
-    await supabase.from("profiles").update({ warning_message: warnText.trim() }).eq("id", warnTarget.id);
-    await logAdminAction("Issued Official Policy Notice", `${warnTarget.full_name}: ${warnText.trim()}`);
+    const ok = await callAdminServer("warn_user", { userId: warnTarget.id, text: warnText.trim(), label: warnTarget.full_name || warnTarget.id });
+    if (!ok) return;
     showMsg(t(`Notice dispatched to ${warnTarget.full_name}.`, `הודעת התראה נשלחה אל ${warnTarget.full_name}.`));
     setWarnTarget(null); setWarnText("");
     loadAllAdminData();
@@ -160,16 +174,16 @@ export default function AdminCommandCenterPage() {
   const confirmBanUser = async () => {
     if (!banTarget) return;
     const reason = banText.trim() || "Violation of ProofCraft & Tanami360 Terms & Security Policy";
-    await supabase.from("profiles").update({ is_banned: true, ban_reason: reason }).eq("id", banTarget.id);
-    await logAdminAction("Suspended User Account (RLS)", `${banTarget.full_name} (${reason})`);
+    const ok = await callAdminServer("ban_user", { userId: banTarget.id, reason, label: banTarget.full_name || banTarget.id });
+    if (!ok) return;
     showMsg(t(`Account ${banTarget.full_name} suspended.`, `החשבון ${banTarget.full_name} הושעה.`));
     setBanTarget(null); setBanText("");
     loadAllAdminData();
   };
 
   const unbanUser = async (u: AdminUserRow) => {
-    await supabase.from("profiles").update({ is_banned: false, ban_reason: "" }).eq("id", u.id);
-    await logAdminAction("Lifted User Suspension", u.full_name || u.id);
+    const ok = await callAdminServer("unban_user", { userId: u.id, label: u.full_name || u.id });
+    if (!ok) return;
     showMsg(t(`Suspension lifted for ${u.full_name}.`, `ההשעיה הוסרה עבור ${u.full_name}.`));
     loadAllAdminData();
   };
@@ -191,35 +205,35 @@ export default function AdminCommandCenterPage() {
 
   const sendSupportReply = async () => {
     if (!replyTarget || !replyText.trim()) return;
-    await supabase.from("support_tickets").update({ admin_reply: replyText.trim(), status: "resolved" }).eq("id", replyTarget.id);
-    await logAdminAction("Replied to Ticket", `${replyTarget.sender_name}: ${replyText.trim()}`);
+    const ok = await callAdminServer("reply_ticket", { ticketId: replyTarget.id, reply: replyText.trim(), senderName: replyTarget.sender_name });
+    if (!ok) return;
     showMsg(t("Reply sent & synced!", "התשובה נשלחה וסונכרנה!"));
     setReplyTarget(null); setReplyText("");
     loadAllAdminData();
   };
 
   const togglePinPost = async (p: AdminPostRow) => {
-    await supabase.from("feed_posts").update({ is_pinned: !p.is_pinned, status: "approved" }).eq("id", p.id);
-    await logAdminAction(!p.is_pinned ? "Pinned Feed Post" : "Unpinned Feed Post", p.project_title);
+    const ok = await callAdminServer("toggle_pin_post", { postId: p.id, nextPin: !p.is_pinned, title: p.project_title });
+    if (!ok) return;
     loadAllAdminData();
   };
 
   const deletePost = async (id: string, title: string) => {
-    await supabase.from("feed_posts").delete().eq("id", id);
-    await logAdminAction("Deleted Feed Post", title);
+    const ok = await callAdminServer("delete_post", { postId: id, title });
+    if (!ok) return;
     showMsg(t("Post deleted.", "הפרסום נמחק."));
     loadAllAdminData();
   };
 
   const saveTrackRow = async (tr: TrackRow) => {
-    await supabase.from("career_tracks").update({ name: tr.name, subtitle: tr.subtitle, price_ils: Number(tr.price_ils) }).eq("level", tr.level);
-    await logAdminAction(`Updated Track ${tr.level} Pricing`, `${tr.name} (₪${tr.price_ils})`);
+    const ok = await callAdminServer("save_track", { level: tr.level, name: tr.name, subtitle: tr.subtitle, priceIls: Number(tr.price_ils) });
+    if (!ok) return;
     showMsg(t(`Saved Track ${tr.level}!`, `מסלול ${tr.level} נשמר בהצלחה!`));
   };
 
   const saveBroadcastSettings = async () => {
-    await supabase.from("site_settings").upsert({ key: "broadcast_banner", value: broadcast, updated_at: new Date().toISOString() });
-    await logAdminAction("Updated Live Broadcast Banner", broadcast.active ? broadcast.text : "Disabled");
+    const ok = await callAdminServer("save_broadcast", { broadcast });
+    if (!ok) return;
     showMsg(t("Broadcast banner updated!", "באנר השידור החי עודכן!"));
   };
   if (authorized === null) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>{t("Verifying Admin Credentials...", "מאמת הרשאות ניהול...")}</div>;
@@ -409,7 +423,7 @@ export default function AdminCommandCenterPage() {
       {activeTab === "tracks" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {tracks.map((tr, idx) => (
-            <div key={tr.level} className="card-surface" style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 110px auto", gap: 10, alignItems: "center" }}>
+            <div key={tr.level} className="card-surface" style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, alignItems: "center" }}>
               <input value={tr.name} onChange={(e) => setTracks((prev) => prev.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))} className="input-dark" />
               <input value={tr.subtitle} onChange={(e) => setTracks((prev) => prev.map((x, i) => i === idx ? { ...x, subtitle: e.target.value } : x))} className="input-dark" />
               <input type="number" value={tr.price_ils} onChange={(e) => setTracks((prev) => prev.map((x, i) => i === idx ? { ...x, price_ils: Number(e.target.value) } : x))} className="input-dark" />
