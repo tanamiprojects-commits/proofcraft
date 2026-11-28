@@ -182,7 +182,7 @@ export default function AffiliateIncomeHubPage() {
   const totalClicks = links.reduce((sum, l) => sum + (l.click_count || 0), 0);
   const originUrl = typeof window !== "undefined" ? window.location.origin : "https://tanami360.com";
 
-  if (loading) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>{t("Loading Track 1 Affiliate Workspace...", "טוען את סביבת העבודה של מסלול 1...")}</div>;
+  const loadingBanner = loading ? (<div style={{ padding: "10px 14px", marginBottom: 14, borderRadius: 12, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.28)", color: "#38bdf8", fontSize: 12.5, fontWeight: 700 }}>{t("Syncing live affiliate networks & links...", "מסנכרן רשתות שותפים וקישורים בזמן אמת...")}</div>) : null;
 
   return (
     <div dir={dir} style={{ textAlign: isHe ? "right" : "left", paddingBottom: 76 }}>
@@ -191,9 +191,11 @@ export default function AffiliateIncomeHubPage() {
       <div className="card-hero" style={{ padding: 24, marginBottom: 18, borderRadius: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <span className="badge-pill" style={{ background: "rgba(52,211,153,0.16)", color: "#34d399", fontSize: 11.5, fontWeight: 800 }}>
-            <Sparkles size={13} /> {t("TRACK 1 · AFFILIATE FINTECH OS WORKSPACE", "מסלול 1 · סביבת עבודה מקצועית להכנסה מקישורים שיתופיים")}
+            <Sparkles size={13} /> {t("TRACK 1 · AFFILIATE STUDIO OS WORKSPACE", "מסלול 1 · סביבת עבודה מקצועית להכנסה מקישורים שיתופיים")}
           </span>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <a href="/vault" style={{ textDecoration: "none" }} className="badge-pill"><Lock size={12} color="#34d399" /> <span style={{ color: "#34d399", fontSize: 11 }}>{t("Save IDs in Vault", "שמור מזהים בכספת")}</span></a>
+            <button type="button" onClick={() => window.open("/context-studio?floating=1", "pcContextFloat", "width=460,height=760")} className="badge-pill" style={{ cursor: "pointer", background: "rgba(129,140,248,0.16)", color: "#a5b4fc", fontSize: 11, border: "1px solid rgba(129,140,248,0.35)" }}><Sparkles size={12} /> {t("Floating Context Studio", "סטודיו הקשר צף")}</button>
             <span className="badge-pill" style={{ background: "rgba(251,191,36,0.14)", color: "#fbbf24", fontSize: 11 }}><Flame size={12} /> {boostCredits} {t("Boost Credits", "נקודות חשיפה")}</span>
             <span className="badge-pill" style={{ background: isPro ? "rgba(56,189,248,0.18)" : "rgba(148,163,184,0.16)", color: isPro ? "#38bdf8" : "#cbd5e1", fontSize: 11 }}>
               {isPro ? "AFFILIATE PRO" : t(`STARTER (${links.length}/3 Links)`, `מסלול חינם (${links.length}/3 קישורים)`)}
@@ -223,7 +225,7 @@ export default function AffiliateIncomeHubPage() {
           })}
         </div>
       </div>
-      <AffiliateBeginnerAcademy isHe={isHe} activeStage={activeStage} onJumpStage={goToStage} />
+      {loadingBanner}<AffiliateBeginnerAcademy isHe={isHe} activeStage={activeStage} onJumpStage={goToStage} />
       <div style={{ marginBottom: 16 }}><button type="button" onClick={() => { const next = !uniOpen; setUniOpen(next); if (next) focusElement(uniRef.current); }} className="btn-ghost" style={{ width: "100%", height: 44, fontSize: 13.5, fontWeight: 900, borderColor: "rgba(56,189,248,0.45)", color: "#38bdf8", background: "rgba(56,189,248,0.08)" }}>{uniOpen ? t("Close Affiliate University (5 Full Modules)", "סגור את אוניברסיטת השותפים המלאה (5 מודולים)") : t("Open Affiliate University: Money Flow, Profit Simulator, Zero-Follower Playbook & 30-Day Plan", "פתח את אוניברסיטת השותפים המלאה: איך הכסף עובר, מחשבון רווחים, שיווק בלי עוקבים ותוכנית 30 יום")}</button></div>
       {uniOpen && <div ref={uniRef} style={{ marginBottom: 20, scrollMarginTop: 84 }}><AffiliateUniversityOS isHe={isHe} onJumpStage={(st) => { setUniOpen(false); goToStage(st); }} /></div>}
       {activeStage === 1 && (
