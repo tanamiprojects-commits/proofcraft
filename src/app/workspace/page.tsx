@@ -60,7 +60,7 @@ export default function WorkspacePage() {
     });
   }, []);
 
-  if (loading) return <div style={{ padding: 48, textAlign: "center", color: "#94a3b8" }}>{t("Loading Production Studio...", "טוען את סטודיו הייצור...")}</div>;
+  const syncBanner = loading ? (<div style={{ padding: "8px 14px", marginBottom: 12, borderRadius: 12, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.28)", color: "#38bdf8", fontSize: 12, fontWeight: 700 }}>{t("Syncing cloud studio profile...", "מסנכרן פרופיל ענן ותיק עבודות...")}</div>) : null;
 
   const guides = getStrategicTrackGuides(lang);
   const activeGuide = guides.find((g) => g.level === selectedTrack) || guides[0];
@@ -70,7 +70,7 @@ export default function WorkspacePage() {
 
   return (
     <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
-      <StudioVisualArtwork variant="workspace" />
+      <StudioVisualArtwork variant="workspace" />{syncBanner}
       
 
       {toast && (
@@ -84,7 +84,7 @@ export default function WorkspacePage() {
       <PublicIdentityBar userId={userId} isHe={isHe} />
       <CreatorRankBadge userId={userId} />
       <ExecutiveReportCard userId={userId} />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)", marginBottom: 16 }}><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" onClick={() => setWsMode("build")} className={wsMode === "build" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("1. Engineering Studio & Portfolio", "1. סטודיו בנייה ותיק עבודות")}</button><button type="button" onClick={() => setWsMode("organic")} className={wsMode === "organic" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("2. Organic Network & Co-Op Ring", "2. רשת שיווק אורגנית וקידום הדדי")}</button><button type="button" onClick={() => setWsMode("vault")} className={wsMode === "vault" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("3. Encrypted Context & Crypto Vault", "3. כספת סודות, קריפטו והקשר")}</button></div><span style={{ fontSize: 11.5, color: "#94a3b8" }}>{t("Switch between building your product and growing organic traffic.", "עבור בין בניית המוצר להקמת רשת השיווק האורגנית שלך.")}</span></div>{wsMode === "organic" && <OrganicNetworkBuilderOS userId={userId} />}{wsMode === "vault" && <ZeroKnowledgeVaultOS userId={userId} />}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: 14, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.25)", marginBottom: 16 }}><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" onClick={() => setWsMode("build")} className={wsMode === "build" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("1. Engineering Studio & Portfolio", "1. סטודיו בנייה ותיק עבודות")}</button><button type="button" onClick={() => setWsMode("organic")} className={wsMode === "organic" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("2. Organic Network & Co-Op Ring", "2. רשת שיווק אורגנית וקידום הדדי")}</button><button type="button" onClick={() => setWsMode("vault")} className={wsMode === "vault" ? "btn-primary" : "btn-ghost"} style={{ width: "auto", height: 36, fontSize: 12.5 }}>{t("3. Encrypted Context & Crypto Vault", "3. כספת סודות, קריפטו והקשר")}</button></div><button type="button" onClick={() => window.open("/context-studio?floating=1", "pcContextFloat", "width=540,height=740")} className="btn-ghost" style={{ height: 34, padding: "0 12px", fontSize: 12, color: "#a5b4fc", borderColor: "rgba(129,140,248,0.38)" }}>{t("Floating Context Studio", "סטודיו הקשר צף")}</button></div>{wsMode === "organic" && <OrganicNetworkBuilderOS userId={userId} />}{wsMode === "vault" && <ZeroKnowledgeVaultOS userId={userId} />}
       <SmartCampaignLauncher userId={userId} context="workspace" />
       <PublicBrandingEditor userId={userId} />
       <div className="card-hero" style={{ padding: 20, marginBottom: 18 }}>
