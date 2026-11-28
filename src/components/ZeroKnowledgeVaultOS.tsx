@@ -255,16 +255,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, alignItems: "center", padding: 16, borderRadius: 16, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(56,189,248,0.22)", marginBottom: 18 }}>
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc", marginBottom: 8 }}>{isHe ? "כספת ראשית אחת + תתי-כספות חכמות לבחירה" : "One Master Vault + Smart Optional Sub-Vaults"}</h2>
-          <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.65 }}>{isHe ? "נכנסים פעם אחת בסיסמת מאסטר ראשית, ומארגנים את כל הפריטים בתתי-כספות מקצועיות (כללי, קריפטו, פיתוח). לכל תת-כספת תוכל לבחור: פתיחה אוטומטית תחת הסיסמה הראשית, קוד PIN נפרד, או שאלת זיכרון אישית שרק אתה יודע." : "Unlock once with your Master Key and organize items into professional Sub-Vaults."}</p>
-        </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <img src="/vault/vault-hero.png" alt="AES-256 Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "60%", maxHeight: 145, objectFit: "contain", borderRadius: 12 }} />
-          <img src="/vault/vault-context.png" alt="Context Vault" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} style={{ width: "36%", maxHeight: 145, objectFit: "contain", borderRadius: 12 }} />
-        </div>
-      </div>
+
 
             {showSmartGuide && (
         <div style={{ padding: 16, borderRadius: 14, background: "rgba(14,165,233,0.1)", border: "1px solid rgba(56,189,248,0.4)", marginBottom: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, fontSize: 12, color: "#e2e8f0", lineHeight: 1.6 }}>
@@ -439,6 +430,7 @@ export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | nul
           )}
         </div>
       )}
+    <VaultSecurityAndBackupAcademy isHe={isHe} />
     </section>
   );
 }
