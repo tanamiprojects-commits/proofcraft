@@ -254,7 +254,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div>© 2026 ProofCraft Studio OS · {isHe ? "פלטפורמת AI, פורטפוליו מאומת והכנסה משותפים" : "Verified AI Engineering & Direct Affiliate Income OS"}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}>
             {legalDocs.map((doc) => (
-              <button key={doc.id} type="button" onClick={() => setLegalDoc(doc)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12 }}>{doc.title}</button>
+              <button key={doc.id} type="button" onClick={() => setLegalDoc(doc)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12 }}>{isHe ? (doc.title.includes("About") ? "אודות ProofCraft Studio" : doc.title.includes("Pricing") ? "מחירון שקוף" : doc.title.includes("Terms") ? "תנאי שימוש" : doc.title.includes("Privacy") ? "מדיניות פרטיות ואבטחה" : doc.title.includes("Refund") ? "מדיניות ביטולים והחזרים" : doc.title.includes("Accessibility") ? "הצהרת נגישות" : doc.title) : doc.title}</button>
             ))}
             <Link href="/legal" style={{ color: "#cbd5e1", textDecoration: "none", fontSize: 12, fontWeight: 700 }}>{isHe ? "תנאים, פרטיות וגילוי נאות" : "Legal & Privacy"}</Link>
             <button type="button" onClick={() => setA11yOpen(true)} style={{ background: "none", border: "none", color: "#38bdf8", cursor: "pointer", fontSize: 12, fontWeight: 700 }}><Accessibility size={13} style={{ display: "inline" }} /> {isHe ? "נגישות" : "A11y"}</button>
