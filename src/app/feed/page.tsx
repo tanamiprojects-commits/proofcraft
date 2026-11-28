@@ -23,9 +23,51 @@ interface FeedPostRow {
   created_at: string;
 }
 
+const SEED_FEED_POSTS: FeedPostRow[] = [
+  {
+    id: "seed-build-1",
+    author_name: "ProofCraft Studio",
+    track_level: 4,
+    project_title: "סטודיו חבילות ההקשר ופענוח OCR — ProofCraft Context Studio",
+    live_url: "https://tanami360.com",
+    summary: "מערכת חכמה לאריזת קבצי קוד, תמונות מסך ולוגי שגיאות מקומית בדפדפן עם הסתרת מפתחות אוטומטית עבור צ׳אט AI.",
+    post_type: "build_proof",
+    lang_code: "he",
+    price_badge: "חינם · v4.0",
+    boost_credits: 24,
+    created_at: "2026-11-28T00:00:00Z",
+  },
+  {
+    id: "seed-deal-1",
+    author_name: "Tanami360 Deals",
+    track_level: 1,
+    project_title: "מרכז השותפים 360° — השוואת רשתות ויצירת מודעות בלחיצה",
+    live_url: "https://tanami360.com",
+    summary: "חיבור מהיר לעליאקספרס, אמזון, Temu ורשתות ישראליות עם כללי בטיחות למניעת חסימה ומחולל קופי לוואטסאפ ופייסבוק.",
+    post_type: "verified_deal",
+    lang_code: "he",
+    price_badge: "100% חינם",
+    boost_credits: 18,
+    created_at: "2026-11-28T00:00:00Z",
+  },
+  {
+    id: "seed-bundle-1",
+    author_name: "ProofCraft Security",
+    track_level: 3,
+    project_title: "כספת סודות, סיסמאות והקשר מוצפנת (AES-256 Zero-Knowledge)",
+    live_url: "https://tanami360.com",
+    summary: "שמירה מקומית מוצפנת בדפדפן לסיסמאות, מפתחות פרויקטים וביטויי שחזור של קריפטו ללא שליחת מפתחות לשרת.",
+    post_type: "deal_bundle",
+    lang_code: "he",
+    price_badge: "AES-256",
+    boost_credits: 15,
+    created_at: "2026-11-28T00:00:00Z",
+  },
+];
+
 export default function ExpandedMarketingFeedPage() {
   const { isHe, dir, t } = useStudioLang();
-  const [posts, setPosts] = useState<FeedPostRow[]>([]);
+  const [posts, setPosts] = useState<FeedPostRow[]>(SEED_FEED_POSTS);
   const [filterType, setFilterType] = useState<string>("all");
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
@@ -41,7 +83,7 @@ export default function ExpandedMarketingFeedPage() {
 
   const loadPosts = async () => {
     const { data } = await supabase.from("feed_posts").select("*").eq("is_approved", true).order("boost_credits", { ascending: false }).order("created_at", { ascending: false }).limit(50);
-    if (data) setPosts(data as FeedPostRow[]);
+    if (data && data.length > 0) setPosts(data as FeedPostRow[]);
   };
 
   useEffect(() => {
