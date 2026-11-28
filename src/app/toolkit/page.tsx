@@ -224,7 +224,7 @@ export default function ToolkitPage() {
 
                 <h2 style={{ fontSize: 17, fontWeight: 900, color: "#f8fafc", marginBottom: 2 }}>{tool.name}</h2>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#38bdf8", marginBottom: 8 }}>{tool.category}</div>
-                <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.5, marginBottom: 12 }}>{tool.short_desc}</p>
+                <p style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.5, marginBottom: 12 }}>{isHe ? (tool.stage_number === 1 ? "אפיון ארכיטקטורת מערכת, סכמות נתונים וזרימת משתמשים לפני כתיבת שורת קוד אחת." : tool.stage_number === 2 ? "בניית ממשק משתמש רספונסיבי וחד עם מערכת עיצוב מותאמת למובייל ולמחשב." : tool.stage_number === 3 ? "פיתוח, שכתוב ודיבוג קוד Full-Stack ב-Next.js ו-TypeScript עם הקשר מלא." : tool.stage_number === 4 ? "מסד נתונים מנוהל בענן כולל אימות משתמשים והגנת גישה ברמת שורה (RLS)." : tool.stage_number === 5 ? "ניהול גרסאות ב-GitHub, סריקת מפתחות .env ובדיקות בנייה נקיות לייצור." : tool.stage_number === 6 ? "פריסה גלובלית מאובטחת ב-HTTPS וחיבור סליקה מאומתת עם Webhooks." : tool.short_desc) : tool.short_desc}</p>
               </div>
               <div>
                 {tool.pricing_summary && (
@@ -279,12 +279,12 @@ export default function ToolkitPage() {
         })}
       </div>
 
-      <GlobalModal isOpen={Boolean(guideTool)} onClose={() => setGuideTool(null)} title={`Integration Guide: ${guideTool?.name || ""}`}>
+      <GlobalModal isOpen={Boolean(guideTool)} onClose={() => setGuideTool(null)} title={isHe ? `מדריך הטמעה ואפיון: ${guideTool?.name || ""}` : `Integration Guide: ${guideTool?.name || ""}`}>
         {guideTool && (
-          <div dir="ltr" style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
+          <div dir={dir} style={{ textAlign: isHe ? "right" : "left", display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
             <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>{guideTool.full_explanation || guideTool.short_desc}</p>
             <div style={{ padding: 12, borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontWeight: 800, color: "#38bdf8", marginBottom: 6 }}>Execution Steps:</div>
+              <div style={{ fontWeight: 800, color: "#38bdf8", marginBottom: 6 }}>{isHe ? "שלבי ביצוע מעשיים:" : "Execution Steps:"}</div>
               <ul style={{ paddingLeft: 18, color: "#cbd5e1", lineHeight: 1.6 }}>
                 {guideTool.actions_list.map((act, i) => <li key={i}>{act}</li>)}
               </ul>
