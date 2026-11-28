@@ -25,7 +25,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState<"en" | "he">("en");
+  const [lang, setLang] = useState<"en" | "he">("he");
   const [quickVaultOpen, setQuickVaultOpen] = useState(false);
   const [vipBadge, setVipBadge] = useState<VipGrantRecord | null>(null);
   const [focusMode, setFocusMode] = useState<FocusMode>("full_os");
@@ -306,7 +306,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <GlobalModal isOpen={pocketOpen} onClose={() => setPocketOpen(false)} title={isHe ? "סנכרון נייד ↔ מחשב" : "Field Sync"}><PocketFieldStudio /></GlobalModal>
 
-      <GlobalModal isOpen={a11yOpen} onClose={() => setA11yOpen(false)} title={isHe ? "מרכז נגישות מתקדם" : "Fintech Accessibility Center"}>
+      <GlobalModal isOpen={a11yOpen} onClose={() => setA11yOpen(false)} title={isHe ? "מרכז נגישות מתקדם" : "Studio Accessibility Center"}>
         <div dir={isHe ? "rtl" : "ltr"} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
             {(["100%", "112%", "125%"] as const).map((sc) => (
