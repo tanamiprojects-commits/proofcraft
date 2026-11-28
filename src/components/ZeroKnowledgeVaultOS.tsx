@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import VaultSecurityAndBackupAcademy from "@/components/VaultSecurityAndBackupAcademy";
 import { Accessibility, CheckCircle2, ChevronDown, ChevronUp, Copy, Edit3, Eye, EyeOff, FileSpreadsheet, FolderLock, Globe, KeyRound, Lock, Plus, Printer, RefreshCw, RotateCcw, ShieldCheck, Unlock } from "lucide-react";
 import { useStudioLang } from "@/lib/i18n-engine";
 import { supabase } from "@/lib/supabase";
@@ -26,7 +27,7 @@ export interface VaultEntry {
 export default function ZeroKnowledgeVaultOS({ userId }: { userId?: string | null; standalone?: boolean }) {
   const { isHe: globalHe, toggleLang } = useStudioLang();
   const [localLang, setLocalLang] = useState<"he" | "en" | null>(null);
-  const isHe = localLang ? localLang === "he" : globalHe;
+  const isHe = localLang ? localLang === "he" : true;
   const subDomain = "https://" + "studio" + ".tanami360.com";
   const storageKey = `pc_zk_vault_v2_${userId || "universal"}`;
 
