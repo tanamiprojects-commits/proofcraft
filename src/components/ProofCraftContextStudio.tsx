@@ -86,7 +86,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
       const txt = await navigator.clipboard.readText();
       if (txt) {
         setRawInput(txt); setActivePart(0);
-        setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+        triggerTextHud(txt); setTimeout(() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 110);
       }
     } catch {}
   };
@@ -97,9 +97,9 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     const check = await validateAndInspectMediaFile(file, isHe);
     if (!check.ok) { setScanStep(0); setHudStatus("idle"); setPipNotice(check.error || "Blocked"); setTimeout(() => setPipNotice(""), 4000); return; }
     setScanStep(2); setHudPct(55); await new Promise((r) => setTimeout(r, 180)); setScanStep(3); setHudPct(85);
-    if (check.summaryText) { setRawInput(check.summaryText); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); return; }
+    if (check.summaryText) { setRawInput(check.summaryText); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 110); return; }
     const reader = new FileReader();
-    reader.onload = () => { setRawInput(String(reader.result || "")); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90); };
+    reader.onload = () => { setRawInput(String(reader.result || "")); setActivePart(0); setScanStep(4); setHudPct(100); setHudStatus("done"); setTimeout(() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 110); };
     reader.readAsText(file);
   };
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.item(0); if (f) await processIncomingFile(f); };
@@ -109,8 +109,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
     const reader = new FileReader();
     reader.onload = () => {
       setRawInput(String(reader.result || ""));
-      setActivePart(0);
-      setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+      setActivePart(0); setTimeout(() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 110);
     };
     reader.readAsText(file);
   };
@@ -203,8 +202,7 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
           </div>
         </div>
       )}
-      <LiveActionTelemetryHUD status={hudStatus} progressPct={hudPct} actionTitle={hudTitle} fileName={scanFileName} analysis={analysis} isHe={isHe} onCopyPacket={() => handleCopyPacket(activePart)} onDownloadPacket={() => handleDownloadPacket(activePart)} onFilterErrors={(m) => { setFilterMode(m); setActivePart(0); }} onInspectAssets={() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
-      <div ref={intelRef} style={{ scrollMarginTop: 84 }} /><ContextIntelligencePanel rawInput={rawInput} projectTitle={projectTitle} analysis={analysis} filterMode={filterMode} isHe={isHe} onChangeFilter={(m: SurgicalFilterMode) => { setFilterMode(m); setActivePart(0); }} onLoadSnapshot={(txt: string, ttl: string) => { setRawInput(txt); setProjectTitle(ttl); setActivePart(0); }} onNotify={(m: string) => { setPipNotice(m); setTimeout(() => setPipNotice(""), 3000); }} />
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
       <style>{`.fintech-scroll-hidden{scrollbar-width:none;-ms-overflow-style:none;resize:none}.fintech-scroll-hidden::-webkit-scrollbar{display:none;width:0;height:0}`}</style>
         <div style={{ padding: 18, borderRadius: 16, background: "#11131a", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -283,12 +281,16 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
               </div>
             )}
           </div>
-          <textarea rows={13} value={rawInput} onChange={(e) => { const v = e.target.value; setRawInput(v); setActivePart(0); triggerTextHud(v); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, minHeight: 270 }} />
+          <textarea rows={7} value={rawInput} onPaste={() => setTimeout(() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120)} onChange={(e) => { const v = e.target.value; setRawInput(v); setActivePart(0); triggerTextHud(v); }} className="input-dark fintech-scroll-hidden" placeholder={isHe ? "הדבק כאן פלט ארוך מ-PowerShell, קוד מקור שלם, שגיאת בנייה או ייבא קובץ של 15,000 שורות..." : "Paste up to 15,000+ lines of PowerShell output, source code, or import a file..."} style={{ fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.55, height: 155, minHeight: 155, maxHeight: 175, overflowY: "auto" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, padding: "10px 14px", borderRadius: 12, background: "#0a0b0e", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
             <span style={{ color: "#94a3b8" }}>{isHe ? `שורות: ${lineCount.toLocaleString()} | תווים: ${result.totalChars.toLocaleString()} | טוקנים: ~${result.estimatedTokens.toLocaleString()}` : `Lines: ${lineCount.toLocaleString()} | Chars: ${result.totalChars.toLocaleString()} | Tokens: ~${result.estimatedTokens.toLocaleString()}`}</span>
             <strong style={{ color: "#34d399" }}>{result.packets.length > 1 ? (isHe ? `פוצל ל-${result.packets.length} חלקים` : `Split into ${result.packets.length} parts`) : (isHe ? "חבילה 1 שלמה ✓" : "1 Complete Packet ✓")}</strong>
           </div>
           {result.maskedSecretsCount > 0 && <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fde68a", fontSize: 12 }}><ShieldAlert size={15} /> <span>{isHe ? `הוסתרו אוטומטית ${result.maskedSecretsCount} מפתחות רגישים.` : `Masked ${result.maskedSecretsCount} secret(s).`}</span></div>}
+        </div>
+                <div ref={intelRef} style={{ scrollMarginTop: 84, display: "flex", flexDirection: "column", gap: 12 }}>
+          <LiveActionTelemetryHUD status={hudStatus} progressPct={hudPct} actionTitle={hudTitle} fileName={scanFileName} analysis={analysis} isHe={isHe} onCopyPacket={() => handleCopyPacket(activePart)} onDownloadPacket={() => handleDownloadPacket(activePart)} onFilterErrors={(m) => { setFilterMode(m); setActivePart(0); }} onInspectAssets={() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+          <ContextIntelligencePanel rawInput={rawInput} projectTitle={projectTitle} analysis={analysis} filterMode={filterMode} isHe={isHe} onChangeFilter={(m: SurgicalFilterMode) => { setFilterMode(m); setActivePart(0); }} onLoadSnapshot={(txt: string, ttl: string) => { setRawInput(txt); setProjectTitle(ttl); setActivePart(0); }} onNotify={(m: string) => { setPipNotice(m); setTimeout(() => setPipNotice(""), 3000); }} />
         </div>
         <div ref={outputRef} style={{ padding: 18, borderRadius: 16, background: "#11131a", border: "1px solid rgba(56,189,248,0.28)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 14, scrollMarginTop: 84 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -303,6 +305,33 @@ export default function ProofCraftContextStudio({ embeddedInMethod = false, defa
                     {isHe ? `חלק ${p.partIndex}/${p.totalParts}` : `Part ${p.partIndex}/${p.totalParts}`}
                   </button>
                 ))}
+              </div>
+            )}
+                        {rawInput.trim() && (
+              <div style={{ padding: 12, borderRadius: 12, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.32)", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, fontSize: 12 }}>
+                  <strong style={{ color: "#38bdf8" }}>{isHe ? "תוצאות ניתוח מהיר ופעולות מומלצות:" : "Live Scan Findings & Smart Actions:"}</strong>
+                  <span style={{ color: "#cbd5e1" }}>
+                    {isHe
+                      ? `שגיאות: ${analysis.errorLines.length} · מפתחות שהוסתרו: ${result.maskedSecretsCount} · שורות מסוננות: ${analysis.filteredLineCount.toLocaleString()}`
+                      : `Errors: ${analysis.errorLines.length} · Masked Secrets: ${result.maskedSecretsCount} · Filtered Lines: ${analysis.filteredLineCount.toLocaleString()}`}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {analysis.errorLines.length > 0 && (
+                    <button type="button" onClick={() => { setFilterMode("errors_only"); setActivePart(0); setTimeout(() => handleCopyPacket(0), 60); }} className="btn-primary" style={{ width: "auto", height: 30, padding: "0 10px", fontSize: 11.5, background: "#ef4444" }}>
+                      {isHe ? `סנן ${analysis.errorLines.length} שגיאות והעתק לתיקון` : `Isolate ${analysis.errorLines.length} Errors & Copy`}
+                    </button>
+                  )}
+                  {result.maskedSecretsCount > 0 && (
+                    <a href="/vault" className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#34d399", borderColor: "rgba(52,211,153,0.4)", textDecoration: "none" }}>
+                      {isHe ? "שמור מפתחות בכספת (/vault)" : "Save Secrets in Vault"}
+                    </a>
+                  )}
+                  <button type="button" onClick={() => intelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} className="btn-ghost" style={{ height: 30, padding: "0 10px", fontSize: 11.5, color: "#a5b4fc" }}>
+                    {isHe ? "צפה בדוח המודיעין ויומן המעקב ↑" : "Inspect Full Intelligence & Log ↑"}
+                  </button>
+                </div>
               </div>
             )}
             <pre className="fintech-scroll-hidden" dir={isHe ? "rtl" : "ltr"} style={{ height: 290, overflow: "auto", padding: 14, borderRadius: 12, background: "#05070a", border: "1px solid rgba(56,189,248,0.25)", color: "#e2e8f0", fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>{currentPacket && currentPacket.content.length > 18000 ? `${currentPacket.content.slice(0, 11000)}\n\n... [תצוגה מקדימה מהירה — הקובץ המלא כולל את כל ${analysis.filteredLineCount.toLocaleString()} השורות המסוננות יירד בשלמותו בלחיצה על Download (.md)] ...\n\n${currentPacket.content.slice(-3500)}` : currentPacket?.content}</pre>
