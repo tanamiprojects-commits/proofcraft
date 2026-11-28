@@ -129,7 +129,7 @@ export default function ExpandedMarketingFeedPage() {
             <Flame size={13} /> {t("ORGANIC MARKETING & PROOF-OF-EXECUTION WALL", "קיר השיווק האורגני והוכחות הביצוע")}
           </span>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Link href="/affiliate" className="btn-ghost" style={{ height: 36, fontSize: 12, color: "#38bdf8" }}>{t("Manage Smart Links", "ניהול קישורים חכמים")}</Link>
+            <button type="button" onClick={() => window.open("/context-studio?floating=1", "pcContextFloat", "width=460,height=760")} className="btn-ghost" style={{ height: 36, fontSize: 12, color: "#a5b4fc", borderColor: "rgba(129,140,248,0.35)" }}><Sparkles size={13} /> {t("Floating Context Studio", "סטודיו הקשר צף")}</button><Link href="/affiliate" className="btn-ghost" style={{ height: 36, fontSize: 12, color: "#38bdf8" }}>{t("Manage Smart Links", "ניהול קישורים חכמים")}</Link>
             <button type="button" onClick={() => setComposerOpen(!composerOpen)} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 16px", fontSize: 12 }}>
               <Plus size={14} /> {t("Publish Deal or Live Build", "פרסם דיל או מערכת חיה")}
             </button>
@@ -157,7 +157,7 @@ export default function ExpandedMarketingFeedPage() {
         </div>
       </div>
 
-      {composerOpen && (
+      <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 12, background: "rgba(15,23,42,0.75)", border: "1px solid rgba(251,191,36,0.25)", fontSize: 12, color: "#cbd5e1", display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}><strong style={{ color: "#fbbf24" }}>{t("How Boost Credits Work:", "איך צוברים נקודות חשיפה:")}</strong><span>{t("• +5 Boost on new HTTPS post", "• +5 נק׳ על פרסום חדש מאומת ב-HTTPS")}</span><span>{t("• +2 Boost per community verification", "• +2 נק׳ על כל אימות מחבר קהילה")}</span><span>{t("• Top-scored posts pin to the top", "• הפרסומים המובילים ננעצים בראש הקיר")}</span></div>{composerOpen && (
         <form onSubmit={handlePublish} className="card-surface" style={{ padding: 18, marginBottom: 18, display: "flex", flexDirection: "column", gap: 10, border: "1px solid rgba(56,189,248,0.4)" }}>
           <div style={{ fontSize: 14, fontWeight: 900, color: "#f8fafc" }}>{t("Publish to Organic Marketing Wall", "פרסום חדש לקיר השיווק והקהילה")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
