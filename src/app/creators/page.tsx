@@ -16,12 +16,33 @@ interface PublicCreator {
   peer_karma: number | null;
 }
 
+const SEED_CREATORS: PublicCreator[] = [
+  {
+    id: "live",
+    full_name: "ProofCraft Studio OS",
+    headline: "ארכיטקט מערכות AI מאומתות, כספת מוצפנת AES-256 וסטודיו חבילות הקשר",
+    purchased_track_level: 4,
+    admin_verified: true,
+    is_affiliate_pro: true,
+    peer_karma: 120,
+  },
+  {
+    id: "tanami360",
+    full_name: "Tanami360 Verified Deals",
+    headline: "חנות דילים מאומתים, השוואת רשתות שותפים 360° ומחולל קמפיינים חכם",
+    purchased_track_level: 3,
+    admin_verified: true,
+    is_affiliate_pro: true,
+    peer_karma: 85,
+  },
+];
+
 export default function CreatorsDirectoryPage() {
   const { isHe, dir, t } = useStudioLang();
-  const [creators, setCreators] = useState<PublicCreator[]>([]);
+  const [creators, setCreators] = useState<PublicCreator[]>(SEED_CREATORS);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "verified" | "pro">("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => { const loadCreators = () =>
     supabase
@@ -32,7 +53,7 @@ export default function CreatorsDirectoryPage() {
       .order("purchased_track_level", { ascending: false })
       .limit(48)
       .then(({ data }) => {
-        setCreators((data as PublicCreator[]) || []);
+        if (data && data.length > 0) setCreators(data as PublicCreator[]);
         setLoading(false); }); loadCreators(); window.addEventListener("proofcraft:sync-now", loadCreators); return () => window.removeEventListener("proofcraft:sync-now", loadCreators);
   }, []);
 
@@ -51,7 +72,7 @@ export default function CreatorsDirectoryPage() {
           <span className="badge-pill" style={{ background: "rgba(52,211,153,0.14)", color: "#34d399", fontSize: 11 }}>
             <Sparkles size={13} /> {t("VERIFIED CREATORS & STOREFRONTS DIRECTORY", "\u05D0\u05D9\u05E0\u05D3\u05E7\u05E1 \u05D9\u05D5\u05E6\u05E8\u05D9\u05DD \u05D5\u05D7\u05E0\u05D5\u05D9\u05D5\u05EA \u05DE\u05D0\u05D5\u05DE\u05EA\u05D5\u05EA")}
           </span>
-          <ViralShareBar title="ProofCraft Verified AI Builders & Deal Curators Directory" isHe={isHe} compact />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}><Link href="/workspace" className="btn-primary" style={{ width: "auto", height: 34, padding: "0 14px", fontSize: 12 }}>{t("Create Verified Profile (Free)", "הקם פרופיל יוצר מאומת (חינם)")}</Link><ViralShareBar title="ProofCraft Verified AI Builders & Deal Curators Directory" isHe={isHe} compact /></div>
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", marginBottom: 6 }}>
           {t("Discover Verified AI Builders & Deal Curators", "\u05D2\u05DC\u05D4 \u05D1\u05D5\u05E0\u05D9 AI \u05DE\u05D0\u05D5\u05DE\u05EA\u05D9\u05DD \u05D5\u05D7\u05E0\u05D5\u05D9\u05D5\u05EA \u05D3\u05D9\u05DC\u05D9\u05DD")}
