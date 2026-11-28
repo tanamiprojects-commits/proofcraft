@@ -206,7 +206,7 @@ export default function AffiliateIncomeHubPage() {
         <p style={{ fontSize: 13.5, color: "#94a3b8", lineHeight: 1.6, marginBottom: 16 }}>{t("Follow the 4 structured stations below: choose a network, verify your ID, create tracked links, and launch ready-made campaigns.", "עבוד לפי 4 התחנות המסודרות למטה: בחר רשת שותפים, אמת מזהה, צור קישורים חכמים והפץ קמפיינים מוכנים בלחיצה.")}</p>
         <div ref={workspaceRef} style={{ scrollMarginTop: 84, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
           {[
-            { id: 1 as const, icon: Compass, step: "01", label: t("1. Choose Network", "1. בחירת רשת והשוואה"), sub: t(`${networks.length} verified networks`, `${networks.length} רשתות מאומתות`) },
+            { id: 1 as const, icon: Compass, step: "01", label: t("1. Choose Network", "1. בחירת רשת והשוואה"), sub: loading ? t("5+ core networks ready", "5+ רשתות ליבה מאומתות") : t(`${networks.length} verified networks`, `${networks.length} רשתות מאומתות`) },
             { id: 2 as const, icon: ShieldCheck, step: "02", label: t("2. Guided Signup & ID", "2. הרשמה ואימות מזהה"), sub: t(`${accounts.length} active accounts`, `${accounts.length} חשבונות מאומתים`) },
             { id: 3 as const, icon: Link2, step: "03", label: t("3. Smart Link Vault", "3. יצירת קישורים חכמים"), sub: t(`${links.length} links · ${totalClicks} clicks`, `${links.length} קישורים · ${totalClicks} קליקים`) },
             { id: 4 as const, icon: Megaphone, step: "04", label: t("4. Campaign & Ad Studio", "4. אשף הפצה וקמפיינים"), sub: t("Ads, AI Bridge & Payouts", "מודעות מוכנות וכלי AI") },
