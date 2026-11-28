@@ -22,16 +22,16 @@ const THEMES: Record<
   }
 > = {
   home: {
-    badge: "GLOBAL AI PRODUCT OS",
+    badge: "PROOF-CRAFT STUDIO OS",
     title: "v1.0 → v4.0 Production",
     subtitle: "Verified Engineering & Live Deployment",
     primaryGlow: "rgba(16, 185, 129, 0.28)",
     secondaryGlow: "rgba(2, 132, 199, 0.26)",
     accentHex: "#34d399",
-    stat1Label: "SECURITY",
+    stat1Label: "אבטחה והצפנה",
     stat1Val: "RLS + HMAC",
-    stat2Label: "PORTFOLIO",
-    stat2Val: "4 LIVE TIERS",
+    stat2Label: "תיק עבודות",
+    stat2Val: "4 מסלולי פיתוח",
   },
   method: {
     badge: "PROMPT & TERMINAL VAULT",
