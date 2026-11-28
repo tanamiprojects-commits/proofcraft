@@ -12,6 +12,7 @@ import { getActiveUserProfile, syncProfileToCloud } from "@/lib/cloud-store";
 import { BuilderProfile, DEFAULT_PROFILE } from "@/lib/proofcraft-store";
 import GlobalModal from "@/components/GlobalModal";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
+import { ActiveBuilderContext, readActiveBuilderContext } from "@/lib/builder-context-bridge";
 
 const DOMAIN_CONTEXTS = [
   { id: "landing", label: "Conversion Landing Engine", labelHe: "מנוע דף נחיתה להמרות", context: "for a high-converting global web landing engine with instant lead capture" },
@@ -36,6 +37,7 @@ export default function MethodPage() {
   const [outputDraft, setOutputDraft] = useState("");
   const [chainOpen, setChainOpen] = useState(false);
   const [contextDrawerOpen, setContextDrawerOpen] = useState(false);
+  const [studioCtx, setStudioCtx] = useState<ActiveBuilderContext | null>(null);
   const [toast, setToast] = useState("");
   const station2Ref = useRef<HTMLDivElement | null>(null);
 
@@ -47,6 +49,7 @@ export default function MethodPage() {
   const syncUserVault = useCallback(async () => { const res = await getActiveUserProfile(); setUserId(res.userId); setProfile(res.profile); }, []);
 
   useEffect(() => {
+    const bc = readActiveBuilderContext(); if (bc) { setStudioCtx(bc); const dIdx = DOMAIN_CONTEXTS.findIndex((d) => d.id === bc.domainPresetId); if (dIdx >= 0) setDomainIdx(dIdx); }
     syncUserVault();
     const onSync = () => syncUserVault();
     window.addEventListener("proofcraft:sync-now", onSync);
@@ -145,6 +148,7 @@ export default function MethodPage() {
             : "Select your project architecture, copy ready-to-paste prompts in one click, and lock verified outputs with zero secret leaks."}
         </p>
 
+{studioCtx && (<div style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.32)", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12, color: "#e2e8f0" }}><span><strong style={{ color: "#34d399" }}>{isHe ? "הקשר פעיל מסטודיו הבנייה:" : "Active Context from Workspace:"}</strong> {studioCtx.projectTitle} ({studioCtx.nicheLabel})</span><Link href="/workspace" style={{ color: "#38bdf8", fontWeight: 700 }}>{isHe ? "חזרה לסטודיו הבנייה ←" : "Back to Workspace →"}</Link></div>)}
         <div style={{ fontSize: 11.5, fontWeight: 800, color: "#94a3b8", marginBottom: 8 }}>
           {isHe ? "הקשר הפרויקט (מוזרק אוטומטית לשלבים 1–8):" : "TARGET PROJECT CONTEXT (AUTO-INJECTED INTO STAGES 1–8):"}
         </div>
