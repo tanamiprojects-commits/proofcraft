@@ -55,7 +55,36 @@ export default function HomePage() {
     <div dir={dir} style={{ textAlign: isHe ? "right" : "left" }}>
       {/* Visual Fintech OS Banner (Matches Certified Credential Design System) */}
       <div style={{ marginBottom: 18 }}>
-        <StudioVisualArtwork variant="home" />
+              <div className="card-hero" style={{ padding: 22, marginBottom: 16, borderRadius: 20, border: "1px solid rgba(56,189,248,0.35)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+          <span className="badge-pill" style={{ background: "rgba(56,189,248,0.16)", color: "#38bdf8", fontSize: 11, fontWeight: 800 }}>
+            <Sparkles size={12} /> {t("PROOF-OF-EXECUTION AI & AFFILIATE OS", "מערכת ההפעלה להנדסת AI מאומתת והכנסה משותפים")}
+          </span>
+          <span className="badge-pill" style={{ background: "rgba(52,211,153,0.16)", color: "#34d399", fontSize: 11, fontWeight: 800 }}>
+            <ShieldCheck size={12} /> {t("Zero-Knowledge AES-256 Vault", "כספת מוצפנת AES-256 בדפדפן")}
+          </span>
+        </div>
+        <h1 style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", lineHeight: 1.3, marginBottom: 8 }}>
+          {t("Build Verified AI Products & Smart Affiliate Income — Step by Step", "בנה מערכות AI מאומתות והכנסה חכמה משותפים — צעד אחר צעד")}
+        </h1>
+        <p style={{ fontSize: 13.5, color: "#cbd5e1", lineHeight: 1.65, marginBottom: 14 }}>
+          {t("Start 100% free with zero coding required: launch tracked affiliate campaigns in minutes or ship verified AI systems into a live public portfolio.", "התחל ב-100% בחינם וללא צורך בניסיון קודם: הקם קמפיינים חכמים לשותפים תוך דקות, או בנה מערכות AI אמיתיות לתיק עבודות ציבורי מאומת.")}
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 8 }}>
+          {[
+            { top: t("100% Free Start", "התחלה ב-100% חינם"), sub: t("Both tracks open immediately", "שני המסלולים פתוחים מיד") },
+            { top: t("Zero Code Needed", "ללא צורך בידע בתכנות"), sub: t("Guided step-by-step stations", "תחנות עבודה מודרכות שלב-אחר-שלב") },
+            { top: t("Client-Side Vault", "הצפנה מקומית בדפדפן"), sub: t("AES-256 keys & context protection", "אבטחת מפתחות והקשר מלאה") },
+            { top: t("Verified Proof", "אימות ביצועים אמיתי"), sub: t("Live links, GitHub & Vercel checks", "בדיקות חיות לקישורים ופרויקטים") },
+          ].map((item, idx) => (
+            <div key={idx} style={{ padding: "10px 12px", borderRadius: 12, background: "rgba(10,11,14,0.75)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 900, color: "#34d399" }}>{item.top}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <StudioVisualArtwork variant="home" />
       </div>
 
       {userId && (
@@ -200,6 +229,11 @@ export default function HomePage() {
           <ShieldCheck size={18} color="#fbbf24" style={{ marginBottom: 6 }} />
           <div style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", marginBottom: 3 }}>{t("Zero-Knowledge Context & Crypto Vault", "כספת סודות, קריפטו והקשר מוצפנת")}</div>
           <p style={{ fontSize: 12, color: "#94a3b8" }}>{t("Client-side AES-256 vault for passwords, API keys & 12/24-word crypto seeds with full context.", "שמירה מוצפנת בדפדפן (AES-256) לסיסמאות, מפתחות פרויקטים ו-12/24 מילים של קריפטו עם הקשר מלא.")}</p>
+        </Link>
+                <Link href="/context-studio" className="card-surface" style={{ padding: 16, display: "block" }}>
+          <Sparkles size={18} color="#a5b4fc" style={{ marginBottom: 6 }} />
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", marginBottom: 3 }}>{t("Smart Context Packet & OCR Studio", "סטודיו חבילות הקשר ופענוח OCR")}</div>
+          <p style={{ fontSize: 12, color: "#94a3b8" }}>{t("Package 15,000+ lines, screenshots & error logs locally with secret masking for AI chats.", "ארוז קוד, תמונות מסך ולוגי שגיאות מקומית בדפדפן עם הסתרת מפתחות עבור צ׳אט AI.")}</p>
         </Link>
         <Link href="/method" className="card-surface" style={{ padding: 16, display: "block" }}>
           <BookOpen size={18} color="#38bdf8" style={{ marginBottom: 6 }} />
