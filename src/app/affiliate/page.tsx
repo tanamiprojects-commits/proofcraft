@@ -10,7 +10,7 @@ import { useStudioLang } from "@/lib/i18n-engine";
 import { sanitizePlainText } from "@/lib/security-utils";
 import {
   AffClick, AffKarmaEntry, AffLink, AffNetwork, AffPromptItem, AffUserAccount,
-  buildMultiChannelAdCopy, fetchAffiliateHubState, generateSmartSlug
+  buildMultiChannelAdCopy, CORE_AFF_NETWORKS, fetchAffiliateHubState, generateSmartSlug
 } from "@/lib/affiliate-store";
 import Link360Drawer from "@/components/affiliate/Link360Drawer";
 import CustomNetworkModal from "@/components/affiliate/CustomNetworkModal";
@@ -42,7 +42,7 @@ export default function AffiliateIncomeHubPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [activeStage, setActiveStage] = useState<1 | 2 | 3 | 4>(1);
-  const [networks, setNetworks] = useState<AffNetwork[]>([]);
+  const [networks, setNetworks] = useState<AffNetwork[]>(CORE_AFF_NETWORKS);
   const [prompts, setPrompts] = useState<AffPromptItem[]>([]);
   const [accounts, setAccounts] = useState<AffUserAccount[]>([]);
   const [links, setLinks] = useState<AffLink[]>([]);
@@ -90,7 +90,7 @@ export default function AffiliateIncomeHubPage() {
 
   const reloadHub = async (uid: string | null) => {
     const st = await fetchAffiliateHubState(uid);
-    setNetworks(st.networks); setPrompts(st.prompts); setAccounts(st.accounts);
+    if (st.networks && st.networks.length > 0) setNetworks(st.networks); setPrompts(st.prompts); setAccounts(st.accounts);
     setLinks(st.links); setClicks(st.clicks); setKarma(st.karma);
     setIsPro(st.isAffiliatePro); setBoostCredits(st.boostCredits); setReferralCode(st.referralCode);
     setLoading(false);
