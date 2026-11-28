@@ -1,7 +1,11 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Copy, Sparkles, PlusCircle, Package, ShieldAlert, BookMarked, Link2, GraduationCap, Target, Compass, RefreshCw } from "lucide-react";
+import {
+  CheckCircle2, Copy, Sparkles, PlusCircle, Package, ShieldAlert, BookMarked,
+  Link2, GraduationCap, Target, Compass, RefreshCw, Layers, ChevronDown, ChevronUp
+} from "lucide-react";
+import ProofCraftContextStudio from "@/components/ProofCraftContextStudio";
 import { useStudioLang } from "@/lib/i18n-engine";
 import { PROMPT_VAULT_CATALOG, VaultPromptItem } from "@/lib/prompt-vault-data";
 import { getActiveUserProfile, syncProfileToCloud } from "@/lib/cloud-store";
@@ -31,9 +35,15 @@ export default function MethodPage() {
   const [outputModalOpen, setOutputModalOpen] = useState(false);
   const [outputDraft, setOutputDraft] = useState("");
   const [chainOpen, setChainOpen] = useState(false);
+  const [contextDrawerOpen, setContextDrawerOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const station2Ref = useRef<HTMLDivElement | null>(null);
 
   const showMsg = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3200); };
+  const jumpToStage = (idx: number) => {
+    setActiveIdx(idx);
+    setTimeout(() => station2Ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 70);
+  };
   const syncUserVault = useCallback(async () => { const res = await getActiveUserProfile(); setUserId(res.userId); setProfile(res.profile); }, []);
 
   useEffect(() => {
@@ -50,6 +60,7 @@ export default function MethodPage() {
     }
     return () => window.removeEventListener("proofcraft:sync-now", onSync);
   }, [syncUserVault]);
+
   const persistVaultState = (nextCustom: VaultPromptItem[], nextOutputs: Record<string, string>) => {
     localStorage.setItem("pc_prompt_vault_v1", JSON.stringify({ customPrompts: nextCustom, savedOutputs: nextOutputs }));
   };
@@ -59,6 +70,7 @@ export default function MethodPage() {
   const domain = DOMAIN_CONTEXTS.at(domainIdx) || DOMAIN_CONTEXTS.at(0)!;
   const stepKey = `vault-step-${currentItem.id}`;
   const isDone = profile.completedStepIds.includes(stepKey);
+  const completedCount = allPrompts.filter((p) => profile.completedStepIds.includes(`vault-step-${p.id}`)).length;
   const needsDomainContext = currentItem.stageNumber <= 8;
   const personalizedPrompt = needsDomainContext ? `${currentItem.powershellReadyPrompt} (${domain.context})` : currentItem.powershellReadyPrompt;
 
@@ -106,68 +118,157 @@ export default function MethodPage() {
       <StudioVisualArtwork variant="method" />
       {toast && <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 90, background: "#0f172a", border: "1px solid rgba(52,211,153,0.45)", color: "#34d399", padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>{toast}</div>}
 
-      <div className="card-hero" style={{ padding: 22, marginBottom: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-          <div>
-            <span className="badge-pill" style={{ background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)", fontSize: 11, marginBottom: 6 }}>
-              <Sparkles size={12} /> {isHe ? "כספת הפרומפטים המקצועית (11 שלבים + העברת הקשר מלאה)" : "11-STAGE PRODUCTION PROMPT VAULT & FULL HANDOVER"}
+      {/* STATION 1: Overview, Progress & Target Architecture */}
+      <section className="card-hero" style={{ padding: 20, marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span className="badge-pill" style={{ background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)", fontSize: 11 }}>
+              <Sparkles size={12} /> {isHe ? `תחנה 1 מתוך 3 · כספת הפרומפטים (${completedCount}/${allPrompts.length} הושלמו)` : `STATION 1 OF 3 · PROMPT VAULT (${completedCount}/${allPrompts.length} DONE)`}
             </span>
-            <h1 style={{ fontSize: 21, fontWeight: 900, color: "#f8fafc" }}>{isHe ? "מתודולוגיית ProofCraft וכספת הפרומפטים החכמה" : "ProofCraft Engineering Method & Smart Prompt Vault"}</h1>
-            <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 2 }}>{isHe ? "למד איך להגיש פרומפטים מדויקים לכל צ'אט חכם, לסכם פלטפורמה שלמה בלי לאבד הקשר ולשחזר פקודות שנחתכו" : "Master context-rich prompting, full-platform handoffs, truncated command recovery, and zero-secret execution."}</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => setActiveIdx(10)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12, borderColor: "rgba(52,211,153,0.4)", color: "#34d399" }}><RefreshCw size={13} /> {isHe ? "סיכום פלטפורמה מלא (Master)" : "Full Platform Handover"}</button>
-            <button type="button" onClick={() => setActiveIdx(9)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12, borderColor: "rgba(251,191,36,0.4)", color: "#fbbf24" }}><ShieldAlert size={13} /> {isHe ? "שחזור פקודה שנחתכה" : "Truncated Recovery Prompt"}</button>
-            <button type="button" onClick={() => setAddOpen(true)} className="btn-ghost" style={{ minHeight: 38, fontSize: 12 }}><PlusCircle size={14} /> {isHe ? "הוסף פרומפט אישי" : "Add Custom Prompt"}</button>
-            <button type="button" onClick={() => setChainOpen(true)} className="btn-primary" style={{ width: "auto", minHeight: 38, fontSize: 12 }}><Package size={14} /> {isHe ? `בונה שרשרת (${selectedChainIds.length})` : `Chain Builder (${selectedChainIds.length})`}</button>
+            <button type="button" onClick={() => jumpToStage(10)} className="btn-ghost" style={{ height: 34, fontSize: 12, borderColor: "rgba(52,211,153,0.4)", color: "#34d399" }}>
+              <RefreshCw size={13} /> {isHe ? "סיכום פלטפורמה מלא (Master)" : "Full Platform Handover"}
+            </button>
+            <button type="button" onClick={() => jumpToStage(9)} className="btn-ghost" style={{ height: 34, fontSize: 12, borderColor: "rgba(251,191,36,0.4)", color: "#fbbf24" }}>
+              <ShieldAlert size={13} /> {isHe ? "שחזור פקודה שנחתכה" : "Truncated Recovery"}
+            </button>
           </div>
         </div>
-        <div style={{ padding: 12, borderRadius: 12, background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.3)", fontSize: 12, color: "#fca5a5", display: "flex", alignItems: "flex-start", gap: 8 }}>
-          <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-          <div><strong>{isHe ? "פרוטוקול אפס-סודות בטרמינל:" : "Zero-Secret Terminal Protocol:"}</strong> {isHe ? "לעולם אל תדביק מפתחות SERVICE_ROLE_KEY, סיסמאות מסד נתונים או סודות Stripe לתוך פרומפטים או קובצי לקוח. שמור סודות אך ורק ב-.env.local." : "Never paste SERVICE_ROLE_KEY, database passwords, or Stripe secrets into AI prompts or client files. Store secrets strictly in .env.local."}</div>
-        </div>
-      </div>
 
-      <div className="card-surface" style={{ padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 800, color: "#94a3b8", marginBottom: 8 }}>{isHe ? "1. בחר הקשר ארכיטקטוני לפרויקט (לשלבי הבנייה 1–8):" : "1. SELECT TARGET ARCHITECTURE CONTEXT (FOR BUILD STAGES 1–8):"}</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 16 }}>
-          {DOMAIN_CONTEXTS.map((d, idx) => (<button key={d.id} type="button" onClick={() => setDomainIdx(idx)} style={{ minHeight: 40, padding: "9px 12px", borderRadius: 10, textAlign: isHe ? "right" : "left", cursor: "pointer", fontSize: 12, fontWeight: 700, background: domainIdx === idx ? "rgba(56, 189, 248, 0.16)" : "#0a0b0e", color: domainIdx === idx ? "#38bdf8" : "#cbd5e1", border: `1px solid ${domainIdx === idx ? "#38bdf8" : "rgba(255,255,255,0.08)"}` }}>{isHe ? d.labelHe : d.label}</button>))}
+        <h1 style={{ fontSize: 21, fontWeight: 900, color: "#f8fafc", marginBottom: 4 }}>
+          {isHe ? "מתודולוגיית ProofCraft וכספת הפרומפטים החכמה" : "ProofCraft Engineering Method & Smart Prompt Vault"}
+        </h1>
+        <p style={{ fontSize: 12.5, color: "#cbd5e1", lineHeight: 1.55, marginBottom: 14 }}>
+          {isHe
+            ? "בחר את סוג הפרויקט שלך, קבל פרומפט מותאם אישית להעתקה בלחיצה אחת, ושמור תוצרים מאומתים ללא דליפת מפתחות."
+            : "Select your project architecture, copy ready-to-paste prompts in one click, and lock verified outputs with zero secret leaks."}
+        </p>
+
+        <div style={{ fontSize: 11.5, fontWeight: 800, color: "#94a3b8", marginBottom: 8 }}>
+          {isHe ? "הקשר הפרויקט (מוזרק אוטומטית לשלבים 1–8):" : "TARGET PROJECT CONTEXT (AUTO-INJECTED INTO STAGES 1–8):"}
         </div>
-        <div style={{ fontSize: 11.5, fontWeight: 800, color: "#94a3b8", marginBottom: 8 }}>{isHe ? "2. בחר שלב או פרומפט עבודה מתוך הכספת:" : "2. SELECT WORKFLOW STAGE OR CONTINUITY PROMPT:"}</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8 }}>
+          {DOMAIN_CONTEXTS.map((d, idx) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => setDomainIdx(idx)}
+              style={{
+                minHeight: 40, padding: "9px 12px", borderRadius: 10, textAlign: isHe ? "right" : "left", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                background: domainIdx === idx ? "rgba(56, 189, 248, 0.16)" : "#0a0b0e",
+                color: domainIdx === idx ? "#38bdf8" : "#cbd5e1",
+                border: `1px solid ${domainIdx === idx ? "#38bdf8" : "rgba(255,255,255,0.08)"}`
+              }}
+            >
+              {isHe ? d.labelHe : d.label}
+            </button>
+          ))}
+        </div>
+      </section>
+      {/* STATION 2: Active Prompt Stage & Copy Studio */}
+      <section ref={station2Ref} className="card-surface" style={{ padding: 18, marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+          <span className="badge-pill" style={{ background: "rgba(52, 211, 153, 0.16)", color: "#34d399", fontSize: 11 }}>
+            {isHe ? "תחנה 2 מתוך 3 · בחירת שלב והעתקת פרומפט" : "STATION 2 OF 3 · STAGE SELECTOR & PROMPT"}
+          </span>
+          <span style={{ fontSize: 11.5, color: "#fca5a5", fontWeight: 700 }}>
+            {isHe ? "🔒 פרוטוקול אפס-סודות: לעולם אל תדביק מפתחות API" : "🔒 Zero-Secret Rule: Never paste API keys"}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
           {allPrompts.map((item, idx) => {
             const done = profile.completedStepIds.includes(`vault-step-${item.id}`);
             const inChain = selectedChainIds.includes(item.id);
             const label = isHe ? item.titleHe : item.title;
-            return (<button key={item.id} type="button" onClick={() => setActiveIdx(idx)} style={{ minHeight: 36, padding: "6px 12px", borderRadius: 999, fontSize: 11.5, fontWeight: 700, cursor: "pointer", background: activeIdx === idx ? "#0284c7" : "#0a0b0e", color: activeIdx === idx ? "#fff" : done ? "#34d399" : "#cbd5e1", border: `1px solid ${activeIdx === idx ? "#0284c7" : inChain ? "#fbbf24" : "rgba(255,255,255,0.1)"}` }}>{done ? "✓ " : ""}{idx + 1}. {label.slice(0, 28)}</button>);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActiveIdx(idx)}
+                style={{
+                  minHeight: 34, padding: "5px 11px", borderRadius: 999, fontSize: 11.5, fontWeight: 700, cursor: "pointer",
+                  background: activeIdx === idx ? "#0284c7" : "#0a0b0e",
+                  color: activeIdx === idx ? "#fff" : done ? "#34d399" : "#cbd5e1",
+                  border: `1px solid ${activeIdx === idx ? "#0284c7" : inChain ? "#fbbf24" : "rgba(255,255,255,0.1)"}`
+                }}
+              >
+                {done ? "✓ " : ""}{idx + 1}. {label.slice(0, 26)}
+              </button>
+            );
           })}
         </div>
-        <div style={{ padding: 18, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.22)" }}>
+
+        <div style={{ padding: 16, borderRadius: 14, background: "#0a0b0e", border: "1px solid rgba(56,189,248,0.22)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
             <span className="badge-pill" style={{ background: "rgba(56, 189, 248, 0.14)", color: "#38bdf8", fontSize: 11 }}>{isHe ? currentItem.categoryHe : currentItem.category}</span>
-            <button type="button" onClick={() => toggleChainItem(currentItem.id)} className="btn-ghost" style={{ minHeight: 34, fontSize: 11, color: selectedChainIds.includes(currentItem.id) ? "#fbbf24" : "#cbd5e1" }}>{selectedChainIds.includes(currentItem.id) ? (isHe ? "✓ כלול בחבילה" : "✓ Included in Bundle") : (isHe ? "+ הוסף לחבילת שרשרת" : "+ Add to Chain Bundle")}</button>
+            <button type="button" onClick={() => toggleChainItem(currentItem.id)} className="btn-ghost" style={{ height: 32, fontSize: 11, color: selectedChainIds.includes(currentItem.id) ? "#fbbf24" : "#cbd5e1" }}>
+              {selectedChainIds.includes(currentItem.id) ? (isHe ? "✓ כלול בחבילת שרשרת" : "✓ In Chain Bundle") : (isHe ? "+ הוסף לחבילת שרשרת" : "+ Add to Chain")}
+            </button>
           </div>
           <h2 style={{ fontSize: 18, fontWeight: 900, color: "#f8fafc", marginBottom: 12 }}>{isHe ? currentItem.titleHe : currentItem.title}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 10, marginBottom: 14 }}>
-            <div style={{ padding: 12, borderRadius: 10, background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.2)" }}><div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#38bdf8", marginBottom: 4 }}><Target size={14} /><span>{isHe ? "מטרת הפרומפט והפעולה המקצועית" : "Professional Action & Purpose"}</span></div><div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.goalHe : currentItem.goal}</div></div>
-            <div style={{ padding: 12, borderRadius: 10, background: "rgba(129,140,248,0.07)", border: "1px solid rgba(129,140,248,0.2)" }}><div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#818cf8", marginBottom: 4 }}><GraduationCap size={14} /><span>{isHe ? "איך להגיש לצ'אט בלי לאבד הקשר" : "How to Submit Without Losing Context"}</span></div><div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.howToUseHe : currentItem.howToUse}</div></div>
-            <div style={{ padding: 12, borderRadius: 10, background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.2)" }}><div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#34d399", marginBottom: 4 }}><Compass size={14} /><span>{isHe ? "התוצאה הרצויה שתקבל מהצ'אט" : "Expected High-Precision Output"}</span></div><div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.expectedResultHe : currentItem.expectedResult}</div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, marginBottom: 14 }}>
+            <div style={{ padding: 12, borderRadius: 10, background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#38bdf8", marginBottom: 4 }}><Target size={14} /><span>{isHe ? "מטרת הפרומפט" : "Action & Purpose"}</span></div>
+              <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.goalHe : currentItem.goal}</div>
+            </div>
+            <div style={{ padding: 12, borderRadius: 10, background: "rgba(129,140,248,0.07)", border: "1px solid rgba(129,140,248,0.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#818cf8", marginBottom: 4 }}><GraduationCap size={14} /><span>{isHe ? "איך להגיש לצ'אט" : "How to Submit"}</span></div>
+              <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.howToUseHe : currentItem.howToUse}</div>
+            </div>
+            <div style={{ padding: 12, borderRadius: 10, background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "#34d399", marginBottom: 4 }}><Compass size={14} /><span>{isHe ? "התוצאה הרצויה" : "Expected Output"}</span></div>
+              <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.55 }}>{isHe ? currentItem.expectedResultHe : currentItem.expectedResult}</div>
+            </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#38bdf8", marginBottom: 6 }}>{isHe ? "נוסח הפרומפט המלא להעתקה והדבקה בכל צ'אט חכם:" : "READY-TO-PASTE PROMPT FOR ANY AI CHAT:"}</div>
+
           <pre dir="ltr" style={{ textAlign: "left", padding: 14, borderRadius: 10, background: "#05070a", border: "1px solid rgba(56, 189, 248, 0.25)", color: "#e2e8f0", fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.6, marginBottom: 12 }}>{personalizedPrompt}</pre>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => copyText(personalizedPrompt, isHe ? "הפרומפט המקצועי" : "Prompt")} className="btn-primary" style={{ width: "auto", minHeight: 40, fontSize: 12 }}><Copy size={13} /> {isHe ? "העתק פרומפט להדבקה בצ'אט" : "Copy Prompt for AI Chat"}</button>
-            <button type="button" onClick={() => { setOutputDraft(savedOutputs[currentItem.id] || ""); setOutputModalOpen(true); }} className="btn-ghost" style={{ minHeight: 40, fontSize: 12 }}><BookMarked size={13} /> {savedOutputs[currentItem.id] ? (isHe ? "ערוך פלט שמור" : "Edit Saved Output") : (isHe ? "שמור פלט מאומת" : "Save Verified Output")}</button>
-            <button type="button" onClick={toggleStepDone} className="btn-ghost" style={{ minHeight: 40, fontSize: 12, color: isDone ? "#34d399" : "#cbd5e1" }}><CheckCircle2 size={13} /> {isDone ? (isHe ? "הושלם" : "Completed") : (isHe ? "סמן כהושלם" : "Mark Stage Complete")}</button>
-            <Link href={affiliateToolHref} className="btn-ghost" style={{ minHeight: 40, fontSize: 12, color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.35)" }}><Link2 size={13} /> {isHe ? "צור קישור שותפים לכלי זה" : "Monetize This Tool"}</Link>
+            <button type="button" onClick={() => copyText(personalizedPrompt, isHe ? "הפרומפט המקצועי" : "Prompt")} className="btn-primary" style={{ width: "auto", height: 38, fontSize: 12 }}><Copy size={13} /> {isHe ? "העתק פרומפט להדבקה בצ'אט" : "Copy Prompt"}</button>
+            <button type="button" onClick={() => { setOutputDraft(savedOutputs[currentItem.id] || ""); setOutputModalOpen(true); }} className="btn-ghost" style={{ height: 38, fontSize: 12 }}><BookMarked size={13} /> {savedOutputs[currentItem.id] ? (isHe ? "ערוך פלט שמור" : "Edit Output") : (isHe ? "שמור פלט מאומת" : "Save Output")}</button>
+            <button type="button" onClick={toggleStepDone} className="btn-ghost" style={{ height: 38, fontSize: 12, color: isDone ? "#34d399" : "#cbd5e1" }}><CheckCircle2 size={13} /> {isDone ? (isHe ? "הושלם ✓" : "Completed ✓") : (isHe ? "סמן כהושלם" : "Mark Complete")}</button>
+            <Link href={affiliateToolHref} className="btn-ghost" style={{ height: 38, fontSize: 12, color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.35)" }}><Link2 size={13} /> {isHe ? "צור קישור שותפים" : "Monetize Tool"}</Link>
           </div>
         </div>
-      </div>
+        {savedOutputs[currentItem.id] && (
+          <div style={{ marginTop: 12, padding: 14, borderRadius: 12, background: "#05070a", border: "1px solid rgba(52, 211, 153, 0.35)" }}>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#34d399", marginBottom: 6 }}>{isHe ? "תוצר מאומת נעול לשלב זה:" : "LOCKED VERIFIED ARTIFACT:"}</div>
+            <pre dir="ltr" style={{ textAlign: "left", fontSize: 12, color: "#cbd5e1", whiteSpace: "pre-wrap", margin: 0 }}>{savedOutputs[currentItem.id]}</pre>
+          </div>
+        )}
+      </section>
 
-      {savedOutputs[currentItem.id] && (<div className="card-surface" style={{ padding: 16, marginBottom: 18, border: "1px solid rgba(52, 211, 153, 0.35)" }}><div style={{ fontSize: 12, fontWeight: 800, color: "#34d399", marginBottom: 6 }}>{isHe ? "תוצר מאומת נעול לשלב זה:" : "LOCKED VERIFIED ARTIFACT FOR THIS STAGE:"}</div><pre dir="ltr" style={{ textAlign: "left", fontSize: 12, color: "#cbd5e1", whiteSpace: "pre-wrap", margin: 0 }}>{savedOutputs[currentItem.id]}</pre></div>)}
+      {/* STATION 3: Collapsible Context Studio & Chain Builder */}
+      <section className="card-surface" style={{ padding: 18, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          <span className="badge-pill" style={{ background: "rgba(251, 191, 36, 0.16)", color: "#fbbf24", fontSize: 11 }}>
+            {isHe ? "תחנה 3 מתוך 3 · כלי הקשר, שרשראות ומתכונים אישיים" : "STATION 3 OF 3 · CONTEXT PACKAGING & BUNDLES"}
+          </span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => setAddOpen(true)} className="btn-ghost" style={{ height: 34, fontSize: 12 }}><PlusCircle size={13} /> {isHe ? "הוסף פרומפט אישי" : "Add Custom Prompt"}</button>
+            <button type="button" onClick={() => setChainOpen(true)} className="btn-ghost" style={{ height: 34, fontSize: 12, color: "#fbbf24", borderColor: "rgba(251,191,36,0.35)" }}><Package size={13} /> {isHe ? `בונה שרשרת (${selectedChainIds.length})` : `Chain Builder (${selectedChainIds.length})`}</button>
+          </div>
+        </div>
+
+        <button type="button" onClick={() => setContextDrawerOpen((v) => !v)} className="btn-ghost" style={{ width: "100%", justifyContent: "space-between", height: 42, fontSize: 13, fontWeight: 800, color: "#e2e8f0" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <Layers size={16} color="#818cf8" />
+            {isHe ? "פתח את מארז ההקשר החכם (סינון פלטי טרמינל והכנת Handover)" : "Open Embedded Smart Context Studio (Clean Terminal Logs & Package Handover)"}
+          </span>
+          {contextDrawerOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+
+        {contextDrawerOpen && (
+          <div style={{ marginTop: 14 }}>
+            <ProofCraftContextStudio embeddedInMethod={true} defaultStageLabel={isHe ? currentItem.titleHe : currentItem.title} externalLang={isHe ? "he" : "en"} />
+          </div>
+        )}
+      </section>
+
       <GlobalModal isOpen={addOpen} onClose={() => setAddOpen(false)} title={isHe ? "שמירת מתכון פרומפט אישי" : "Save Custom Prompt Recipe"}><div style={{ display: "flex", flexDirection: "column", gap: 10 }}><input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={isHe ? "כותרת הפרומפט" : "Recipe Title"} className="input-dark" /><textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} rows={5} placeholder={isHe ? "הדבק כאן את הנחיות הפרומפט..." : "Paste your tested prompt instructions..."} className="input-dark" /><button type="button" onClick={handleAddCustomPrompt} className="btn-primary">{isHe ? "שמור לכספת" : "Save to Vault"}</button></div></GlobalModal>
       <GlobalModal isOpen={outputModalOpen} onClose={() => setOutputModalOpen(false)} title={isHe ? "נעילת פלט ביצוע מאומת" : "Lock Verified Execution Output"}><div style={{ display: "flex", flexDirection: "column", gap: 10 }}><textarea value={outputDraft} onChange={(e) => setOutputDraft(e.target.value)} rows={6} placeholder={isHe ? "הדבק כאן פלט טרמינל מאומת..." : "Paste verified terminal output..."} className="input-dark" /><button type="button" onClick={handleSaveOutput} className="btn-primary">{isHe ? "נעל פלט בכספת" : "Lock Output in Vault"}</button></div></GlobalModal>
-      <GlobalModal isOpen={chainOpen} onClose={() => setChainOpen(false)} title={isHe ? `חבילת פרומפטים משולבת (${selectedChainIds.length})` : `Multi-Stage Prompt Bundle (${selectedChainIds.length} Selected)`}><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{selectedChainIds.length === 0 ? (<p style={{ fontSize: 13, color: "#94a3b8" }}>{isHe ? "לחץ על '+ הוסף לחבילת שרשרת' בכל שלב." : "Click '+ Add to Chain Bundle' on any stage."}</p>) : (<><pre dir="ltr" style={{ textAlign: "left", maxHeight: 280, overflow: "auto", padding: 12, borderRadius: 10, background: "#05070a", color: "#e2e8f0", fontSize: 11.5, whiteSpace: "pre-wrap" }}>{compiledChainBundle}</pre><button type="button" onClick={() => copyText(compiledChainBundle, isHe ? "חבילת הפרומפטים" : "Full Prompt Chain Bundle")} className="btn-primary"><Copy size={14} /> {isHe ? "העתק חבילה מלאה" : "Copy Full Bundle"}</button></>)}</div></GlobalModal>
+      <GlobalModal isOpen={chainOpen} onClose={() => setChainOpen(false)} title={isHe ? `חבילת פרומפטים משולבת (${selectedChainIds.length})` : `Multi-Stage Prompt Bundle (${selectedChainIds.length} Selected)`}><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{selectedChainIds.length === 0 ? (<p style={{ fontSize: 13, color: "#94a3b8" }}>{isHe ? "לחץ על '+ הוסף לחבילת שרשרת' בכל שלב." : "Click '+ Add to Chain' on any stage."}</p>) : (<><pre dir="ltr" style={{ textAlign: "left", maxHeight: 280, overflow: "auto", padding: 12, borderRadius: 10, background: "#05070a", color: "#e2e8f0", fontSize: 11.5, whiteSpace: "pre-wrap" }}>{compiledChainBundle}</pre><button type="button" onClick={() => copyText(compiledChainBundle, isHe ? "חבילת הפרומפטים" : "Full Prompt Chain Bundle")} className="btn-primary"><Copy size={14} /> {isHe ? "העתק חבילה מלאה" : "Copy Full Bundle"}</button></>)}</div></GlobalModal>
     </div>
   );
 }
