@@ -8,7 +8,7 @@ const LANG_STORAGE_KEY = "pc_studio_lang_v2";
 const LANG_EVENT_NAME = "pc_lang_changed";
 
 export function detectNaturalVisitorLang(): StudioLang {
-  if (typeof window === "undefined") return "en";
+  if (typeof window === "undefined") return "he";
   const saved = window.localStorage.getItem(LANG_STORAGE_KEY);
   if (saved === "he" || saved === "en") return saved;
 
@@ -41,7 +41,7 @@ export function useStudioLang(): {
   toggleLang: () => void;
   t: (enText: string, heText: string) => string;
 } {
-  const [lang, setLangState] = useState<StudioLang>("en");
+  const [lang, setLangState] = useState<StudioLang>("he");
 
   useEffect(() => {
     const initial = detectNaturalVisitorLang();
