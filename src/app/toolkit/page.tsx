@@ -11,6 +11,25 @@ import SuggestToolButton from "@/components/SuggestToolButton";
 import ExternalServiceBridge from "@/components/ExternalServiceBridge";
 import StudioVisualArtwork from "@/components/StudioVisualArtwork";
 
+import { DEV_TOOLS } from "@/lib/dev-toolkit-data";
+
+const INITIAL_CLOUD_TOOLS: CloudDevTool[] = DEV_TOOLS.map((t) => ({
+  id: t.id,
+  stage_number: t.stageNumber,
+  stage_title: t.stageTitle,
+  name: t.name,
+  category: t.category,
+  short_desc: t.shortDesc,
+  full_explanation: t.fullExplanation,
+  actions_list: t.actionsYouCanDo,
+  pricing_summary: "",
+  user_requirements: t.userRequirements,
+  core_capabilities: t.coreCapabilities,
+  official_url: t.officialUrl,
+  verification_label: t.verificationActionLabel,
+  is_active: true,
+}));
+
 const TOOLKIT_STAGES = [
   { stage: 1, label: "Architecture & Spec", labelHe: "ארכיטקטורה ואפיון" },
   { stage: 2, label: "UI/UX Design", labelHe: "עיצוב ממשק וחוויה" },
@@ -22,7 +41,7 @@ const TOOLKIT_STAGES = [
 
 export default function ToolkitPage() {
   const { isHe, dir } = useStudioLang();
-  const [tools, setTools] = useState<CloudDevTool[]>([]);
+  const [tools, setTools] = useState<CloudDevTool[]>(INITIAL_CLOUD_TOOLS);
   const [selectedStage, setSelectedStage] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -35,7 +54,7 @@ export default function ToolkitPage() {
 
   useEffect(() => {
     Promise.all([fetchCloudDevTools(), getActiveUserProfile()]).then(([cloudTools, uRes]) => {
-      setTools(cloudTools);
+      if (cloudTools && cloudTools.length > 0) setTools(cloudTools);
       setUserId(uRes.userId);
       setProfile(uRes.profile);
       setCompletedTools(uRes.completedTools || []);
@@ -94,7 +113,7 @@ export default function ToolkitPage() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <SuggestToolButton userId={userId} authorName={profile.fullName || "ProofCraft Builder"} onNotify={showToast} />
-            <Link href="/method" className="badge-pill" style={{ minHeight: 36, background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)" }}>
+            <Link href="/vault" className="badge-pill" style={{ minHeight: 36, background: "rgba(52, 211, 153, 0.14)", color: "#34d399", border: "1px solid rgba(52, 211, 153, 0.35)", textDecoration: "none" }}><span>{isHe ? "שמור מפתחות בכספת" : "Save Keys in Vault"}</span></Link><button type="button" onClick={() => window.open("/context-studio?floating=1", "pcContextFloat", "width=460,height=760")} className="badge-pill" style={{ minHeight: 36, cursor: "pointer", background: "rgba(56, 189, 248, 0.14)", color: "#38bdf8", border: "1px solid rgba(56, 189, 248, 0.35)" }}><span>{isHe ? "סטודיו הקשר צף" : "Floating Context Studio"}</span></button><Link href="/method" className="badge-pill" style={{ minHeight: 36, background: "rgba(129, 140, 248, 0.16)", color: "#818cf8", border: "1px solid rgba(129, 140, 248, 0.35)" }}>
               <span>{isHe ? "כספת הפרומפטים" : "Prompt Vault"}</span>
             </Link>
           </div>
