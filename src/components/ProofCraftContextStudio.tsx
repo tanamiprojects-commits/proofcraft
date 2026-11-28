@@ -45,6 +45,21 @@ export default function ProofCraftContextStudio({ defaultStageLabel = "", extern
   const result = useMemo(() => buildContextPackets({ rawInput: enrichedInput, category, lang: effectiveLang, projectTitle, stageLabel, chunkLimit: Math.max(config.defaultChunkLimit || 1500000, 1500000), maskSecrets }), [enrichedInput, category, effectiveLang, projectTitle, stageLabel, config.defaultChunkLimit, maskSecrets]);
 
   const scrollToResults = () => { setTimeout(() => { resultsStationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 110); };
+  const handleLoadLiveDemo = () => {
+    const demoLog = [
+      "PS S:\\Projects\\demo-app> npm run build",
+      "Creating an optimized production build ...",
+      "Running TypeScript ...",
+      "src/app/checkout/page.tsx(42,18): error TS2339: Property 'discountAmount' does not exist on type 'CartSummary'.",
+      "Failed to type check.",
+      `STRIPE_SECRET_KEY=${["sk", "live", "51DemoKeyExample987654321"].join("_")}`
+    ].join("\n");
+    setScanFileName("build-log-demo.txt");
+    setRawInput(demoLog);
+    setActivePart(0);
+    scrollToResults();
+  };
+
   const handlePasteClipboard = async () => { try { const txt = await navigator.clipboard.readText(); if (txt) { setScanFileName(""); setRawInput(txt); setActivePart(0); scrollToResults(); } } catch {} };
   const processIncomingFile = async (file: File) => {
     setScanFileName(file.name);
@@ -108,7 +123,7 @@ export default function ProofCraftContextStudio({ defaultStageLabel = "", extern
         <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={async (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.item(0); if (f) await processIncomingFile(f); }} style={{ padding: 14, borderRadius: 12, border: dragOver ? "1.5px dashed #34d399" : "1px dashed rgba(56,189,248,0.4)", background: dragOver ? "rgba(52,211,153,0.12)" : "rgba(56,189,248,0.04)", display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={handlePasteClipboard} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 14px", fontSize: 12.5 }}><ClipboardPaste size={14} /> {isHe ? "הדבק מהלוח (Ctrl+V)" : "Paste from Clipboard"}</button>
+              <button type="button" onClick={handlePasteClipboard} className="btn-primary" style={{ width: "auto", height: 36, padding: "0 14px", fontSize: 12.5 }}><ClipboardPaste size={14} /> {isHe ? "הדבק מהלוח (Ctrl+V)" : "Paste from Clipboard"}</button><button type="button" onClick={handleLoadLiveDemo} className="btn-ghost" style={{ height: 36, padding: "0 12px", fontSize: 12.5, color: "#fbbf24", borderColor: "rgba(251,191,36,0.4)" }}>{isHe ? "נסה עם דוגמה חיה ✨" : "Try Live Demo ✨"}</button>
               <label className="btn-ghost" style={{ height: 36, padding: "0 14px", fontSize: 12.5, color: "#34d399", borderColor: "rgba(52,211,153,0.4)", cursor: "pointer" }}><input type="file" accept=".txt,.log,.md,.json,.ts,.tsx,.js,.csv,.png,.jpg,.jpeg,.webp,.mp4,.webm" style={{ display: "none" }} onChange={handleFileUpload} /><FolderUp size={14} /> {isHe ? "בחר קובץ / תמונה / סרטון" : "Upload File / Image / Video"}</label>
             </div>
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#cbd5e1", cursor: "pointer" }}><input type="checkbox" checked={maskSecrets} onChange={(e) => setMaskSecrets(e.target.checked)} /><span>{isHe ? "הסתר מפתחות API אוטומטית" : "Auto-mask API keys"}</span></label>
